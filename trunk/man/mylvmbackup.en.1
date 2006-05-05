@@ -1,0 +1,150 @@
+.\" Copyright (c) 1992, 2001 Free Software Foundation
+.\" See section COPYING for conditions for redistribution
+.TH mylvmbackup 1 "08 Aug 2003" "MYSQL AB" "MYSQL"
+.de BP
+.sp
+.ti -.2i
+\(**
+..
+.SH NAME
+\fBmylvmbackup\fP \- utility for creating MySQL backups via LVM snapshots
+.SH SYNOPSIS
+.hy 0
+.na
+\fBmylvmbackup\fP
+[\fB\-\-user=\fP\fIstring\fP]
+[\fB\-\-password=\fP\fIstring\fP]
+[\fB\-\-lvcreate=\fP\fIstring\fP]
+[\fB\-\-lvremove=\fP\fIstring\fP]
+[\fB\-\-lvname=\fP\fIstring\fP]
+[\fB\-\-vgname=\fP\fIstring\fP]
+[\fB\-\-lvsize=\fP\fIstring\fP]
+[\fB\-\-tmpdir=\fP\fIstring\fP]
+[\fB\-\-backupdir=\fP\fIstring\fP]
+[\fB\-\-mount=\fP\fIstring\fP]
+[\fB\-\-umount=\fP\fIstring\fP]
+[\fB\-\-tar=\fP\fIstring\fP]
+[\fB\-\-help\fP]
+.ad b
+.hy 1
+.SH DESCRIPTION
+\fBmylvmbackup\fP is a script for quickly creating backups of
+MySQL server data files.
+To perform a backup, \fBmylvmbackup\fP
+obtains a read lock and flushes all server caches to disk,
+makes an LVM snapshot of the volume containing the MySQL data directory,
+and unlocks the server.
+The backup process takes only a small amount of time.
+When it is done, the server can continue normal operations.
+.PP
+The LVM snapshot is mounted to a temporary directory and all data
+is backed up using the \fItar\fP program.
+The archive file is created using a name of the form
+\fIYYYY_MM_DD_hh_mm_SS_mysql.tgz\fP, where
+\fIYYYY\fP, \fIMM\fP, \fIDD\fP, \fIhh\fP, \fImm\fP, and \fIss\fP
+represent the year, month, day, hour, minute, and second of the time at which
+the backup occurred.
+Use of timestamped archive names allows you to run \fBmylvmbackup\fP
+many times without danger of rewriting old archives.
+.PP
+It is necessary to run \fBmylvmbackup\fP on the same host where the MySQL
+server runs.
+Even though \fBmylvmbackup\fP
+communicates with the server through a normal client connection
+to obtain the read lock and flush data, it makes the backup by accessing
+the file system directly.
+It is also necessary that the MySQL server data
+directory be on an LVM volume.
+(It is, however, a good idea to do the LVM backup to a different partition
+than the one where the data directory resides.
+Otherwise, there is a good chance that LVM will run out of undo space for
+LVM snapshot maintenance and the backup will fail.)
+.PP
+The user who invokes \fBmylvmbackup\fP must have sufficient filesystem
+permissions to create the LVM snapshot and mount it.
+This includes read/write access to the backup directory.
+.PP
+\fBmylvmbackup\fP is a Perl script that uses DBI to access the MySQL server.
+For proper operation, it requires that Perl be installed, as well as the DBI
+and DBD::mysql modules.
+In addition,
+\fBmylvmbackup\fP uses several other programs:
+\fI/bin/date\fP to constuct the archive filename,
+\fItar\fP to back up data, LVM
+utilities to create and remove the LVM snapshot, and the system
+utilities \fImount\fP and \fIumount\fP.
+.SH OPTIONS
+\fBmylvmbackup\fP supports the following options on the command line:
+.TP
+.BI \-\-user= string
+Specifies the username to use for connecting to the MySQL server.
+The default is \fIroot\fP.
+.TP
+.BI \-\-password= string
+Specifies the password to use for connecting to the MySQL server.
+The default is the empty string (no password).
+.TP
+.BI \-\-lvcreate= string
+Specifies the pathname for the \fIlvcreate\fP program.
+The default is \fI/sbin/lvcreate\fP.
+.TP
+.BI \-\-lvremove= string
+Specifies the pathname for the \fIlvremove\fP program.
+The default is \fI/sbin/lvremove\fP.
+.TP
+.BI \-\-lvname= string
+Specifies the pathname of the logical volume where the MySQL data directory
+is located.
+The default is \fI/data/db\fP.
+.TP
+.BI \-\-vgname= string
+Specifies the name of the LVM volume group where the logical volume for the
+MySQL data directory is placed.
+The default is \fImysql\fP.
+.TP
+.BI \-\-lvsize= string
+Specifies the size for the snapshot volume.
+The default is \fI5G\fP (5 gigabytes).
+.TP
+.BI \-\-tmpdir= string
+Specifies the pathname to an empty directory to be used for mounting the LVM
+snapshot volume.
+The default value is \fI/var/lib/mysql/mnt\fP.
+.TP
+.BI \-\-backupdir= string
+Specifies the pathname of the directory where the archive file should be
+written.
+The default is \fI/var/lib/mysql/backup\fP.
+The backup directory must not be on the same volume as the
+MySQL data directory.
+.TP
+.BI \-\-mount= string
+Specifies the pathname for the \fImount\fP program.
+The default is \fI/bin/mount\fP.
+.TP
+.BI \-\-umount= string
+Specifies the pathname for the \fIumount\fP program.
+The default is \fI/bin/umount\fP.
+.TP
+.BI \-\-tar= string
+Specifies the pathname for the \fItar\fP program.
+The default is \fI/bin/tar\fP.
+.TP
+.B \-\-help
+Displays a help message showing the available options.
+.SH FILES
+.TP 15
+\fI/usr/local/bin/mylvmbackup\fP
+The \fBmylvmbackup\fP script.
+.SH "SEE ALSO"
+\fIdate(\fP1),
+\fImount(\fP8),
+\fItar(\fP1),
+\fIlvcreate\fP(8),
+\fIlvremove(\fP8),
+\fIumount(\fP8)
+.SH CREDITS
+\fBmylvmbackup\fP is distributed under the GNU public license. See the file COPYING for details.
+.PP
+This program was initially written by Aleksey "Walrus" Kishkin from MySQL AB, with suggestions
+from Peter Zaitsev and Lenz Grimmer.

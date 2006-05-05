@@ -1,0 +1,8 @@
+Installation of mylvmbackup is pretty straight-forward:
+
+ - Put the script "mylvmbackup" in a directory listed in your $PATH environment
+   variable (e.g. /usr/local/bin) and make sure it's executable
+ - If required, put the man page into a directory listed in your $MANPATH environment
+   variable (e.g. /usr/local/man/man1)
+
+Thank's it!

@@ -1,0 +1,9 @@
+mylvmbackup TODO list:
+
+ - clean up the code, better option and error handling
+ - add support for creating a configuration file /etc/mylvmbackup.conf to store the
+   backup options (using Config::IniFiles, Config::General or even YAML?)
+ - Make the backup file name format customizable
+ - Create a Makefile to create the distribution package
+ - Support other backup methods than tar (e.g. rsync) by modularizing the backup part
+ - Convert the separate man page into POD (?)

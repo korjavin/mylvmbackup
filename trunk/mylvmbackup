@@ -1,0 +1,195 @@
+#!/usr/bin/perl  -w
+#
+# mylvmbackup - utility for creating MySQL backups via LVM snapshots
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+use DBI;
+use Getopt::Long;
+use strict;
+use diagnostics;
+
+my $version='0.1';
+my $user='root';
+my $password='';
+
+my $lvcreate='/sbin/lvcreate';
+my $lvremove='/sbin/lvremove';
+my $vgname='mysql';
+my $lvname='data';
+my $lvsize='5G';
+
+my $tmpdir='/var/lib/mysql/mnt';
+my $backupdir='/var/lib/mysql/backup';
+my $mount='/bin/mount';
+my $umount='/bin/umount';
+my $tar='/bin/tar';
+
+GetOptions("user=s" => \$user,
+  "password=s" => \$password,
+  "lvcreate=s" => \$lvcreate,
+  "lvremove=s" => \$lvremove,
+  "vgname=s" => \$vgname,
+  "lvsize=s" => \$lvsize,
+  "lvname=s" => \$lvname,
+  "tmpdir=s" => \$tmpdir,
+  "backupdir=s" => \$backupdir,
+  "mount=s" => \$mount,
+  "umount=s" => \$mount,
+  "tar=s" => \$mount,
+  "help" => \&help,  
+) or help();
+
+
+my $date=`/bin/date +"%Y_%m_%d_%H_%M_%S"`;
+chomp $date;
+my $pos_filename = "$backupdir/${date}_mysql.pos";
+my $archivename  = "$backupdir/${date}_mysql.tar.gz";
+
+my $mounted = 0;
+my $snapshot_created = 0;
+
+
+# Check the backupdir, it must be, and it must be readable/writable
+check_dir($backupdir,'backupdir');
+
+# Check the tmpdir, it must empty
+check_dir($tmpdir,'tmpdir');
+
+my @tmpdir_content = glob "$tmpdir/*" ;
+unless ( scalar(@tmpdir_content) eq 0)
+{
+print "Please make sure Temp dir ($tmpdir) is empty\n",'-'x20,"\n"; 
+exit(1);
+};
+
+my $dbh= DBI->connect("dbi:mysql:mysql",$user,$password) 
+   or die $DBI::errstr;
+$dbh->do("flush tables with read lock") or die $DBI::errstr;
+&create_pos_file($dbh);
+create_snapshot();
+$dbh->do("unlock tables") or die $DBI::errstr;
+$dbh->disconnect;
+if ($snapshot_created)
+{
+  if (mount_snapshot())
+  {
+    do_backup();
+  }    
+}
+cleanup();
+exit 0;
+
+sub create_pos_file
+{
+ my $dbh = shift;
+ my $sth = $dbh->prepare("show master status") or die $DBI::errstr;
+ my ($file,$pos_file,$position,$binlog_do_db,$binlog_ignore_db);
+ if ($sth->execute && ( ($file,$position,$binlog_do_db,$binlog_ignore_db) = $sth->fetchrow_array))
+ {
+   open $pos_file, ">$pos_filename" or die ("Cannot open $pos_filename for write");
+   print $pos_file "$file\t$position\t$binlog_do_db\t$binlog_ignore_db\n";
+   close $pos_file;
+ }
+ $sth->finish;
+ 
+}
+
+
+sub do_backup
+{
+  print "Create archive $archivename\n";
+  my $command = "$tar cvzf $archivename $tmpdir/*";
+  $command .= " $pos_filename" if (-f $pos_filename );
+  if ( system($command) == 0 )
+  {
+    print "DONE\n";
+  } else {
+    print "FAIL $!\n";
+  }    
+}
+
+sub mount_snapshot
+{ 
+  $mounted = 1 if (system("$mount /dev/$vgname/backup $tmpdir") == 0);
+  print "Cannot mount snapshot: $! \n" unless $mounted eq 1;
+  return $mounted; 
+} 
+
+sub create_snapshot 
+{ 
+  $snapshot_created=1 if 
+   ( system("$lvcreate",'-s',"--size=$lvsize",
+            "--name=backup","/dev/$vgname/$lvname") == 0); 
+  print "Cannot create snapshot: $! \n" unless $snapshot_created eq 1;
+  return $snapshot_created;
+}
+
+sub cleanup
+{
+  system("$umount $tmpdir") if ($mounted);
+  unlink $pos_filename;
+  system("$lvremove -f /dev/$vgname/backup") if ($snapshot_created);
+}
+
+sub help {
+print <<EOF;
+
+mylvmbackup Version $version
+ 
+This script performs a MySQL backup by using an LVM snapshot volume.
+It requires the MySQL server's data directory to be placed on a logical
+volume, and creates an LVM snapshot to create a copy of the MySQL datadir.
+Afterwards, all data files are backed using GNU tar to an archive directory.
+ 
+Options:
+
+  --user=<username>        Set username for connection to mysql
+  --password=<password>    Set password 
+  --lvcreate=<filename>    Path for lvcreate (default: $lvcreate)
+  --lvremove=<filename>    Path for lvremove (default: $lvremove)
+  --lvname=<name>          Name of logical volume, where mysql datadir is placed
+  --vgname=<name>          Name of LVM VG, where placed LV for mysql datadir
+  --lvsize=<size>          Size for snapshot volume, default = 5G
+  --tmpdir=<dirname>       Path for empty directory (that will be used to
+                           mount the snapshot volume)
+  --backupdir=<dirname>    Path for directory for archives,
+  --mount=<filename>       Path for mount (default: $mount)
+  --umount=<filename>      Path for umount (default: $umount)
+  --tar=<filename>         Path for tar (default: $tar)
+  --help                   Print this help
+
+EOF
+ exit 1;
+}
+
+sub check_dir 
+{
+ my ($dirname,$optioname) = @_;
+ unless ( (-d $dirname) and 
+     (-w $dirname) and (-r $dirname) and  (-x $dirname))
+ {
+   print <<DIRERROR;
+
+The directory $dirname does not exist or I don't have sufficient privileges
+to read/write/access it.
+Please verify the permissions or provide another directory by using the option
+--${optioname}=<directory>
+
+DIRERROR
+   &help;
+  }
+}  
+
