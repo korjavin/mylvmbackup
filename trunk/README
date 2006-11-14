@@ -3,27 +3,31 @@ mylvmbackup - utility for creating MySQL backups via LVM snapshots
 Home page: http://www.lenzg.org/mylvmbackup/
 Maintainer: Lenz Grimmer <lenz@grimmer.com>
 
-mylvmbackup is a Perl script for quickly creating backups of MySQL server data
-files. To perform a backup, mylvmbackup obtains a read lock and flushes all
-server caches to disk, makes an LVM snapshot of the volume containing the MySQL
-data directory, and unlocks the server. The backup process takes only a small
-amount of time. When it is done, the server can continue normal operations.
+mylvmbackup is a Perl script for quickly creating backups of MySQL server's
+data files. To perform a backup, mylvmbackup obtains a read lock on all tables
+and flushes all server caches to disk, makes an LVM snapshot of the volume
+containing the MySQL data directory, and unlocks the tables again. The snapshot
+process takes only a small amount of time. When it is done, the server can
+continue normal operations, while the actual file backup proceeds.
 
-The LVM snapshot is mounted to a temporary directory and all data is backed up
-using the tar program. The archive file is created using a name of the form
-YYYY_MM_DD_hh_mm_SS_mysql.tgz, where YYYY, MM, DD, hh, mm, and ss represent the
-year, month, day, hour, minute, and second of the time at which the backup
-occurred. Use of timestamped archive names allows you to run mylvmbackup many
-times without danger of rewriting old archives.
+The LVM snapshot is mounted to a temporary directory and all data is backed
+up using the tar program. The archive file is created using a name of the
+form backup-YYYYMMDD_hhmmss_mysql.tar.gz, where YYYY, MM, DD, hh, mm, and
+ss represent the year, month, day, hour, minute, and second of the time at
+which the backup occurred. The prefix backup and the date format can be
+modified. The use of timestamped archive names allows you to run mylvmbackup
+many times without danger of rewriting old archives.
 
 It is necessary to run mylvmbackup on the same host where the MySQL server
-runs. Even though mylvmbackup communicates with the server through a normal
-client connection to obtain the read lock and flush data, it makes the backup
-by accessing the file system directly. It is also necessary that the MySQL
-server data directory be on an LVM volume. (It is, however, a good idea to do
-the LVM backup to a different partition than the one where the data directory
-resides. Otherwise, there is a good chance that LVM will run out of undo space
-for LVM snapshot maintenance and the backup will fail.)
+runs. If your MySQL daemon is not listening on localhost, or using the default
+socket location, you must specify --host or --socket. Even though mylvmbackup
+communicates with the server through a normal client connection to obtain the
+read lock and flush data, it makes the backup by accessing the file system
+directly. It is also necessary that the MySQL server data directory resides on
+an LVM volume. (It is, however, a good idea to do the LVM backup to a different
+partition than the one where the data directory resides. Otherwise, there is a
+good chance that LVM will run out of undo space for LVM snapshot maintenance
+and the backup will fail.)
 
 The user who invokes mylvmbackup must have sufficient filesystem permissions to
 create the LVM snapshot and mount it. This includes read/write access to the
