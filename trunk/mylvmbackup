@@ -33,6 +33,7 @@ my $need_xfsworkaround=0;
 my $vgname='mysql';
 my $prefix='backup';
 my $lvname='data';
+my $datefmt='%Y%m%d_%H%M%S';
 
 my $relpath='';
 my $lvsize='5G';
@@ -67,13 +68,14 @@ GetOptions("user=s" => \$user,
   "umount=s" => \$mount,
   "tar=s" => \$mount,
   "tararg=s" => \$tararg,
+  "datefmt=s" => \$datefmt,
   "xfs" => \&need_xfsworkaround,
   "help" => \&help,  
 ) or help();
 
 $backuplv = $lvname.'_snapshot' if length($backuplv) == 0;
 
-my $date=`/bin/date +"%Y%m%d_%H%M%S"`;
+my $date=`/bin/date +"$datefmt"`;
 chomp $date;
 my $pos_filename = $backupdir.'/'.$prefix.'-'.$date.'_mysql.pos';
 my $archivename  = $backupdir.'/'.$prefix.'-'.$date.'_mysql.tar.gz';
@@ -235,6 +237,7 @@ This script performs a MySQL backup by using an LVM snapshot volume.
 It requires the MySQL server's data directory to be placed on a logical
 volume, and creates an LVM snapshot to create a copy of the MySQL datadir.
 Afterwards, all data files are backed using GNU tar to an archive directory.
+See the manual page for more info.
  
 Options:
 
@@ -250,6 +253,7 @@ Options:
   --relpath=<name>         Relative path on LV to datadir (def: $relpath)
   --lvsize=<size>          Size for snapshot volume (def: $lvsize)
   --prefix=<prefix>        Prefix for naming the backup (def: $prefix)
+  --datefmt=<format>       Specify the format of the date string (def: $datefmt)
   --mountdir=<dirname>     Path for mountpoint (def: $mountdir)
   --backupdir=<dirname>    Path for archives (def: $backupdir)
   --mount=<filename>       Path for mount (def: $mount)

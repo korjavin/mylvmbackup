@@ -1,11 +1,18 @@
+2006-11-14  Lenz Grimmer <lenz@grimmer.com>
+
+ - Documented Robin's changes in the man page, cleaned up the man page
+   in general
+ - Added new option: 'datefmt' that allows one to define the format of
+   the date time stamp in the backup file name
+
 2006-11-12  Robin H. Johnson <robbat2@gentoo.org>
 
  - General cleanup, intended to make mylvmbackup usable for distributions.
  - Add --xfs to help with using XFS snapshots (adds nouuid per LVM HOWTO)
  - Support for relative paths within the datadir LV.
  - Sane default locations for the snapshot mount point and the backup
- directory. Distributions should create /var/tmp/mylvmbackup/mnt/ and
- /var/tmp/mylvmbackup/backup/ on installation of mylvmbackup.
+   directory. Distributions should create /var/tmp/mylvmbackup/mnt/ and
+   /var/tmp/mylvmbackup/backup/ on installation of mylvmbackup.
  - Add a prefix name for backups, to enable multiple parallel backups.
  - Add host/port/socket support for connecting to MySQL properly.
  - Give a little more output during the backup process.
