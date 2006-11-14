@@ -1,3 +1,19 @@
+2006-11-12  Robin H. Johnson <robbat2@gentoo.org>
+
+ - General cleanup, intended to make mylvmbackup usable for distributions.
+ - Add --xfs to help with using XFS snapshots (adds nouuid per LVM HOWTO)
+ - Support for relative paths within the datadir LV.
+ - Sane default locations for the snapshot mount point and the backup
+ directory. Distributions should create /var/tmp/mylvmbackup/mnt/ and
+ /var/tmp/mylvmbackup/backup/ on installation of mylvmbackup.
+ - Add a prefix name for backups, to enable multiple parallel backups.
+ - Add host/port/socket support for connecting to MySQL properly.
+ - Give a little more output during the backup process.
+ - Change the position file format to be a key/value pair style.
+ - Capture the slave and master status during position capture.
+ - Hidden option: 'tararg' to override the default 'cvzf' parameter to tar.
+ - Hidden option: 'backuplv' to control the name of the snapshot LV.
+
 2006-05-05  Lenz Grimmer <lenz@grimmer.com>
 
  - Initial version 0.1
