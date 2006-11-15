@@ -1,0 +1,9 @@
+mylvmbackup TODO list:
+
+ - add support for creating a configuration file /etc/mylvmbackup.conf to store the
+   backup options (using Config::IniFiles, Config::General or even YAML?)
+ - Support other backup methods than tar (e.g. rsync) by modularizing the backup part
+ - Further clean up the code, better option and error handling
+ - Better logging (via syslog?)
+ - Convert the separate man page into POD or another documentation meta format to
+   simplify the creation of READMEs, man pages and related documents?
