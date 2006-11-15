@@ -1,3 +1,14 @@
+2006-11-15  Lenz Grimmer <lenz@grimmer.com>
+
+ - Added Makefile to perform various build and installation tasks
+ - Renamed the mylvmbackup source file to mylvmbackup.pl.in, which
+   is turned into the mylvmbackup executable by the Makefile
+ - Added RPM spec file to build RPM packages
+ - Updated Version to 0.2 (now defined in the Makefile)
+ - Updated INSTALL file, now one can run "make install" instead of manually
+   copying the files
+ - Updated TODO list
+
 2006-11-14  Lenz Grimmer <lenz@grimmer.com>
 
  - Documented Robin's changes in the man page, cleaned up the man page

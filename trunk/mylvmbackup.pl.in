@@ -21,7 +21,9 @@ use Getopt::Long;
 use strict;
 use diagnostics;
 
-my $version='0.2';
+# Version is set in the Makefile
+my $version='@VERSION@';
+
 my $user='root';
 my $password='';
 my $host = '';
