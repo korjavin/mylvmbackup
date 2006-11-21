@@ -126,9 +126,6 @@ if(length($host) > 0) {
 print scalar(localtime)." Connecting to database...\n";
 my $dbh= DBI->connect($dsn,$user,$password)
   or die $DBI::errstr;
-  
-print scalar(localtime). " Stopping slave...\n";
-$dbh->do("stop slave") or die $DBI::errstr;
 
 print scalar(localtime). " Flushing tables...\n";
 $dbh->do("flush tables with read lock") or die $DBI::errstr;
@@ -141,9 +138,6 @@ create_snapshot();
 
 print scalar(localtime). " Unlocking tables...\n";
 $dbh->do("unlock tables") or die $DBI::errstr;
-
-print scalar(localtime). " Restarting slave...\n";
-$dbh->do("start slave") or die $DBI::errstr;
 
 print scalar(localtime). " Disconnecting from database...\n";
 $dbh->disconnect;

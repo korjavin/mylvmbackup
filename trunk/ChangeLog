@@ -1,3 +1,10 @@
+2006-11-21  Lenz Grimmer <lenz@grimmer.com>
+
+ - Removed the START/STOP SLAVE calls (They cause problems where the box isn't
+   a slave, and don't actually help anything where the box is a slave) - thanks
+   to Robin H. Johnson <robbat2@gentoo.org> for reporting this and Fred Blaise
+   for verifying it.
+
 2006-11-15  Lenz Grimmer <lenz@grimmer.com>
 
  - Added Makefile to perform various build and installation tasks
