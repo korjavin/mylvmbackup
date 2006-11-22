@@ -28,57 +28,59 @@ my $cfg = new Config::IniFiles( -file => "/etc/mylvmbackup.conf" );
 # Version is set in the Makefile
 my $version='@VERSION@';
 
-my $user = $cfg->val( 'auth', 'user');
-my $password = $cfg->val ('auth', 'password');
-my $host = $cfg->val ('auth', 'host');
-my $port = $cfg->val ('auth', 'port');
-my $socket = $cfg->val ('auth', 'socket');
+my $user = $cfg->val( 'mysql', 'user');
+my $password = $cfg->val ('mysql', 'password');
+my $host = $cfg->val ('mysql', 'host');
+my $port = $cfg->val ('mysql', 'port');
+my $socket = $cfg->val ('mysql', 'socket');
 
-my $need_xfsworkaround=$cfg->val ('fs', 'is_xfs');
+my $need_xfsworkaround=$cfg->val ('fs', 'xfs');
 
-my $vgname=$cfg->val ('lvm', 'vg_src_name');
+my $vgname=$cfg->val ('lvm', 'vgname');
 my $prefix=$cfg->val ('lvm', 'prefix');
-my $lvname=$cfg->val ('lvm', 'lv_src_name');
+my $lvname=$cfg->val ('lvm', 'lvname');
 my $datefmt=$cfg->val ('misc', 'date_format');
 
 # Not used at the moment, not in GetOptions
-my $relpath=$cfg->val ('fs', 'rel_path');
+my $relpath=$cfg->val ('fs', 'relpath');
 
-my $lvsize=$cfg->val ('lvm', 'snapshot_size');
-my $tararg=$cfg->val ('misc', 'tar_opts');
+my $lvsize=$cfg->val ('lvm', 'lvsize');
+my $tararg=$cfg->val ('misc', 'tararg');
 
-my $mountdir=$cfg->val ('fs', 'mount_dir');
-my $backupdir=$cfg->val ('fs', 'backup_dir');
+my $mountdir=$cfg->val ('fs', 'mountdir');
+my $backupdir=$cfg->val ('fs', 'backupdir');
 
-my $lvcreate=$cfg->val ('bin', 'lvcreate_bin');
-my $lvremove=$cfg->val ('bin', 'lvremove_bin');
-my $mount=$cfg->val ('bin', 'mount_bin');
-my $umount=$cfg->val ('bin', 'umount_bin');
-my $tar=$cfg->val ('bin', 'tar_bin');
+my $lvcreate=$cfg->val ('tools', 'lvcreate');
+my $lvremove=$cfg->val ('tools', 'lvremove');
+my $mount=$cfg->val ('tools', 'mount');
+my $tar=$cfg->val ('tools', 'tar');
+my $umount=$cfg->val ('tools', 'umount');
 
-my $backuplv = $cfg->val ('lvm', 'lv_backup_name');
+my $backuplv = $cfg->val ('lvm', 'backuplv');
 
-GetOptions("user=s" => \$user,
-  "host=s" => \$host,
-  "socket=s" => \$socket,
-  "port=i" => \$port,
-  "password=s" => \$password,
-  "vgname=s" => \$vgname,
-  "lvsize=s" => \$lvsize,
-  "lvname=s" => \$lvname,
-  "backuplv=s" => \$backuplv,
-  "prefix=s" => \$prefix,
-  "mountdir=s" => \$mountdir,
+GetOptions(
   "backupdir=s" => \$backupdir,
-  "lvcreate=s" => \$lvcreate,
-  "lvremove=s" => \$lvremove,
-  "mount=s" => \$mount,
-  "umount=s" => \$mount,
-  "tar=s" => \$mount,
-  "tararg=s" => \$tararg,
+  "backuplv=s" => \$backuplv,
   "datefmt=s" => \$datefmt,
-  "xfs" => \&need_xfsworkaround,
   "help" => \&help,  
+  "host=s" => \$host,
+  "lvcreate=s" => \$lvcreate,
+  "lvname=s" => \$lvname,
+  "lvremove=s" => \$lvremove,
+  "lvsize=s" => \$lvsize,
+  "mountdir=s" => \$mountdir,
+  "mount=s" => \$mount,
+  "password=s" => \$password,
+  "port=i" => \$port,
+  "prefix=s" => \$prefix,
+  "relpath=s" => \$relpath,
+  "socket=s" => \$socket,
+  "tararg=s" => \$tararg,
+  "tar=s" => \$mount,
+  "umount=s" => \$mount,
+  "user=s" => \$user,
+  "vgname=s" => \$vgname,
+  "xfs" => \&need_xfsworkaround,
 ) or help();
 
 $backuplv = $lvname.'_snapshot' if length($backuplv) == 0;

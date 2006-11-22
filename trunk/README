@@ -34,6 +34,8 @@ create the LVM snapshot and mount it. This includes read/write access to the
 backup directory.
 
 For proper operation mylvmbackup requires that Perl as well as the DBI and
-DBD::mysql modules. It also needs the Config::IniFiles to read the global configuration file of the program. In addition, it uses several other programs: /bin/date to
-construct the archive filename, tar to back up data, LVM utilities to create
-and remove the LVM snapshot, and the system utilities mount and umount.
+DBD::mysql modules. It also needs the Config::IniFiles to read the global
+configuration file of the program. In addition, it uses several other
+programs: /bin/date to construct the archive filename, tar to back up data,
+LVM utilities to create and remove the LVM snapshot, and the system utilities
+mount and umount.
