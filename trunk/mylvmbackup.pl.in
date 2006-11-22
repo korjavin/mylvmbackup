@@ -18,39 +18,45 @@
 
 use DBI;
 use Getopt::Long;
+use Config::IniFiles;
 use strict;
 use diagnostics;
+
+# Initialize config file
+my $cfg = new Config::IniFiles( -file => "/etc/mylvmbackup.conf" );
 
 # Version is set in the Makefile
 my $version='@VERSION@';
 
-my $user='root';
-my $password='';
-my $host = '';
-my $port = 3306;
-my $socket = '';
+my $user = $cfg->val( 'auth', 'user');
+my $password = $cfg->val ('auth', 'password');
+my $host = $cfg->val ('auth', 'host');
+my $port = $cfg->val ('auth', 'port');
+my $socket = $cfg->val ('auth', 'socket');
 
-my $need_xfsworkaround=0;
+my $need_xfsworkaround=$cfg->val ('fs', 'is_xfs');
 
-my $vgname='mysql';
-my $prefix='backup';
-my $lvname='data';
-my $datefmt='%Y%m%d_%H%M%S';
+my $vgname=$cfg->val ('lvm', 'vg_src_name');
+my $prefix=$cfg->val ('lvm', 'prefix');
+my $lvname=$cfg->val ('lvm', 'lv_src_name');
+my $datefmt=$cfg->val ('misc', 'date_format');
 
-my $relpath='';
-my $lvsize='5G';
-my $tararg='cvzf';
+# Not used at the moment, not in GetOptions
+my $relpath=$cfg->val ('fs', 'rel_path');
 
-my $mountdir='/var/tmp/mylvmbackup/mnt/';
-my $backupdir='/var/tmp/mylvmbackup/backup/';
+my $lvsize=$cfg->val ('lvm', 'snapshot_size');
+my $tararg=$cfg->val ('misc', 'tar_opts');
 
-my $lvcreate='/sbin/lvcreate';
-my $lvremove='/sbin/lvremove';
-my $mount='/bin/mount';
-my $umount='/bin/umount';
-my $tar='/bin/tar';
+my $mountdir=$cfg->val ('fs', 'mount_dir');
+my $backupdir=$cfg->val ('fs', 'backup_dir');
 
-my $backuplv = '';
+my $lvcreate=$cfg->val ('bin', 'lvcreate_bin');
+my $lvremove=$cfg->val ('bin', 'lvremove_bin');
+my $mount=$cfg->val ('bin', 'mount_bin');
+my $umount=$cfg->val ('bin', 'umount_bin');
+my $tar=$cfg->val ('bin', 'tar_bin');
+
+my $backuplv = $cfg->val ('lvm', 'lv_backup_name');
 
 GetOptions("user=s" => \$user,
   "host=s" => \$host,
