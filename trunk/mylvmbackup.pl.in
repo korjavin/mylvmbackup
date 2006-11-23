@@ -19,6 +19,7 @@
 use DBI;
 use Getopt::Long;
 use Config::IniFiles;
+use Sys::Syslog qw(:DEFAULT setlogsock :macros);
 use strict;
 use diagnostics;
 
@@ -46,13 +47,21 @@ use vars qw(
   $tararg
   $umount
   $user
-  $vgname);
+  $vgname
+  $log_method
+  $syslog_socktype
+  $syslog_ident
+  $syslog_facility
+  $syslog_args
+  $syslog_remotehost
+  );
 
 #
 # Initialize variables from config file, if it exists
 #
 if (-r $configfile) {
-  my $cfg = new Config::IniFiles( -file => $configfile );
+  my $cfg = new Config::IniFiles( -file => $configfile )
+    or log_msg ("Couldn't read configuration file: " . $!, LOG_WARNING);
 
   $user = $cfg->val( 'mysql', 'user');
   $password = $cfg->val ('mysql', 'password');
@@ -63,11 +72,10 @@ if (-r $configfile) {
   $need_xfsworkaround=$cfg->val ('fs', 'xfs');
 
   $vgname=$cfg->val ('lvm', 'vgname');
-  $prefix=$cfg->val ('lvm', 'prefix');
+  $prefix=$cfg->val ('misc', 'prefix');
   $lvname=$cfg->val ('lvm', 'lvname');
-  $datefmt=$cfg->val ('misc', 'date_format');
+  $datefmt=$cfg->val ('misc', 'datefmt');
 
-# Not used at the moment, not in GetOptions
   $relpath=$cfg->val ('fs', 'relpath');
 
   $lvsize=$cfg->val ('lvm', 'lvsize');
@@ -83,6 +91,14 @@ if (-r $configfile) {
   $umount=$cfg->val ('tools', 'umount');
 
   $backuplv = $cfg->val ('lvm', 'backuplv');
+
+  $log_method = $cfg->val('logging', 'log_method');
+  $syslog_socktype = $cfg->val ('logging', 'syslog_socktype');
+  $syslog_ident = $cfg->val ('logging', 'syslog_ident');
+  $syslog_facility = $cfg->val ('logging', 'syslog_facility');
+  $syslog_args = $cfg->val ('logging', 'syslog_args');
+  $syslog_remotehost = $cfg->val ('logging', 'syslog_remotehost');
+
 } else {
   $user = 'root';
   $password = '';
@@ -111,6 +127,8 @@ if (-r $configfile) {
   $tar='/bin/tar';
 
   $backuplv = '';
+
+  $log_method = 'standard';
 }   
 
 GetOptions(
@@ -131,12 +149,28 @@ GetOptions(
   "relpath=s" => \$relpath,
   "socket=s" => \$socket,
   "tararg=s" => \$tararg,
-  "tar=s" => \$mount,
-  "umount=s" => \$mount,
+  "tar=s" => \$tar,
+  "umount=s" => \$umount,
   "user=s" => \$user,
   "vgname=s" => \$vgname,
   "xfs" => \&need_xfsworkaround,
+  "log_method" => \&log_method,
+  "syslog_socktype" => \&syslog_socktype,
+  "syslog_ident" => \&syslog_ident,
+  "syslog_facility" => \&syslog_facility,
+  "syslog_args" => \&syslog_args,
+  "syslog_remotehost" => \&syslog_remotehost,
 ) or help();
+
+if ($log_method eq "syslog") {
+        if ($syslog_socktype ne "native") {
+                setlogsock ($syslog_socktype);
+                $Sys::Syslog::host = $syslog_remotehost;
+        }
+        openlog ($syslog_ident, $syslog_args, $syslog_facility);
+        log_msg ("Starting new backup...", 'info');
+} 
+
 
 $backuplv = $lvname.'_snapshot' if length($backuplv) == 0;
 
@@ -156,7 +190,7 @@ check_dir($mountdir,'mountdir');
 
 # Append the prefix to the mountdir, to allow multiple parallel backups
 # the / is to ensure we go a level under it.
-$mountdir .= '/'.$prefix;
+$mountdir .= '/'.$prefix unless ($prefix eq "");
 
 # Now create it
 mkdir $mountdir;
@@ -168,14 +202,14 @@ check_dir($mountdir,'mountdir');
 my @mountdir_content = glob "$mountdir/*" ;
 unless ( scalar(@mountdir_content) eq 0)
 {
-	print "Please make sure Temp dir ($mountdir) is empty\n",'-'x20,"\n"; 
+	log_msg ("Please make sure Temp dir ($mountdir) is empty.", LOG_ERR); 
 	exit(1);
 };
 
 # Figure out our DSN string
 my $dsn = "dbi:mysql:mysql";
 if(length($socket) > 0 && length($host) > 0) {
-	print "Please specify only a host OR a socket to use.\n";
+	log_msg ("Please specify only a host OR a socket to use.", LOG_ERR);
 	exit(1);
 }
 if(length($socket) > 0) {
@@ -186,36 +220,38 @@ if(length($host) > 0) {
  $dsn .= "post=".$port;
 }
 
-print scalar(localtime)." Connecting to database...\n";
+log_msg ("Connecting to database...", LOG_INFO);
 my $dbh= DBI->connect($dsn,$user,$password)
-  or die $DBI::errstr;
+  or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
 
-print scalar(localtime). " Flushing tables...\n";
-$dbh->do("flush tables with read lock") or die $DBI::errstr;
+log_msg ("Flushing tables...", LOG_INFO);
+$dbh->do("flush tables with read lock") 
+  or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
 
-print scalar(localtime). " Taking position record...\n";
+log_msg ("Taking position record...", LOG_INFO);
 &create_pos_file($dbh);
 
-print scalar(localtime). " Taking snapshot...\n";
+log_msg ("Taking snapshot...", LOG_INFO);
 create_snapshot();
 
-print scalar(localtime). " Unlocking tables...\n";
-$dbh->do("unlock tables") or die $DBI::errstr;
+log_msg ("Unlocking tables...", LOG_INFO);
+$dbh->do("unlock tables") 
+  or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
 
-print scalar(localtime). " Disconnecting from database...\n";
+log_msg ("Disconnecting from database...", LOG_INFO);
 $dbh->disconnect;
 
 if ($snapshot_created)
 {
-	print scalar(localtime). " Mounting snapshot...\n";
+	log_msg ("Mounting snapshot...", LOG_INFO);
 	if (mount_snapshot())
 	{
-		print scalar(localtime). " Taking actual backup...\n";
+		log_msg ("Taking actual backup...", LOG_INFO);
 		do_backup();
 	}    
 }
 
-print scalar(localtime). " Cleaning up...\n";
+log_msg ("Cleaning up...", LOG_INFO);
 cleanup();
 exit 0;
 
@@ -223,7 +259,7 @@ sub create_pos_file
 {
  my $dbh = shift;
  my $pos_file;
- open $pos_file, ">$pos_filename" or die ("Cannot open $pos_filename for write");
+ open $pos_file, ">$pos_filename" or log_msg ("Cannot open $pos_filename for write", LOG_ERR) && die ("Cannot open $pos_filename for write");
  &_create_pos_file_single($dbh,'SHOW MASTER STATUS',$pos_file,'Master');
  &_create_pos_file_single($dbh,'SHOW SLAVE STATUS',$pos_file,'Slave');
  close $pos_file;
@@ -232,8 +268,8 @@ sub create_pos_file
 sub _create_pos_file_single
 {
 	my $dbh = shift; my $query = shift; my $fh = shift; my $pos_prefix = shift;
-	my $sth = $dbh->prepare($query) or die $DBI::errstr;
-	$sth->execute or die $DBI::errstr;
+	my $sth = $dbh->prepare($query) or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
+	$sth->execute or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
 	while (my $r = $sth->fetchrow_hashref) {
 		foreach my $f (@{$sth->{NAME}}) {
 			my $v = $r->{$f};
@@ -247,14 +283,14 @@ sub _create_pos_file_single
 
 sub do_backup
 {
-  print "Create archive $archivename\n";
+  log_msg ("Create archive $archivename", LOG_INFO);
   my $command = "$tar $tararg $archivename $mountdir/$relpath/mysql";
   $command .= " $pos_filename" if (-f $pos_filename );
   if ( system($command) == 0 )
   {
-    print "DONE\n";
+    log_msg ("DONE", LOG_INFO);
   } else {
-    print "FAIL $!\n";
+    log_msg ("FAIL $!", LOG_ERR);
   }    
 }
 
@@ -263,7 +299,7 @@ sub mount_snapshot
   my $params = 'ro';
   $params .= ',nouuid' if $need_xfsworkaround;
   $mounted = 1 if (system("$mount -o $params /dev/$vgname/$backuplv $mountdir") == 0);
-  print "Cannot mount snapshot: $! \n" unless $mounted eq 1;
+  log_msg ("Cannot mount snapshot: $!", LOG_ERR) unless $mounted eq 1;
   return $mounted; 
 } 
 
@@ -272,9 +308,29 @@ sub create_snapshot
   $snapshot_created=1 if 
    ( system("$lvcreate",'-s',"--size=$lvsize",
             "--name=$backuplv","/dev/$vgname/$lvname") == 0); 
-  print "Cannot create snapshot: $! \n" unless $snapshot_created eq 1;
+  log_msg ("Cannot create snapshot: $!", LOG_ERR) unless $snapshot_created eq 1;
   return $snapshot_created;
 }
+
+
+sub log_msg
+{
+        my $msg = shift;
+        my $syslog_level = shift;
+
+        if ($log_method eq "standard") {
+                __print_it($msg . "\n");
+        } elsif ($log_method eq "syslog") {
+                __log_it ($syslog_level, $msg);
+        } elsif ($log_method eq "both") {
+                __print_it ($msg . "\n");
+                __log_it ($syslog_level, $msg);
+        }
+
+        sub __print_it { print $_[0]; }
+        sub __log_it { syslog ($_[0], $_[1]); }
+}
+
 
 sub cleanup
 {
@@ -342,6 +398,9 @@ Please verify the permissions or provide another directory
 by using the option --$optioname=<directory>
 
 DIRERROR
+
+   log_msg ("The directory $dirname does not exist or I don't have sufficient privileges to read/write/access it.", LOG_ERR);
+
    &help;
   }
 }  

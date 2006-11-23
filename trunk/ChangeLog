@@ -1,3 +1,15 @@
+2006-11-23  Fred Blaise <fred.blaise@gmail.com>
+
+ - Added functionality to use syslog for logging activity. This requires
+   the Sys::Syslog Perl module.
+ - Bugfix: in GetOptions, tar and umount were pointing to the mount binary.
+ - Do not append a '/' to $mountdir if $prefix is empty.
+ - Bugfix: Corrected variable 'date_format' back to 'datefmt'
+ - Bugfix: Removed tailing slash for backupdir and mountdir in config file to
+   avoid resulting double slash with unused variable
+ - Bugfix: Fixed wrong section assignation of $prefix (misc, instead of lvm),
+   which resulted in uninitialized value.
+
 2006-11-23  Lenz Grimmer <lenz@grimmer.com>
 
  - slighty cleaned up Fred's patch, reverted using the previous default values
