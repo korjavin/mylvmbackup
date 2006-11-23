@@ -1,3 +1,19 @@
+2006-11-23  Lenz Grimmer <lenz@grimmer.com>
+
+ - slighty cleaned up Fred's patch, reverted using the previous default values
+   and match the variables used in the config file with the command line
+   options
+ - Updated TODO (supporting external config files is done, thanks)
+ - bumped up version number to 0.3
+ - Added installing of the config file to the Makefile
+ - Changed the default LVM snapshot size from 10M to 5G to match the defaults
+ - Added the config file to the RPM file list
+ - Changed the script to still work without the configfile, falling back to
+   builtin defaults (to revert the previous behavior).
+ - Started converting the man page to asciidoc for easier maintenance and
+   more possibilities to convert to other formats like HTML or DocBook.
+   (Makefile support is still missing)
+
 2006-11-22  Fred Blaise <fred.blaise@gmail.com>
 
  - Added initial support for using an external /etc/mylvmbackup.conf

@@ -22,41 +22,96 @@ use Config::IniFiles;
 use strict;
 use diagnostics;
 
-# Initialize config file
-my $cfg = new Config::IniFiles( -file => "/etc/mylvmbackup.conf" );
-
 # Version is set in the Makefile
 my $version='@VERSION@';
+my $configfile = "/etc/mylvmbackup.conf";
+use vars qw(
+  $backupdir
+  $backuplv
+  $datefmt
+  $host
+  $lvcreate
+  $lvname
+  $lvremove
+  $lvsize
+  $mount
+  $mountdir
+  $need_xfsworkaround
+  $password
+  $port
+  $prefix
+  $relpath
+  $socket
+  $tar
+  $tararg
+  $umount
+  $user
+  $vgname);
 
-my $user = $cfg->val( 'mysql', 'user');
-my $password = $cfg->val ('mysql', 'password');
-my $host = $cfg->val ('mysql', 'host');
-my $port = $cfg->val ('mysql', 'port');
-my $socket = $cfg->val ('mysql', 'socket');
+#
+# Initialize variables from config file, if it exists
+#
+if (-r $configfile) {
+  my $cfg = new Config::IniFiles( -file => $configfile );
 
-my $need_xfsworkaround=$cfg->val ('fs', 'xfs');
+  $user = $cfg->val( 'mysql', 'user');
+  $password = $cfg->val ('mysql', 'password');
+  $host = $cfg->val ('mysql', 'host');
+  $port = $cfg->val ('mysql', 'port');
+  $socket = $cfg->val ('mysql', 'socket');
 
-my $vgname=$cfg->val ('lvm', 'vgname');
-my $prefix=$cfg->val ('lvm', 'prefix');
-my $lvname=$cfg->val ('lvm', 'lvname');
-my $datefmt=$cfg->val ('misc', 'date_format');
+  $need_xfsworkaround=$cfg->val ('fs', 'xfs');
+
+  $vgname=$cfg->val ('lvm', 'vgname');
+  $prefix=$cfg->val ('lvm', 'prefix');
+  $lvname=$cfg->val ('lvm', 'lvname');
+  $datefmt=$cfg->val ('misc', 'date_format');
 
 # Not used at the moment, not in GetOptions
-my $relpath=$cfg->val ('fs', 'relpath');
+  $relpath=$cfg->val ('fs', 'relpath');
 
-my $lvsize=$cfg->val ('lvm', 'lvsize');
-my $tararg=$cfg->val ('misc', 'tararg');
+  $lvsize=$cfg->val ('lvm', 'lvsize');
+  $tararg=$cfg->val ('misc', 'tararg');
 
-my $mountdir=$cfg->val ('fs', 'mountdir');
-my $backupdir=$cfg->val ('fs', 'backupdir');
+  $mountdir=$cfg->val ('fs', 'mountdir');
+  $backupdir=$cfg->val ('fs', 'backupdir');
 
-my $lvcreate=$cfg->val ('tools', 'lvcreate');
-my $lvremove=$cfg->val ('tools', 'lvremove');
-my $mount=$cfg->val ('tools', 'mount');
-my $tar=$cfg->val ('tools', 'tar');
-my $umount=$cfg->val ('tools', 'umount');
+  $lvcreate=$cfg->val ('tools', 'lvcreate');
+  $lvremove=$cfg->val ('tools', 'lvremove');
+  $mount=$cfg->val ('tools', 'mount');
+  $tar=$cfg->val ('tools', 'tar');
+  $umount=$cfg->val ('tools', 'umount');
 
-my $backuplv = $cfg->val ('lvm', 'backuplv');
+  $backuplv = $cfg->val ('lvm', 'backuplv');
+} else {
+  $user = 'root';
+  $password = '';
+  $host = '';
+  $port = 3306;
+  $socket = '';
+
+  $need_xfsworkaround=0;
+
+  $vgname='mysql';
+  $prefix='backup';
+  $lvname='data';
+  $datefmt='%Y%m%d_%H%M%S';
+
+  $relpath='';
+  $lvsize='5G';
+  $tararg='cvzf';
+
+  $mountdir='/var/tmp/mylvmbackup/mnt/';
+  $backupdir='/var/tmp/mylvmbackup/backup/';
+
+  $lvcreate='/sbin/lvcreate';
+  $lvremove='/sbin/lvremove';
+  $mount='/bin/mount';
+  $umount='/bin/umount';
+  $tar='/bin/tar';
+
+  $backuplv = '';
+}   
 
 GetOptions(
   "backupdir=s" => \$backupdir,

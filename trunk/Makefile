@@ -22,7 +22,7 @@ TAR = /bin/tar
 # define some variables
 
 NAME = mylvmbackup
-VERSION = 0.2
+VERSION = 0.3
 MAN1 = man/$(NAME).en.1 
 DISTFILES = COPYING \
 	INSTALL \
@@ -55,6 +55,7 @@ $(NAME): $(NAME).pl.in
 install: all
 	test -d $(DESTDIR)$(bindir) || $(INSTALL) -d $(DESTDIR)$(bindir)
 	test -d $(DESTDIR)$(man1dir) || $(INSTALL) -d $(DESTDIR)$(man1dir)
+	test -d $(DESTDIR)$(sysconfdir) || $(INSTALL) -d $(DESTDIR)$(sysconfdir)
 	$(INSTALL_PROGRAM) $(NAME) $(DESTDIR)$(bindir)
 	$(INSTALL_DATA) $(MAN1) $(DESTDIR)$(man1dir)/$(NAME).1
 	$(INSTALL_CONF) $(NAME).conf $(DESTDIR)$(sysconfdir)
