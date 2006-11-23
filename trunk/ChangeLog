@@ -12,7 +12,8 @@
    builtin defaults (to revert the previous behavior).
  - Started converting the man page to asciidoc for easier maintenance and
    more possibilities to convert to other formats like HTML or DocBook.
-   (Makefile support is still missing)
+ - Renamed the man page input file, added man page building with a2x to the
+   Makefile
 
 2006-11-22  Fred Blaise <fred.blaise@gmail.com>
 

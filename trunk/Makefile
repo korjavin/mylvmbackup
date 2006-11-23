@@ -3,6 +3,8 @@
 #
 
 # required programs
+A2X = /usr/bin/a2x
+A2XMANFLAGS = -d manpage -f manpage
 CHMOD = /bin/chmod
 CP = /bin/cp
 GZIP = /bin/gzip
@@ -23,11 +25,12 @@ TAR = /bin/tar
 
 NAME = mylvmbackup
 VERSION = 0.3
-MAN1 = man/$(NAME).en.1 
+MAN1 = man/$(NAME).1
 DISTFILES = COPYING \
 	INSTALL \
 	ChangeLog \
 	Makefile \
+	man \
 	$(NAME) \
 	$(NAME).pl.in \
 	$(NAME).spec \
@@ -35,7 +38,7 @@ DISTFILES = COPYING \
 	$(NAME).conf \
 	README \
 	TODO
-CLEANFILES = $(NAME).spec $(NAME)
+CLEANFILES = $(NAME).spec $(NAME) $(MAN1)
 prefix = /usr/local
 sysconfdir = /etc
 bindir = $(prefix)/bin
@@ -43,7 +46,7 @@ distdir = $(NAME)-$(VERSION)
 mandir = $(prefix)/man
 man1dir = $(mandir)/man1
 
-all: $(DISTFILES)
+all: $(DISTFILES) $(MAN1)
 
 $(NAME).spec: $(NAME).spec.in
 	$(SED) -e s/@VERSION@/$(VERSION)/ < $< > $@
@@ -51,6 +54,10 @@ $(NAME).spec: $(NAME).spec.in
 $(NAME): $(NAME).pl.in
 	$(SED) -e s/@VERSION@/$(VERSION)/ < $< > $@
 	$(CHMOD) 755 $@
+
+$(MAN1):
+	$(A2X) $(A2XMANFLAGS) $(MAN1).txt
+	$(RM) $(MAN1).xml
 
 install: all
 	test -d $(DESTDIR)$(bindir) || $(INSTALL) -d $(DESTDIR)$(bindir)
@@ -68,9 +75,8 @@ uninstall:
 distdir: all
 	if test -d $(distdir) ; then $(RM) -rf $(distdir) ; fi
 	mkdir $(distdir)
-	$(CP) $(DISTFILES) $(distdir)
-	mkdir $(distdir)/man
-	$(CP) $(MAN1) $(distdir)/man
+	$(CP) -a $(DISTFILES) $(distdir)
+	rm -rf `find $(distdir) -type d -name .svn -print`
 
 dist: distdir
 	$(TAR) chof - $(distdir) | $(GZIP) -c > $(distdir).tar.gz
