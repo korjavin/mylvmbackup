@@ -17,37 +17,38 @@ DESCRIPTION
 mylvmbackup is a tool for quickly creating backups of MySQL server's data
 files. To perform a backup, mylvmbackup obtains a read lock on all tables and
 flushes all server caches to disk, makes an LVM snapshot of the volume
-containing the MySQL data directory, and unlocks the tables again. The snapshot
-process takes only a small amount of time. When it is done, the server can
-continue normal operations, while the actual file backup proceeds.
+containing the MySQL data directory, and unlocks the tables again. The
+snapshot process takes only a small amount of time. When it is done, the
+server can continue normal operations, while the actual file backup proceeds.
 
 The LVM snapshot is mounted to a temporary directory and all data is backed up
 using the 'tar' program. The archive file is created using a name of the form
-'backup-YYYYMMDD_hhmmss_mysql.tar.gz', where 'YYYY', 'MM', 'DD', 'hh', 'mm', and 'ss'
-represent the year, month, day, hour, minute, and second of the time at which
-the backup occurred. The prefix 'backup' and the date format can be modified. The
-use of timestamped archive names allows you to run mylvmbackup many times
-without danger of rewriting old archives.
+'backup-YYYYMMDD_hhmmss_mysql.tar.gz', where 'YYYY', 'MM', 'DD', 'hh', 'mm',
+and 'ss' represent the year, month, day, hour, minute, and second of the time
+at which the backup occurred. The prefix 'backup' and the date format can be
+modified. The use of timestamped archive names allows you to run mylvmbackup
+many times without danger of rewriting old archives.
 
 It is necessary to run mylvmbackup on the same host where the MySQL server
 runs. If your MySQL daemon is not listening on localhost or using the default
-socket location, you must specify '--host' or '--socket'. Even though mylvmbackup
-communicates with the server through a normal client connection to obtain the
-read lock and flush data, it makes the backup by accessing the file system
-directly. It is also necessary that the MySQL server data directory resides on
-an LVM volume. (It is, however, a good idea to do the LVM backup to a different
-partition than the one where the data directory resides. Otherwise, there is a
-good chance that LVM will run out of undo space for LVM snapshot maintenance
-and the backup will fail.)
+socket location, you must specify '--host' or '--socket'. Even though
+mylvmbackup communicates with the server through a normal client connection to
+obtain the read lock and flush data, it makes the backup by accessing the file
+system directly. It is also necessary that the MySQL server data directory
+resides on an LVM volume. (It is, however, a good idea to do the LVM backup to
+a different partition than the one where the data directory resides.
+Otherwise, there is a good chance that LVM will run out of undo space for LVM
+snapshot maintenance and the backup will fail.)
 
-The user who invokes mylvmbackup must have sufficient filesystem permissions to
-create the LVM snapshot and mount it. This includes read/write access to the
-backup directory.
+The user who invokes mylvmbackup must have sufficient filesystem permissions
+to create the LVM snapshot and mount it. This includes read/write access to
+the backup directory.
 
 
 OPTIONS
 -------
-mylvmbackup supports the following command line options:
+mylvmbackup supports the following command line options. The same options can
+also be defined in the '/etc/mylvmbackup.conf' configuration file.
 
 --user=string::
   Specifies the username to use for connecting to the MySQL server.
@@ -114,7 +115,7 @@ mylvmbackup supports the following command line options:
   Specifies the pathname of the directory where the archive files will be
   written to. The backup directory must not be on the same volume as the MySQL
   data directory.
-  The default is '/var/tmp/mylvmbackup/backup/'.cw
+  The default is '/var/tmp/mylvmbackup/backup/'
 
 --mount=string::
   Specifies the pathname for the 'mount' program.
@@ -143,11 +144,6 @@ FILES
 mylvmbackup::
   The executable Perl script that performs the work.
 
-EXAMPLES
---------
-a2x -f pdf doc/quickstart.txt::
-  Generates doc/quickstart.pdf.
-
 
 REQUISITES
 ----------
@@ -170,12 +166,12 @@ AUTHOR
 This program was initially written by Aleksey "Walrus" Kishkin from
 MySQL AB, with suggestions from Peter Zaitsev and Lenz Grimmer.
 
-It is currently maintained by Lenz Grimmer, <mailto:lenz@grimmer.com[]>
+It is currently maintained by Lenz Grimmer, <mailto:lenz@grimmer.com>[]
 
 
 RESOURCES
 ---------
-Main web site: http://www.lenzg.org//mylvmbackup/[]
+Main web site: http://www.lenzg.org/mylvmbackup/[]
 
 
 CREDITS
