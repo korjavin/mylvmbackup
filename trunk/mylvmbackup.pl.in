@@ -19,7 +19,6 @@
 use DBI;
 use Getopt::Long;
 use Config::IniFiles;
-use Sys::Syslog qw(:DEFAULT setlogsock :macros);
 use strict;
 use diagnostics;
 
@@ -61,7 +60,7 @@ use vars qw(
 #
 if (-r $configfile) {
   my $cfg = new Config::IniFiles( -file => $configfile )
-    or log_msg ("Couldn't read configuration file: " . $!, LOG_WARNING);
+    or log_msg ("Couldn't read configuration file: " . $!, 'LOG_WARNING');
 
   $user = $cfg->val( 'mysql', 'user');
   $password = $cfg->val ('mysql', 'password');
@@ -129,6 +128,11 @@ if (-r $configfile) {
   $backuplv = '';
 
   $log_method = 'standard';
+  $syslog_socktype = 'native';
+  $syslog_ident = 'mylvmbackup';
+  $syslog_facility = '';
+  $syslog_args = 'pid,ndelay';
+  $syslog_remotehost = '';
 }   
 
 GetOptions(
@@ -154,21 +158,22 @@ GetOptions(
   "user=s" => \$user,
   "vgname=s" => \$vgname,
   "xfs" => \&need_xfsworkaround,
-  "log_method" => \&log_method,
-  "syslog_socktype" => \&syslog_socktype,
-  "syslog_ident" => \&syslog_ident,
-  "syslog_facility" => \&syslog_facility,
-  "syslog_args" => \&syslog_args,
-  "syslog_remotehost" => \&syslog_remotehost,
+  "log_method=s" => \$log_method,
+  "syslog_socktype=s" => \$syslog_socktype,
+  "syslog_ident=s" => \$syslog_ident,
+  "syslog_facility=s" => \$syslog_facility,
+  "syslog_args=s" => \$syslog_args,
+  "syslog_remotehost=s" => \$syslog_remotehost,
 ) or help();
 
 if ($log_method eq "syslog") {
-        if ($syslog_socktype ne "native") {
-                setlogsock ($syslog_socktype);
-                $Sys::Syslog::host = $syslog_remotehost;
-        }
-        openlog ($syslog_ident, $syslog_args, $syslog_facility);
-        log_msg ("Starting new backup...", 'info');
+  use Sys::Syslog qw(:DEFAULT setlogsock :macros);
+  if ($syslog_socktype ne "native") {
+    setlogsock ($syslog_socktype);
+    $Sys::Syslog::host = $syslog_remotehost;
+  }
+  openlog ($syslog_ident, $syslog_args, $syslog_facility);
+  log_msg ("Starting new backup...", LOG_INFO);
 } 
 
 
@@ -315,20 +320,47 @@ sub create_snapshot
 
 sub log_msg
 {
-        my $msg = shift;
-        my $syslog_level = shift;
+  my $msg = shift;
+  my $syslog_level = shift;
 
-        if ($log_method eq "standard") {
-                __print_it($msg . "\n");
-        } elsif ($log_method eq "syslog") {
-                __log_it ($syslog_level, $msg);
-        } elsif ($log_method eq "both") {
-                __print_it ($msg . "\n");
-                __log_it ($syslog_level, $msg);
-        }
+  if ($log_method eq "standard") {
+    __print_it($syslog_level, $msg);
+  } elsif ($log_method eq "syslog") {
+    __log_it ($syslog_level, $msg);
+  } elsif ($log_method eq "both") {
+    __print_it ($syslog_level, $msg);
+    __log_it ($syslog_level, $msg);
+}
 
-        sub __print_it { print $_[0]; }
-        sub __log_it { syslog ($_[0], $_[1]); }
+  sub __print_it
+  {
+    my $logmsg = '';
+
+    if ($_[0] eq "LOG_WARNING") {
+      $logmsg = "Warning:";
+    } elsif ($_[0] eq "LOG_INFO") {
+      $logmsg = "Info:";
+    } elsif ($_[0] eq "LOG_ERR") {
+      $logmsg = "Error:";
+    }
+    print timestamp() . $logmsg . " " . $_[1] . "\n";
+  }
+
+  sub __log_it { syslog ($_[0], $_[1]); }
+
+  sub timestamp { return ymd() . " " . hms(); }
+
+  sub hms
+  {
+    my ($sec,$min,$hour,$mday,$mon,$year) = localtime();
+    return sprintf("%02d:%02d:%02d", $hour, $min, $sec);
+  }
+
+  sub ymd
+  {
+    my ($sec,$min,$hour,$mday,$mon,$year) = localtime();
+    return sprintf("%04d%02d%02d", $year+1900, $mon+1, $mday);
+  }
 }
 
 
@@ -375,6 +407,8 @@ Options:
   --umount=<filename>      Path for umount (def: $umount)
   --tar=<filename>         Path for tar (def: $tar)
   --xfs                    Use nouuid to safely mount XFS partitions.
+  --log_method=<method>    How to log output from this script. Valid options are
+                           "standard", "syslog" or "both" (def: $log_method)
   --help                   Print this help
 
 If your MySQL daemon is not listening on localhost, or using the default 

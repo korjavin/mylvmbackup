@@ -1,3 +1,13 @@
+2006-11-24  Lenz Grimmer <lenz@grimmer.com>
+
+ - Cleaned up Fred's patch a bit: added --help output and corrected the option
+   handling. Provide sane default values when no option file is used.
+ - Only require SyS::Syslog if we actually use syslog for logging (less
+   Perl module dependencies)
+ - Slightly beefed up the console logging by printing a time stamp in front
+   of the message and display "Info/Warning/Error/" according to the log
+   level.
+
 2006-11-23  Fred Blaise <fred.blaise@gmail.com>
 
  - Added functionality to use syslog for logging activity. This requires
