@@ -22,9 +22,15 @@ use Config::IniFiles;
 use strict;
 use diagnostics;
 
-# Version is set in the Makefile
+# Version is set from the Makefile
 my $version='@VERSION@';
+
+# syslog-related options
+my $syslog_ident = 'mylvmbackup';
+my $syslog_args = 'pid,ndelay';
+
 my $configfile = "/etc/mylvmbackup.conf";
+
 use vars qw(
   $backupdir
   $backuplv
@@ -49,9 +55,7 @@ use vars qw(
   $vgname
   $log_method
   $syslog_socktype
-  $syslog_ident
   $syslog_facility
-  $syslog_args
   $syslog_remotehost
   );
 
@@ -93,9 +97,7 @@ if (-r $configfile) {
 
   $log_method = $cfg->val('logging', 'log_method');
   $syslog_socktype = $cfg->val ('logging', 'syslog_socktype');
-  $syslog_ident = $cfg->val ('logging', 'syslog_ident');
   $syslog_facility = $cfg->val ('logging', 'syslog_facility');
-  $syslog_args = $cfg->val ('logging', 'syslog_args');
   $syslog_remotehost = $cfg->val ('logging', 'syslog_remotehost');
 
 } else {
@@ -129,9 +131,7 @@ if (-r $configfile) {
 
   $log_method = 'standard';
   $syslog_socktype = 'native';
-  $syslog_ident = 'mylvmbackup';
   $syslog_facility = '';
-  $syslog_args = 'pid,ndelay';
   $syslog_remotehost = '';
 }   
 
@@ -160,15 +160,14 @@ GetOptions(
   "xfs" => \&need_xfsworkaround,
   "log_method=s" => \$log_method,
   "syslog_socktype=s" => \$syslog_socktype,
-  "syslog_ident=s" => \$syslog_ident,
   "syslog_facility=s" => \$syslog_facility,
-  "syslog_args=s" => \$syslog_args,
   "syslog_remotehost=s" => \$syslog_remotehost,
 ) or help();
 
 if ($log_method eq "syslog") {
   use Sys::Syslog qw(:DEFAULT setlogsock :macros);
   if ($syslog_socktype ne "native") {
+    die ("You need to provide syslog_remotehost!\n") unless ($syslog_remotehost);
     setlogsock ($syslog_socktype);
     $Sys::Syslog::host = $syslog_remotehost;
   }
@@ -388,28 +387,33 @@ See the manual page for more info.
  
 Options:
 
-  --user=<username>        MySQL username (def: $user)
-  --password=<password>    MySQL password
-  --host=<host>            Hostname for MySQL
-  --port=<port>            TCP port for MySQL
-  --socket=<socket>        UNIX socket for MySQL
-  --lvcreate=<filename>    Path for lvcreate (def: $lvcreate)
-  --lvremove=<filename>    Path for lvremove (def: $lvremove)
-  --vgname=<name>          VG containing datadir (def: $vgname)
-  --lvname=<name>          LV containing datadir (def: $lvname)
-  --relpath=<name>         Relative path on LV to datadir (def: $relpath)
-  --lvsize=<size>          Size for snapshot volume (def: $lvsize)
-  --prefix=<prefix>        Prefix for naming the backup (def: $prefix)
-  --datefmt=<format>       Specify the format of the date string (def: $datefmt)
-  --mountdir=<dirname>     Path for mountpoint (def: $mountdir)
-  --backupdir=<dirname>    Path for archives (def: $backupdir)
-  --mount=<filename>       Path for mount (def: $mount)
-  --umount=<filename>      Path for umount (def: $umount)
-  --tar=<filename>         Path for tar (def: $tar)
-  --xfs                    Use nouuid to safely mount XFS partitions.
-  --log_method=<method>    How to log output from this script. Valid options are
-                           "standard", "syslog" or "both" (def: $log_method)
-  --help                   Print this help
+  --user=<username>             MySQL username (def: $user)
+  --password=<password>         MySQL password
+  --host=<host>                 Hostname for MySQL
+  --port=<port>                 TCP port for MySQL
+  --socket=<socket>             UNIX socket for MySQL
+  --lvcreate=<filename>         Path for lvcreate (def: $lvcreate)
+  --lvremove=<filename>         Path for lvremove (def: $lvremove)
+  --vgname=<name>               VG containing datadir (def: $vgname)
+  --lvname=<name>               LV containing datadir (def: $lvname)
+  --relpath=<name>              Relative path on LV to datadir (def: $relpath)
+  --lvsize=<size>               Size for snapshot volume (def: $lvsize)
+  --prefix=<prefix>             Prefix for naming the backup (def: $prefix)
+  --datefmt=<format>            Specify the format of the date string (def: $datefmt)
+  --mountdir=<dirname>          Path for mountpoint (def: $mountdir)
+  --backupdir=<dirname>         Path for archives (def: $backupdir)
+  --mount=<filename>            Path for mount (def: $mount)
+  --umount=<filename>           Path for umount (def: $umount)
+  --tar=<filename>              Path for tar (def: $tar)
+  --xfs                         Use the "nouuid" mount option to safely mount XFS snapshots
+  --log_method=<method>         How to log output from this script. Valid options are
+                                "standard", "syslog" or "both" (def: $log_method)
+  --syslog_socktype=<type>      What type of socket to use for connecting to the syslog
+                                service. Valid options are "native", "tcp" and "udp".
+                                (def: $syslog_socktype)
+  --syslog_facility=<facility>  Define a particular syslog facility (def: $syslog_facility)
+  --syslog_remotehost=<host>    Host name of a remote syslog server (def: $syslog_remotehost)
+  --help                        Print this help
 
 If your MySQL daemon is not listening on localhost, or using the default 
 socket location, you must specify --host or --socket.

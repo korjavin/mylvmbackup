@@ -7,6 +7,10 @@
  - Slightly beefed up the console logging by printing a time stamp in front
    of the message and display "Info/Warning/Error/" according to the log
    level.
+ - Removed syslog_ident and syslog_args from the command line options and
+   config file (these remain hardcoded)
+ - added check for hostname, if remote logging is requested
+ - Updated and reformatted the help output
 
 2006-11-23  Fred Blaise <fred.blaise@gmail.com>
 
