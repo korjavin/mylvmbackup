@@ -129,7 +129,7 @@ if (-r $configfile) {
 
   $backuplv = '';
 
-  $log_method = 'standard';
+  $log_method = 'console';
   $syslog_socktype = 'native';
   $syslog_facility = '';
   $syslog_remotehost = '';
@@ -322,7 +322,7 @@ sub log_msg
   my $msg = shift;
   my $syslog_level = shift;
 
-  if ($log_method eq "standard") {
+  if ($log_method eq "console") {
     __print_it($syslog_level, $msg);
   } elsif ($log_method eq "syslog") {
     __log_it ($syslog_level, $msg);
@@ -407,7 +407,7 @@ Options:
   --tar=<filename>              Path for tar (def: $tar)
   --xfs                         Use the "nouuid" mount option to safely mount XFS snapshots
   --log_method=<method>         How to log output from this script. Valid options are
-                                "standard", "syslog" or "both" (def: $log_method)
+                                "console", "syslog" or "both" (def: $log_method)
   --syslog_socktype=<type>      What type of socket to use for connecting to the syslog
                                 service. Valid options are "native", "tcp" and "udp".
                                 (def: $syslog_socktype)

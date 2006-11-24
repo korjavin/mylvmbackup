@@ -11,6 +11,8 @@
    config file (these remain hardcoded)
  - added check for hostname, if remote logging is requested
  - Updated and reformatted the help output
+ - Changed the name of the default logging from "standard" to "console"
+ - Added descriptions of the new logging options to the man page
 
 2006-11-23  Fred Blaise <fred.blaise@gmail.com>
 

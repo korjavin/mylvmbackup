@@ -132,6 +132,23 @@ also be defined in the '/etc/mylvmbackup.conf' configuration file.
 --xfs::
   Use the 'nouuid' mount option to safely mount snapshot partitions that
   use the XFS file system.
+  
+--log_method=string::
+  How to log output from this script. Valid options are 'console', 'syslog'
+  or 'both'.
+  The default value is 'console'.
+
+--syslog_socktype=string::
+  What type of socket to use for connecting to the syslog service. Valid
+  options are 'native', 'tcp' and 'udp'.
+  The default value is 'native'
+
+--syslog_facility=string::
+  Define a particular syslog facility
+  Default value is the empty string.
+
+--syslog_remotehost=string::
+  Host name of a remote syslog server.
 
 --help::
   Displays a help message showing the available options.
@@ -180,7 +197,7 @@ Robin H. Johnson from the Gentoo project cleaned up the code and added
 several useful features. See the ChangeLog for more details.
 
 Fred Blaise contributed the initial support to use an external configuration
-file.
+file and logging via syslog.
 
 
 COPYING
