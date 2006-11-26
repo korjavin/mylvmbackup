@@ -13,6 +13,7 @@
  - Updated and reformatted the help output
  - Changed the name of the default logging from "standard" to "console"
  - Added descriptions of the new logging options to the man page
+ - Released as version 0.3
 
 2006-11-23  Fred Blaise <fred.blaise@gmail.com>
 
@@ -65,6 +66,7 @@
  - Updated INSTALL file, now one can run "make install" instead of manually
    copying the files
  - Updated TODO list
+ - Released as version 0.2
 
 2006-11-14  Lenz Grimmer <lenz@grimmer.com>
 
