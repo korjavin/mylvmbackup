@@ -5,6 +5,7 @@
 # required programs
 A2X = /usr/bin/a2x
 A2XMANFLAGS = -d manpage -f manpage
+A2XHTMLFLAGS = -d manpage -f xhtml
 CHMOD = /bin/chmod
 CP = /bin/cp
 GZIP = /bin/gzip
@@ -38,7 +39,7 @@ DISTFILES = COPYING \
 	$(NAME).conf \
 	README \
 	TODO
-CLEANFILES = $(NAME).spec $(NAME) $(MAN1)
+CLEANFILES = $(NAME).spec $(NAME) $(MAN1) $(MAN1).html
 prefix = /usr/local
 sysconfdir = /etc
 bindir = $(prefix)/bin
@@ -57,6 +58,10 @@ $(NAME): $(NAME).pl.in
 
 $(MAN1):
 	$(A2X) $(A2XMANFLAGS) $(MAN1).txt
+	$(RM) $(MAN1).xml
+
+htmlman:
+	$(A2X) $(A2XHTMLFLAGS) $(MAN1).txt
 	$(RM) $(MAN1).xml
 
 install: all
