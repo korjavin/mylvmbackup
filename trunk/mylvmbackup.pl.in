@@ -30,7 +30,6 @@ my $version='@VERSION@';
 # syslog-related options
 my $syslog_ident = 'mylvmbackup';
 my $syslog_args = 'pid,ndelay';
-my
 my $configfile = "/etc/mylvmbackup.conf";
 my $configfile2 = "";
 
@@ -331,7 +330,7 @@ sub _create_pos_file_single
 
 sub do_backup
 {
-  log_msg ("Create archive $archivename", LOG_INFO);
+  log_msg ("Creating archive $archivename", LOG_INFO);
   my $mountdir_rel = $mountdir;
   $mountdir_rel =~ s/^$topmountdir//g;
   $mountdir_rel =~ s/^\/+//g;
@@ -390,16 +389,18 @@ sub log_msg
 
   sub __print_it
   {
+    my $syslog_level = shift;
+    my $msg = shift;
     my $logmsg = '';
 
-    if ($_[0] eq "LOG_WARNING") {
-      $logmsg = "Warning:";
-    } elsif ($_[0] eq "LOG_INFO") {
-      $logmsg = "Info:";
-    } elsif ($_[0] eq "LOG_ERR") {
-      $logmsg = "Error:";
+  if ($syslog_level eq LOG_WARNING) {
+      $logmsg = " Warning: ";
+    } elsif ($syslog_level eq LOG_INFO) {
+      $logmsg = " Info: ";
+    } elsif ($syslog_level eq LOG_ERR) {
+      $logmsg = " Error: ";
     }
-    print timestamp() . $logmsg . " " . $_[1] . "\n";
+    print timestamp() . $logmsg . $msg . "\n";
   }
 
   sub __log_it { syslog ($_[0], $_[1]); }
@@ -427,6 +428,7 @@ sub cleanup
   unlink $pos_filename;
   rmdir $mountdir;
   rmdir $posmountdir;
+  rmdir $posdir;
   system("$lvremove -f /dev/$vgname/$backuplv") if ($snapshot_created);
 }
 
@@ -473,7 +475,7 @@ Options:
                                 (def: $syslog_socktype)
   --syslog_facility=<facility>  Define a particular syslog facility (def: $syslog_facility)
   --syslog_remotehost=<host>    Host name of a remote syslog server (def: $syslog_remotehost)
-  --configfile                  Specify an alternative configuration file (def: $configfile)
+  --configfile=<file>           Specify an alternative configuration file (def: $configfile)
   --help                        Print this help
 
 If your MySQL daemon is not listening on localhost, or using the default 
@@ -483,6 +485,9 @@ EOF
  exit 1;
 }
 
+#
+# Check if given directory exists and is writable
+#
 sub check_dir 
 {
  my ($dirname,$optioname) = @_;
@@ -504,8 +509,12 @@ DIRERROR
   }
 }  
 
+#
+# Sanitize directory names:
+#
 # 1. Remove any whitespace padding first
 # 2. Remove trailing slashes
+#
 sub clean_dirname
 {
  my ($d) = @_;

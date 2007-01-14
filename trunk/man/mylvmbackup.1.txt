@@ -141,7 +141,7 @@ also be defined in the '/etc/mylvmbackup.conf' configuration file.
 --syslog_socktype=string::
   What type of socket to use for connecting to the syslog service. Valid
   options are 'native', 'tcp' and 'udp'.
-  The default value is 'native'
+  The default value is 'native'.
 
 --syslog_facility=string::
   Define a particular syslog facility
@@ -149,6 +149,10 @@ also be defined in the '/etc/mylvmbackup.conf' configuration file.
 
 --syslog_remotehost=string::
   Host name of a remote syslog server.
+
+--configfile=string::
+  Specify an alternative configuration file.
+  The default is '/etc/mylvmbackup.conf'.
 
 --help::
   Displays a help message showing the available options.

@@ -1,17 +1,26 @@
+2007-01-14  Lenz Grimmer <lenz@grimmer.com>
+
+ - Bumped up version number to 0.4
+ - Fixed DSN string handling (thanks to Peter Zaitsev for spotting this)
+ - removed a few unused configuration options from the config file (we can
+   re-add them once they are really used)
+ - Slightly cleaned up Robin's changes, updated the man page and help output
+ - Fixed logging to the console (log levels were not printed)
+
 2007-01-12  Robin H. Johnson <robbat2@gentoo.org>
 
  - Clean up option handling to load the defaults, followed by the default
- configuration file, followed by an alternative configuration file (specified
- via CLI arguments), followed by the remained of the CLI arguments.
+   configuration file, followed by an alternative configuration file
+   (specified via CLI arguments), followed by the remainer of the CLI
+   arguments.
  - Do cleanups on directory inputs for spaces and trailing slashes.
  - Enforce a non-empty prefix at all times.
  - Change the capture of the position file and tarball creation to not use
- absolute pathes, and instead use them relative to $mountdir.
+   absolute pathes, and instead use them relative to $mountdir.
  - Utilize a bindmount to get the position directory near the $mountdir for
- the tarball creation.
+   the tarball creation.
  - 'use vars' has been deprecated by upstream way back in Perl-5.6.0
- http://perldoc.perl.org/vars.html, use 'my' instead.
- - Bump version number to 0.4
+   http://perldoc.perl.org/vars.html, use 'my' instead.
 
 2006-11-24  Lenz Grimmer <lenz@grimmer.com>
 
