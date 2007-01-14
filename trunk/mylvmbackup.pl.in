@@ -211,17 +211,19 @@ unless ( scalar(@mountdir_content) eq 0)
 };
 
 # Figure out our DSN string
-my $dsn = "dbi:mysql:mysql";
+my $dsn = "DBI:mysql:database=mysql";
 if(length($socket) > 0 && length($host) > 0) {
 	log_msg ("Please specify only a host OR a socket to use.", LOG_ERR);
 	exit(1);
 }
 if(length($socket) > 0) {
- $dsn .= "mysql_socket=".$socket;
+ $dsn .= ";mysql_socket=".$socket;
 }
 if(length($host) > 0) {
- $dsn .= "host=".$host;
- $dsn .= "post=".$port;
+ $dsn .= ";host=".$host;
+}
+if(length($port) > 0) {
+ $dsn .= ";port=".$port;
 }
 
 log_msg ("Connecting to database...", LOG_INFO);
