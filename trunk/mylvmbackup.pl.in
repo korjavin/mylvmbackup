@@ -37,11 +37,14 @@ my $backupdir;
 my $backuplv;
 my $datefmt;
 my $host;
+my $innodb_recover;
 my $lvcreate;
 my $lvname;
 my $lvremove;
+my $lvs;
 my $lvsize;
 my $mount;
+my $mysqld_safe;
 my $mountdir;
 my $need_xfsworkaround;
 my $password;
@@ -84,7 +87,15 @@ if ("$log_method" eq "syslog") {
   }
   openlog ($syslog_ident, $syslog_args, $syslog_facility);
   log_msg ("Starting new backup...", LOG_INFO);
-} 
+}
+
+my $lvm_version = lvm_version();
+
+if ($innodb_recover == 1 && $lvm_version =~ /^1/)
+{
+  log_msg("LVM1 does not support writable snapshots. InnoDB recovery has been disabled.", LOG_INFO); 
+  $innodb_recover=0;
+}
 
 # Clean up directory inputs
 $prefix = clean_dirname($prefix);
@@ -180,12 +191,17 @@ $dbh->disconnect;
 
 if ($snapshot_created)
 {
-	log_msg ("Mounting snapshot...", LOG_INFO);
-	if (mount_snapshot() and mount_posdir_bind())
-	{
-		log_msg ("Taking actual backup...", LOG_INFO);
-		do_backup();
-	}    
+  log_msg ("Mounting snapshot...", LOG_INFO);
+  if (mount_snapshot() and mount_posdir_bind())
+  {
+    if ($innodb_recover == 1)
+    {
+      log_msg ("Recovering innodb...", LOG_INFO);
+      do_innodb_recover();
+    }
+    log_msg ("Taking actual backup...", LOG_INFO);
+    do_backup();
+  }    
 }
 
 log_msg ("Cleaning up...", LOG_INFO);
@@ -198,39 +214,42 @@ sub load_config
   my $cfg = new Config::IniFiles( -file => $configfile )
     or log_msg ("Couldn't read configuration file: " . $!, 'LOG_WARNING');
 
-  $user = $cfg->val( 'mysql', 'user');
-  $password = $cfg->val ('mysql', 'password');
-  $host = $cfg->val ('mysql', 'host');
-  $port = $cfg->val ('mysql', 'port');
-  $socket = $cfg->val ('mysql', 'socket');
+  $user = $cfg->val( 'mysql', 'user', $user);
+  $password = $cfg->val ('mysql', 'password', $password);
+  $host = $cfg->val ('mysql', 'host', $host);
+  $port = $cfg->val ('mysql', 'port', $port);
+  $socket = $cfg->val ('mysql', 'socket', $socket);
+  $mysqld_safe = $cfg->val ('mysql', 'mysqld_safe', $mysqld_safe);
 
-  $need_xfsworkaround=$cfg->val ('fs', 'xfs');
+  $need_xfsworkaround=$cfg->val ('fs', 'xfs', $need_xfsworkaround);
 
-  $vgname=$cfg->val ('lvm', 'vgname');
-  $prefix=$cfg->val ('misc', 'prefix');
-  $lvname=$cfg->val ('lvm', 'lvname');
-  $datefmt=$cfg->val ('misc', 'datefmt');
+  $vgname=$cfg->val ('lvm', 'vgname', $vgname);
+  $prefix=$cfg->val ('misc', 'prefix', $prefix);
+  $lvname=$cfg->val ('lvm', 'lvname', $lvname);
+  $datefmt=$cfg->val ('misc', 'datefmt', $datefmt);
+  $innodb_recover=$cfg->val ('misc', 'innodb_recover', $innodb_recover);
 
-  $relpath=$cfg->val ('fs', 'relpath');
+  $relpath=$cfg->val ('fs', 'relpath', $relpath);
 
-  $lvsize=$cfg->val ('lvm', 'lvsize');
-  $tararg=$cfg->val ('misc', 'tararg');
+  $lvsize=$cfg->val ('lvm', 'lvsize', $lvsize);
+  $tararg=$cfg->val ('misc', 'tararg', $tararg);
 
-  $mountdir=$cfg->val ('fs', 'mountdir');
-  $backupdir=$cfg->val ('fs', 'backupdir');
+  $mountdir=$cfg->val ('fs', 'mountdir', $mountdir);
+  $backupdir=$cfg->val ('fs', 'backupdir', $backupdir);
 
-  $lvcreate=$cfg->val ('tools', 'lvcreate');
-  $lvremove=$cfg->val ('tools', 'lvremove');
-  $mount=$cfg->val ('tools', 'mount');
-  $tar=$cfg->val ('tools', 'tar');
-  $umount=$cfg->val ('tools', 'umount');
+  $lvcreate=$cfg->val ('tools', 'lvcreate', $lvcreate);
+  $lvremove=$cfg->val ('tools', 'lvremove', $lvremove);
+  $lvs=$cfg->val ('tools', 'lvs', $lvs);
+  $mount=$cfg->val ('tools', 'mount', $mount);
+  $tar=$cfg->val ('tools', 'tar', $tar);
+  $umount=$cfg->val ('tools', 'umount', $umount);
 
-  $backuplv = $cfg->val ('lvm', 'backuplv');
+  $backuplv = $cfg->val ('lvm', 'backuplv', $backuplv);
 
-  $log_method = $cfg->val('logging', 'log_method');
-  $syslog_socktype = $cfg->val ('logging', 'syslog_socktype');
-  $syslog_facility = $cfg->val ('logging', 'syslog_facility');
-  $syslog_remotehost = $cfg->val ('logging', 'syslog_remotehost');
+  $log_method = $cfg->val('logging', 'log_method', $log_method);
+  $syslog_socktype = $cfg->val ('logging', 'syslog_socktype', $syslog_socktype);
+  $syslog_facility = $cfg->val ('logging', 'syslog_facility', $syslog_facility);
+  $syslog_remotehost = $cfg->val ('logging', 'syslog_remotehost', $syslog_remotehost);
 }
 
 sub load_args
@@ -241,9 +260,11 @@ sub load_args
     "datefmt=s" => \$datefmt,
     "help" => \&help,  
     "host=s" => \$host,
+    "innodb_recover" => \&innodb_recover,
     "lvcreate=s" => \$lvcreate,
     "lvname=s" => \$lvname,
     "lvremove=s" => \$lvremove,
+    "lvs=s" => \$lvs,
     "lvsize=s" => \$lvsize,
     "mountdir=s" => \$mountdir,
     "mount=s" => \$mount,
@@ -276,6 +297,8 @@ sub load_defaults
 
   $need_xfsworkaround=0;
 
+  $innodb_recover=0;
+
   $vgname='mysql';
   $prefix='backup';
   $lvname='data';
@@ -288,11 +311,13 @@ sub load_defaults
   $mountdir='/var/tmp/mylvmbackup/mnt/';
   $backupdir='/var/tmp/mylvmbackup/backup/';
 
-  $lvcreate='/sbin/lvcreate';
-  $lvremove='/sbin/lvremove';
-  $mount='/bin/mount';
-  $umount='/bin/umount';
-  $tar='/bin/tar';
+  $lvcreate='lvcreate';
+  $lvremove='lvremove';
+  $lvs='lvs';
+  $mount='mount';
+  $umount='umount';
+  $tar='tar';
+  $mysqld_safe='mysqld_safe';
 
   $backuplv = '';
 
@@ -350,11 +375,21 @@ sub do_backup
 sub mount_snapshot
 { 
   my $params = 'ro';
+  $params = 'rw' if $innodb_recover;
+
   $params .= ',nouuid' if $need_xfsworkaround;
   $mounted = 1 if (system("$mount -o $params /dev/$vgname/$backuplv $mountdir") == 0);
   log_msg ("Cannot mount snapshot: $!", LOG_ERR) unless $mounted eq 1;
   return $mounted; 
-} 
+}
+
+sub do_innodb_recover
+{
+  if ( system("echo 'select 1;' | $mysqld_safe --datadir=$mountdir --skip-networking --skip-grant --bootstrap") != 0 )
+  {
+    log_msg ("Failed to perform InnoDB recovery on the snapshot!", LOG_ERR);
+  }
+}
 
 sub mount_posdir_bind
 {
@@ -432,6 +467,10 @@ sub cleanup
   system("$lvremove -f /dev/$vgname/$backuplv") if ($snapshot_created);
 }
 
+sub innodb_recover {
+	$innodb_recover = 1;
+}
+
 sub need_xfsworkaround {
 	$need_xfsworkaround = 1;
 }
@@ -454,6 +493,8 @@ Options:
   --host=<host>                 Hostname for MySQL
   --port=<port>                 TCP port for MySQL
   --socket=<socket>             UNIX socket for MySQL
+  --innodb_recover              Run InnoDB recovery on the writable snapshot (LVM2 only)
+                                prior to performing the backup
   --lvcreate=<filename>         Path for lvcreate (def: $lvcreate)
   --lvremove=<filename>         Path for lvremove (def: $lvremove)
   --vgname=<name>               VG containing datadir (def: $vgname)
@@ -521,6 +562,17 @@ sub clean_dirname
  $d =~ s/^\s*//g;
  $d =~ s/\s$//g;
  return File::Basename::dirname($d.'/foo')
+}
+
+sub lvm_version
+{
+  my $lv = `$lvs --version`;
+
+  $lv =~ s/LVM version: //;
+  $lv =~ s/^\s*//;
+  $lv =~ s/\s.+//g;
+
+  return $lv;
 }
 
 # vim: ts=2 sw=2 expandtab ft=perl:

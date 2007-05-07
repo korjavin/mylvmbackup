@@ -3,3 +3,6 @@ mylvmbackup TODO list:
  - Document the new logging options in the man page and help output
  - Support other backup methods than tar (e.g. rsync) by modularizing the backup part
  - Further clean up the code, better option and error handling
+ - Providing an option to shut down the server instead of using FLUSH TABLES
+   WITH READ LOCK before taking the snapshot, for consistent InnoDB snapshots
+   (e.g. on a replication slave)

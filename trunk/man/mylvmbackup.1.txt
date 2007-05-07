@@ -71,6 +71,10 @@ also be defined in the '/etc/mylvmbackup.conf' configuration file.
   default location.
   The default is the empty string.
 
+--innodb_recover::
+  Run InnoDB recovery on the writable snapshot (LVM2 only)
+  prior to performing the backup.
+
 --lvcreate=string::
   Specifies the pathname for the 'lvcreate' program.
   The default is '/sbin/lvcreate'.

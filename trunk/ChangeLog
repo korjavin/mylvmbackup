@@ -1,3 +1,20 @@
+2007-05-07  Lenz Grimmer <lenz@grimmer.com>
+
+ - Bumped up version number to 0.5
+ - Slightly reworked Eric's patch and performed some minor code cleanup
+ - Documented the InnoDB recovery option in the man page
+
+2007-04-12  Eric Bergen <eric@provenscaling.com>
+
+ - Added Option "--innodb-recover", which provides an option to run InnoDB
+   recovery on LVM2 snapshots (which provide write access to the device) prior
+   to creating the backup archive. This speeds up resuming a MySQL instance
+   from a restored backup. Also fixed a bug with the default value handling
+   for command line options. In version 0.4 if a config file was specified
+   default values in the script were all changed to blank. This means that
+   the config file had to supply values for every variable instead of just
+   the values that need to be changed from default.
+
 2007-01-14  Lenz Grimmer <lenz@grimmer.com>
 
  - Bumped up version number to 0.4

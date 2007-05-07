@@ -8,6 +8,7 @@ A2XMANFLAGS = -d manpage -f manpage
 A2XHTMLFLAGS = -d manpage -f xhtml
 CHMOD = /bin/chmod
 CP = /bin/cp
+FIND = /usr/bin/find
 GZIP = /bin/gzip
 INSTALL = /usr/bin/install
 INSTALL_DATA = $(INSTALL) -m 644
@@ -25,7 +26,7 @@ TAR = /bin/tar
 # define some variables
 
 NAME = mylvmbackup
-VERSION = 0.4
+VERSION = 0.5
 MAN1 = man/$(NAME).1
 DISTFILES = COPYING \
 	INSTALL \
@@ -81,7 +82,7 @@ distdir: all
 	if test -d $(distdir) ; then $(RM) -rf $(distdir) ; fi
 	mkdir $(distdir)
 	$(CP) -a $(DISTFILES) $(distdir)
-	rm -rf `find $(distdir) -type d -name .svn -print`
+	$(RM) -rf `$(FIND) $(distdir) -type d -name .svn -print`
 
 dist: distdir
 	$(TAR) chof - $(distdir) | $(GZIP) -c > $(distdir).tar.gz
