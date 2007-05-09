@@ -39,3 +39,12 @@ configuration file of the program. In addition, it uses several other
 programs: /bin/date to construct the archive filename, tar to back up data,
 LVM utilities to create and remove the LVM snapshot, and the system utilities
 mount and umount.
+
+Mailing list
+
+If you want to discuss the usage of mylvmbackup, propose patches or ask for
+help, there now is a mailinglist, hosted on FreeLists.org. To
+subscribe, either enter your email address on the mylvmbackup list
+information page at http://www.freelists.org/list/mylvmbackup or send an
+email with the subject "subscribe" to mylvmbackup-request@freelists.org.
+The list is archived at http://www.freelists.org/archives/mylvmbackup/

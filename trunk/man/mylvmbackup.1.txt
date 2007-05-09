@@ -197,15 +197,23 @@ It is currently maintained by Lenz Grimmer, <mailto:lenz@grimmer.com>[]
 RESOURCES
 ---------
 Main web site: http://www.lenzg.org/mylvmbackup/[]
+Mailing list: http://www.freelists.org/list/mylvmbackup/[]
 
 
 CREDITS
 -------
+Several people have contributed to the script since it has been released.
+See the ChangeLog for more details.
+
 Robin H. Johnson from the Gentoo project cleaned up the code and added
-several useful features. See the ChangeLog for more details.
+several useful features.
 
 Fred Blaise contributed the initial support to use an external configuration
 file and logging via syslog.
+
+Eric Bergen provided the code that performs the InnoDB recovery prior
+to performing the backup of LVM2 snapshot volumes. He also fixed the
+broken handling of default options.
 
 
 COPYING
