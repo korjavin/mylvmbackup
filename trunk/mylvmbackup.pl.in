@@ -17,12 +17,14 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 package mylvmbackup;
-use DBI;
-use Getopt::Long;
 use Config::IniFiles;
+use Date::Format;
+use DBI;
 use File::Basename;
-use strict;
+use Getopt::Long;
+
 use diagnostics;
+use strict;
 
 # Version is set from the Makefile
 my $version='@VERSION@';
@@ -111,8 +113,7 @@ my $topmountdir = $mountdir;
 
 my $posdir = $backupdir.'/pos';
 
-my $date=`/bin/date +"$datefmt"`;
-chomp $date;
+my $date= time2str($datefmt, time);
 my $pos_filename = $posdir.'/'.$prefix.'-'.$date.'_mysql.pos';
 my $archivename  = $backupdir.'/'.$prefix.'-'.$date.'_mysql.tar.gz';
 

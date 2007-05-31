@@ -11,12 +11,12 @@ process takes only a small amount of time. When it is done, the server can
 continue normal operations, while the actual file backup proceeds.
 
 The LVM snapshot is mounted to a temporary directory and all data is backed
-up using the tar program. The archive file is created using a name of the
-form backup-YYYYMMDD_hhmmss_mysql.tar.gz, where YYYY, MM, DD, hh, mm, and
-ss represent the year, month, day, hour, minute, and second of the time at
+up using the tar program. By default, the archive file is created using a name
+of the form backup-YYYYMMDD_hhmmss_mysql.tar.gz, where YYYY, MM, DD, hh, mm,
+and ss represent the year, month, day, hour, minute, and second of the time at
 which the backup occurred. The prefix backup and the date format can be
 modified. The use of timestamped archive names allows you to run mylvmbackup
-many times without danger of rewriting old archives.
+many times without danger of overwriting old archives.
 
 It is necessary to run mylvmbackup on the same host where the MySQL server
 runs. If your MySQL daemon is not listening on localhost, or using the default
@@ -33,12 +33,19 @@ The user who invokes mylvmbackup must have sufficient filesystem permissions to
 create the LVM snapshot and mount it. This includes read/write access to the
 backup directory.
 
-For proper operation mylvmbackup requires that Perl as well as the DBI and
-DBD::mysql modules. It also needs the Config::IniFiles to read the global
-configuration file of the program. In addition, it uses several other
-programs: /bin/date to construct the archive filename, tar to back up data,
-LVM utilities to create and remove the LVM snapshot, and the system utilities
-mount and umount.
+Requirements
+
+For proper operation mylvmbackup requires Perl 5 with the 'DBI' and
+'DBD::mysql' modules. It also needs the 'Config::IniFiles' to read the global
+configuration file of the program and 'Sys::Syslog' in case you want to enable
+the syslog log facility. 'Date::Format' is required to create the time stamp
+used in the backup file names. In addition, it utilizes 'Getopt::Long' and
+'File::Basename' which usually are part of the default Perl distribution.
+
+It also requires several other external programs: GNU 'tar' and 'gzip' to back
+up and compress the data, LVM utilities ('lvcreate', 'lvremove' and 'lvs') to
+create and remove the LVM snapshot, and the system utilities 'mount' and
+'umount'.
 
 Mailing list
 

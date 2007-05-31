@@ -1,3 +1,11 @@
+2007-05-31  Lenz Grimmer <lenz@grimmer.com>
+
+ - Bumped up version number to 0.6
+ - Updated man page and README to list all required Perl modules
+   (thanks to Scott Kaminiski for pointing this out)
+ - Replaced the call to the external /bin/date binary for creating
+   the timestamp string with a builtin function (using Date::Format)
+
 2007-05-07  Lenz Grimmer <lenz@grimmer.com>
 
  - Bumped up version number to 0.5
