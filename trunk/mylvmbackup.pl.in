@@ -40,6 +40,7 @@ my $backuplv;
 my $datefmt;
 my $host;
 my $innodb_recover;
+my $skip_flush_tables;
 my $lvcreate;
 my $lvname;
 my $lvremove;
@@ -173,9 +174,12 @@ log_msg ("Connecting to database...", LOG_INFO);
 my $dbh= DBI->connect($dsn,$user,$password)
   or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
 
-log_msg ("Flushing tables...", LOG_INFO);
-$dbh->do("flush tables with read lock") 
-  or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
+unless ($skip_flush_tables == 1)
+{
+  log_msg ("Flushing tables...", LOG_INFO);
+  $dbh->do("flush tables with read lock") 
+    or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
+}
 
 log_msg ("Taking position record...", LOG_INFO);
 &create_pos_file($dbh);
@@ -229,6 +233,7 @@ sub load_config
   $lvname=$cfg->val ('lvm', 'lvname', $lvname);
   $datefmt=$cfg->val ('misc', 'datefmt', $datefmt);
   $innodb_recover=$cfg->val ('misc', 'innodb_recover', $innodb_recover);
+  $skip_flush_tables=$cfg->val ('misc', 'skip_flush_tables', $skip_flush_tables);
 
   $relpath=$cfg->val ('fs', 'relpath', $relpath);
 
@@ -281,6 +286,7 @@ sub load_args
     "vgname=s" => \$vgname,
     "xfs" => \&need_xfsworkaround,
     "log_method=s" => \$log_method,
+    "skip_flush_tables" => \&skip_flush_tables,
     "syslog_socktype=s" => \$syslog_socktype,
     "syslog_facility=s" => \$syslog_facility,
     "syslog_remotehost=s" => \$syslog_remotehost,
@@ -299,6 +305,7 @@ sub load_defaults
   $need_xfsworkaround=0;
 
   $innodb_recover=0;
+  $skip_flush_tables=0;
 
   $vgname='mysql';
   $prefix='backup';
@@ -472,6 +479,10 @@ sub innodb_recover {
 	$innodb_recover = 1;
 }
 
+sub skip_flush_tables {
+  $skip_flush_tables = 1;
+}
+
 sub need_xfsworkaround {
 	$need_xfsworkaround = 1;
 }
@@ -496,6 +507,9 @@ Options:
   --socket=<socket>             UNIX socket for MySQL
   --innodb_recover              Run InnoDB recovery on the writable snapshot (LVM2 only)
                                 prior to performing the backup
+  --skip_flush_tables           Skip the (probably time intensive) flushing of buffers to
+                                disk (in case you want to back up InnoDB tables which don't
+                                support FLUSH TABLES anyway)
   --lvcreate=<filename>         Path for lvcreate (def: $lvcreate)
   --lvremove=<filename>         Path for lvremove (def: $lvremove)
   --vgname=<name>               VG containing datadir (def: $vgname)

@@ -1,3 +1,10 @@
+2007-07-03  Lenz Grimmer <lenz@grimmer.com>
+
+ - Added option "--skip-flush-tables" that performs the snapshot without
+   flushing the tables to disk beforehand (which is not supported by InnoDB
+   tables anyway) - this would save time, as the flushing can take some time,
+   depending on the buffer sizes. (Thanks to Peter Zaitsev for the suggestion)
+
 2007-05-31  Lenz Grimmer <lenz@grimmer.com>
 
  - Bumped up version number to 0.6

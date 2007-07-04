@@ -8,10 +8,6 @@ mylvmbackup TODO list:
      * unison - http://www.cis.upenn.edu/~bcpierce/unison/
      * zip - http://www.info-zip.org/Zip.html
  - Further clean up the code, better option and error handling
- - Add an option "--skip-flush-tables" that performs the snapshot without
-   flushing the tables to disk beforehand (which does not work for InnoDB
-   tables anyway) - this would save time, as the flushing can take some time,
-   depending on the buffer sizes
  - Providing an option to shut down the server instead of using FLUSH TABLES
    WITH READ LOCK before taking the snapshot, for consistent InnoDB snapshots
    (e.g. on a replication slave)

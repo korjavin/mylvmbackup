@@ -75,6 +75,12 @@ also be defined in the '/etc/mylvmbackup.conf' configuration file.
   Run InnoDB recovery on the writable snapshot (LVM2 only)
   prior to performing the backup.
 
+--skip_flush_tables::
+  Don't issue a FLUSH TABLES WITH READ LOCK command before creating the
+  snapshot. Only use this option when backing up InnoDB tables (as they
+  don't support this function anyway and will require recovery in any case).
+  This option skips the (probably time consuming) flushing of buffers.
+
 --lvcreate=string::
   Specifies the pathname for the 'lvcreate' program.
   The default is '/sbin/lvcreate'.
