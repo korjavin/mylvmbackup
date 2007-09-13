@@ -1,3 +1,18 @@
+2007-09-13  Lenz Grimmer <lenz@grimmer.com>
+
+ - Added option "--pidfile" to provide an alternative PID file location for
+   the second server instance that is started to perform the InnoDB recovery
+   on the snapshot prior to backing it up (Otherwise it may default to using
+   the same pid file location that the running server uses and safe_mysqld
+   will abort) - thanks to Kristian Köhntopp for making me aware of this
+   problem
+ - Before discarding the snapshot LV, the output of "lvs <snapshot>" is now
+   printed out for diagnostics. It contains useful information like "how much
+   percent of the backing store was used, which helps tuning the size of the
+   snapshot LV.
+ - Updated the man page, documented the new pidfile option and added a section
+   with general hints
+
 2007-07-03  Lenz Grimmer <lenz@grimmer.com>
 
  - Added option "--skip-flush-tables" that performs the snapshot without

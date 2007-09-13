@@ -51,6 +51,7 @@ my $mysqld_safe;
 my $mountdir;
 my $need_xfsworkaround;
 my $password;
+my $pidfile;
 my $port;
 my $prefix;
 my $relpath;
@@ -233,6 +234,7 @@ sub load_config
   $lvname=$cfg->val ('lvm', 'lvname', $lvname);
   $datefmt=$cfg->val ('misc', 'datefmt', $datefmt);
   $innodb_recover=$cfg->val ('misc', 'innodb_recover', $innodb_recover);
+  $pidfile=$cfg->val ('misc', 'pidfile', $pidfile);
   $skip_flush_tables=$cfg->val ('misc', 'skip_flush_tables', $skip_flush_tables);
 
   $relpath=$cfg->val ('fs', 'relpath', $relpath);
@@ -275,6 +277,7 @@ sub load_args
     "mountdir=s" => \$mountdir,
     "mount=s" => \$mount,
     "password=s" => \$password,
+    "pidfile=s" => \$pidfile,
     "port=i" => \$port,
     "prefix=s" => \$prefix,
     "relpath=s" => \$relpath,
@@ -301,6 +304,7 @@ sub load_defaults
   $host = '';
   $port = 3306;
   $socket = '';
+  $pidfile = '/var/tmp/mylvmbackup_recoverserver.pid';
 
   $need_xfsworkaround=0;
 
@@ -393,7 +397,7 @@ sub mount_snapshot
 
 sub do_innodb_recover
 {
-  if ( system("echo 'select 1;' | $mysqld_safe --datadir=$mountdir --skip-networking --skip-grant --bootstrap") != 0 )
+  if ( system("echo 'select 1;' | $mysqld_safe --pidfile=$pidfile --datadir=$mountdir --skip-networking --skip-grant --bootstrap") != 0 )
   {
     log_msg ("Failed to perform InnoDB recovery on the snapshot!", LOG_ERR);
   }
@@ -472,6 +476,12 @@ sub cleanup
   rmdir $mountdir;
   rmdir $posmountdir;
   rmdir $posdir;
+  my @lvs_info = `$lvs /dev/$vgname/$backuplv`;
+  chomp (@lvs_info);
+  log_msg ("LVM Usage stats:", LOG_INFO);
+  foreach my $lvs_info (@lvs_info) {
+    log_msg ($lvs_info, LOG_INFO);
+  }
   system("$lvremove -f /dev/$vgname/$backuplv") if ($snapshot_created);
 }
 
@@ -510,6 +520,8 @@ Options:
   --skip_flush_tables           Skip the (probably time intensive) flushing of buffers to
                                 disk (in case you want to back up InnoDB tables which don't
                                 support FLUSH TABLES anyway)
+  --pidfile=<filename>          Path to the PID file of the server instance started to
+                                perform the InnoDB recovery (def: $pidfile)
   --lvcreate=<filename>         Path for lvcreate (def: $lvcreate)
   --lvremove=<filename>         Path for lvremove (def: $lvremove)
   --vgname=<name>               VG containing datadir (def: $vgname)

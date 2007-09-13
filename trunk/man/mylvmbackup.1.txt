@@ -29,26 +29,49 @@ of the time at which the backup occurred. The prefix 'backup' and the date
 format can be modified. The use of timestamped archive names allows you to run
 mylvmbackup many times without danger of overwriting old archives.
 
+GENERAL HINTS
+-------------
 It is necessary to run mylvmbackup on the same host where the MySQL server
 runs. If your MySQL daemon is not listening on localhost or using the default
 socket location, you must specify '--host' or '--socket'. Even though
 mylvmbackup communicates with the server through a normal client connection to
-obtain the read lock and flush data, it makes the backup by accessing the file
-system directly. It is also necessary that the MySQL server data directory
-resides on an LVM volume. (It is, however, a good idea to do the LVM backup to
-a different partition than the one where the data directory resides.
-Otherwise, there is a good chance that LVM will run out of undo space for LVM
-snapshot maintenance and the backup will fail.)
+obtain the read lock and flush data, it performs the actual backup by
+accessing the file system directly. It is also a requirement that the MySQL
+server data directory resides on an LVM volume. (It is, however, a good idea
+to do the LVM backup to a different partition than the one where the data
+directory resides.  Otherwise, there is a good chance that LVM will run out of
+undo space for LVM snapshot maintenance and the backup will fail.)
 
 The user who invokes mylvmbackup must have sufficient filesystem permissions
 to create the LVM snapshot and mount it. This includes read/write access to
 the backup directory.
 
+If you plan to back up InnoDB tables using LVM snapshots, be advised that it
+is not sufficient to lock the tables and issue the 'FLUSH TABLES' command to
+get the table files into a consistent state. When starting the MySQL server
+from these restored files, InnoDB will detect these tables as being in an
+inconsistent state and will perform a recovery run before the tables can be
+accessed again. As this can potentially take some time (which you may not want
+to spend after restoring a server and trying to get it back on its feet as
+fast as possible), consider using the option '--innodb_recover', which will
+perform the recovery operation on the backup snapshot prior to archiving it.
+
+Note that this only works when using writable LVM snapshots and thus requires
+LVMv2 (the script performs a test for this and will disable log recovery in
+the case it finds an LVM1 system). This will prolong the time needed to
+perform the actual backup, but will save you precious time when you eventually
+have to restore from this backup set.
+
+If you use InnoDB tables exclusively, you may also want to consider to include
+the option '--skip_flush_tables', to avoid the probably time-consuming and in
+this case unnecessary flushing of buffers. But don't enable this option when
+MyISAM tables are involved!
 
 OPTIONS
 -------
 mylvmbackup supports the following command line options. The same options can
-also be defined in the '/etc/mylvmbackup.conf' configuration file.
+also be defined in the '/etc/mylvmbackup.conf' configuration file (omitting
+the leading dashes, of course).
 
 --user=string::
   Specifies the username to use for connecting to the MySQL server.
@@ -80,6 +103,13 @@ also be defined in the '/etc/mylvmbackup.conf' configuration file.
   snapshot. Only use this option when backing up InnoDB tables (as they
   don't support this function anyway and will require recovery in any case).
   This option skips the (probably time consuming) flushing of buffers.
+
+--pidfile=string::
+  Specifies the full path and file name to the PID file of the server instance
+  that is spawned to perform the InnoDB recovery (see option
+  '--innodb_recover'). Must be different from the PID file that the actual
+  running server uses.
+  The default is '/var/tmp/mylvmbackup_recoverserver.pid'
 
 --lvcreate=string::
   Specifies the pathname for the 'lvcreate' program.
@@ -193,7 +223,7 @@ remove the LVM snapshot, and the system utilities 'mount' and 'umount'.
 
 SEE ALSO
 --------
-'mount(8)', 'tar(1)', 'lvcreate(8)', 'lvremove(8)', 'umount(8)'
+'mount(8)', 'tar(1)', 'lvcreate(8)', 'lvremove(8)', lvs(8)', 'umount(8)'
 
 
 AUTHOR
@@ -225,6 +255,9 @@ Eric Bergen provided the code that performs the InnoDB recovery prior
 to performing the backup of LVM2 snapshot volumes. He also fixed the
 broken handling of default options.
 
+Kristian Köhntopp for suggesting the '--pidfile' option and suggesting to
+add the output of the LVM statistics for being able to better tune the
+snapshot size.
 
 COPYING
 -------
