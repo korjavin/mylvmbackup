@@ -58,6 +58,7 @@ my $relpath;
 my $socket;
 my $tar;
 my $tararg;
+my $tarsuffixarg;
 my $umount;
 my $user;
 my $vgname;
@@ -241,6 +242,7 @@ sub load_config
 
   $lvsize=$cfg->val ('lvm', 'lvsize', $lvsize);
   $tararg=$cfg->val ('misc', 'tararg', $tararg);
+  $tarsuffixarg=$cfg->val ('misc', 'tarsuffixarg', $tarsuffixarg);
 
   $mountdir=$cfg->val ('fs', 'mountdir', $mountdir);
   $backupdir=$cfg->val ('fs', 'backupdir', $backupdir);
@@ -283,6 +285,7 @@ sub load_args
     "relpath=s" => \$relpath,
     "socket=s" => \$socket,
     "tararg=s" => \$tararg,
+    "tarsuffixarg=s" => \$tarsuffixarg,
     "tar=s" => \$tar,
     "umount=s" => \$umount,
     "user=s" => \$user,
@@ -319,6 +322,7 @@ sub load_defaults
   $relpath='';
   $lvsize='5G';
   $tararg='cvzf';
+  $tarsuffixarg='';
 
   $mountdir='/var/tmp/mylvmbackup/mnt/';
   $backupdir='/var/tmp/mylvmbackup/backup/';
@@ -374,7 +378,7 @@ sub do_backup
   my $pos_filename_rel = $posmountdir . '/' . File::Basename::basename($pos_filename);
   $pos_filename_rel =~ s/^$topmountdir//g;
   $pos_filename_rel =~ s/^\/+//g;
-  my $command = "$tar $tararg $archivename -C $topmountdir $mountdir_rel/$relpath";
+  my $command = "$tar $tararg $archivename -C $topmountdir $mountdir_rel/$relpath $tarsuffixarg";
   $command .= " $pos_filename_rel" if (-f $pos_filename );
   if ( system($command) == 0 )
   {
