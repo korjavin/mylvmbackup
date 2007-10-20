@@ -41,6 +41,7 @@ my $datefmt;
 my $host;
 my $innodb_recover;
 my $skip_flush_tables;
+my $extra_flush_tables;
 my $lvcreate;
 my $lvname;
 my $lvremove;
@@ -183,8 +184,15 @@ my $dbh= DBI->connect($dsn,$user,$password)
 
 unless ($skip_flush_tables == 1)
 {
-  log_msg ("Flushing tables...", LOG_INFO);
-  $dbh->do("flush tables with read lock") 
+  if($extra_flush_tables == 1)
+  {
+    log_msg ("Flushing tables (initial)...", LOG_INFO);
+    $dbh->do("FLUSH TABLES") 
+      or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
+  }
+
+  log_msg ("Flushing tables with read lock...", LOG_INFO);
+  $dbh->do("FLUSH TABLES WITH READ LOCK") 
     or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
 }
 
@@ -248,6 +256,7 @@ sub load_config
   $innodb_recover=$cfg->val ('misc', 'innodb_recover', $innodb_recover);
   $pidfile=$cfg->val ('misc', 'pidfile', $pidfile);
   $skip_flush_tables=$cfg->val ('misc', 'skip_flush_tables', $skip_flush_tables);
+  $extra_flush_tables=$cfg->val ('misc', 'extra_flush_tables', $extra_flush_tables);
   $tararg=$cfg->val ('misc', 'tararg', $tararg);
   $tarsuffixarg=$cfg->val ('misc', 'tarsuffixarg', $tarsuffixarg);
   $tarfilesuffix = $cfg->val ('misc', 'tarfilesuffix', $tarfilesuffix);
@@ -299,6 +308,7 @@ sub load_args
     "innodb_recover" => \&innodb_recover,
     "pidfile=s" => \$pidfile,
     "skip_flush_tables" => \&skip_flush_tables,
+    "extra_flush_tables" => \&extra_flush_tables,
     "tararg=s" => \$tararg,
     "tarsuffixarg=s" => \$tarsuffixarg,
     "tarfilesuffix=s" => \$tarfilesuffix,
@@ -349,6 +359,7 @@ sub load_defaults
   $innodb_recover=0;
   $pidfile = '/var/tmp/mylvmbackup_recoverserver.pid';
   $skip_flush_tables=0;
+  $extra_flush_tables=0;
   $tararg='cvzf';
   $tarsuffixarg='';
   $tarfilesuffix='.tar.gz';
@@ -540,6 +551,9 @@ sub innodb_recover {
 
 sub skip_flush_tables {
   $skip_flush_tables = 1;
+}
+sub extra_flush_tables {
+  $extra_flush_tables = 1;
 }
 
 sub need_xfsworkaround {
