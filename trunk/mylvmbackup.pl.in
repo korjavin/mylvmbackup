@@ -215,6 +215,7 @@ log_msg ("Cleaning up...", LOG_INFO);
 cleanup();
 exit 0;
 
+# Please keep all 3 functions in the same order: load_config, load_args, load_defaults 
 sub load_config 
 {
   my $configfile = shift(@_);
@@ -228,33 +229,30 @@ sub load_config
   $socket = $cfg->val ('mysql', 'socket', $socket);
   $mysqld_safe = $cfg->val ('mysql', 'mysqld_safe', $mysqld_safe);
 
-  $need_xfsworkaround=$cfg->val ('fs', 'xfs', $need_xfsworkaround);
-
   $vgname=$cfg->val ('lvm', 'vgname', $vgname);
-  $prefix=$cfg->val ('misc', 'prefix', $prefix);
   $lvname=$cfg->val ('lvm', 'lvname', $lvname);
+  $lvsize=$cfg->val ('lvm', 'lvsize', $lvsize);
+  $backuplv = $cfg->val ('lvm', 'backuplv', $backuplv);
+  
+  $prefix=$cfg->val ('misc', 'prefix', $prefix);
   $datefmt=$cfg->val ('misc', 'datefmt', $datefmt);
   $innodb_recover=$cfg->val ('misc', 'innodb_recover', $innodb_recover);
   $pidfile=$cfg->val ('misc', 'pidfile', $pidfile);
   $skip_flush_tables=$cfg->val ('misc', 'skip_flush_tables', $skip_flush_tables);
-
-  $relpath=$cfg->val ('fs', 'relpath', $relpath);
-
-  $lvsize=$cfg->val ('lvm', 'lvsize', $lvsize);
   $tararg=$cfg->val ('misc', 'tararg', $tararg);
   $tarsuffixarg=$cfg->val ('misc', 'tarsuffixarg', $tarsuffixarg);
 
   $mountdir=$cfg->val ('fs', 'mountdir', $mountdir);
   $backupdir=$cfg->val ('fs', 'backupdir', $backupdir);
+  $relpath=$cfg->val ('fs', 'relpath', $relpath);
+  $need_xfsworkaround=$cfg->val ('fs', 'xfs', $need_xfsworkaround);
 
   $lvcreate=$cfg->val ('tools', 'lvcreate', $lvcreate);
   $lvremove=$cfg->val ('tools', 'lvremove', $lvremove);
   $lvs=$cfg->val ('tools', 'lvs', $lvs);
   $mount=$cfg->val ('tools', 'mount', $mount);
-  $tar=$cfg->val ('tools', 'tar', $tar);
   $umount=$cfg->val ('tools', 'umount', $umount);
-
-  $backuplv = $cfg->val ('lvm', 'backuplv', $backuplv);
+  $tar=$cfg->val ('tools', 'tar', $tar);
 
   $log_method = $cfg->val('logging', 'log_method', $log_method);
   $syslog_socktype = $cfg->val ('logging', 'syslog_socktype', $syslog_socktype);
@@ -262,81 +260,100 @@ sub load_config
   $syslog_remotehost = $cfg->val ('logging', 'syslog_remotehost', $syslog_remotehost);
 }
 
+# Please keep all 3 functions in the same order: load_config, load_args, load_defaults 
 sub load_args
 {
   GetOptions(
-    "backupdir=s" => \$backupdir,
-    "backuplv=s" => \$backuplv,
-    "datefmt=s" => \$datefmt,
+# stuff that doesn't go in the config file ;-)
     "help" => \&help,  
-    "host=s" => \$host,
-    "innodb_recover" => \&innodb_recover,
-    "lvcreate=s" => \$lvcreate,
-    "lvname=s" => \$lvname,
-    "lvremove=s" => \$lvremove,
-    "lvs=s" => \$lvs,
-    "lvsize=s" => \$lvsize,
-    "mountdir=s" => \$mountdir,
-    "mount=s" => \$mount,
+    "configfile=s" => \$configfile2,
+
+# mysql
+    "user=s" => \$user,
     "password=s" => \$password,
-    "pidfile=s" => \$pidfile,
+    "host=s" => \$host,
     "port=i" => \$port,
-    "prefix=s" => \$prefix,
-    "relpath=s" => \$relpath,
     "socket=s" => \$socket,
+    "mysqld_safe=s" => \$mysqld_safe,
+
+# lvm    
+    "vgname=s" => \$vgname,
+    "lvname=s" => \$lvname,
+    "lvsize=s" => \$lvsize,
+    "backuplv=s" => \$backuplv,
+
+# misc
+    "prefix=s" => \$prefix,
+    "datefmt=s" => \$datefmt,
+    "innodb_recover" => \&innodb_recover,
+    "pidfile=s" => \$pidfile,
+    "skip_flush_tables" => \&skip_flush_tables,
     "tararg=s" => \$tararg,
     "tarsuffixarg=s" => \$tarsuffixarg,
-    "tar=s" => \$tar,
-    "umount=s" => \$umount,
-    "user=s" => \$user,
-    "vgname=s" => \$vgname,
+
+# fs
+    "mountdir=s" => \$mountdir,
+    "backupdir=s" => \$backupdir,
+    "relpath=s" => \$relpath,
     "xfs" => \&need_xfsworkaround,
+
+# tools
+    "lvcreate=s" => \$lvcreate,
+    "lvremove=s" => \$lvremove,
+    "lvs=s" => \$lvs,
+    "mount=s" => \$mount,
+    "umount=s" => \$umount,
+    "tar=s" => \$tar,
+
+# logging
     "log_method=s" => \$log_method,
-    "skip_flush_tables" => \&skip_flush_tables,
     "syslog_socktype=s" => \$syslog_socktype,
     "syslog_facility=s" => \$syslog_facility,
     "syslog_remotehost=s" => \$syslog_remotehost,
-    "configfile=s" => \$configfile2,
   ) or help();
 }
 
+# Please keep all 3 functions in the same order: load_config, load_args, load_defaults 
 sub load_defaults
 {
+# mysql
   $user = 'root';
   $password = '';
   $host = '';
   $port = 3306;
   $socket = '';
-  $pidfile = '/var/tmp/mylvmbackup_recoverserver.pid';
+  $mysqld_safe='mysqld_safe';
 
-  $need_xfsworkaround=0;
-
-  $innodb_recover=0;
-  $skip_flush_tables=0;
-
+# lvm
   $vgname='mysql';
-  $prefix='backup';
   $lvname='data';
-  $datefmt='%Y%m%d_%H%M%S';
-
-  $relpath='';
   $lvsize='5G';
+  $backuplv = '';
+
+# misc
+  $prefix='backup';
+  $datefmt='%Y%m%d_%H%M%S';
+  $innodb_recover=0;
+  $pidfile = '/var/tmp/mylvmbackup_recoverserver.pid';
+  $skip_flush_tables=0;
   $tararg='cvzf';
   $tarsuffixarg='';
 
+# fs
   $mountdir='/var/tmp/mylvmbackup/mnt/';
   $backupdir='/var/tmp/mylvmbackup/backup/';
+  $relpath='';
+  $need_xfsworkaround=0;
 
+# tools
   $lvcreate='lvcreate';
   $lvremove='lvremove';
   $lvs='lvs';
   $mount='mount';
   $umount='umount';
   $tar='tar';
-  $mysqld_safe='mysqld_safe';
 
-  $backuplv = '';
-
+# logging
   $log_method = 'console';
   $syslog_socktype = 'native';
   $syslog_facility = '';

@@ -113,11 +113,20 @@ the leading dashes, of course).
 
 --lvcreate=string::
   Specifies the pathname for the 'lvcreate' program.
-  The default is '/sbin/lvcreate'.
+  The default is 'lvcreate'.
 
 --lvremove=string::
   Specifies the pathname for the 'lvremove' program.
-  The default is '/sbin/lvremove'.
+  The default is 'lvremove'.
+
+--lvs=string::
+  Specifies the pathname for the 'lvs' program.
+  The default is 'lvs'.
+
+--mysqld_safe=string::
+  Specifies the pathname for the 'mysqld_safe' program.
+  The default is 'mysqld_safe'. 
+  Only used to perform InnoDB recovery.
 
 --vgname=string::
   Specifies the volume group of the logical volume where the MySQL
@@ -128,6 +137,10 @@ the leading dashes, of course).
   Specifies the name of the logical volume where the MySQL data
   directory is located.
   The default is 'data'.
+
+--backuplv=string::
+  Specifies the name of the logical volume for the snapshot volume.
+  The default is appending "_snapshot" to the lvname.
 
 --relpath=string::
   Relative path on the logical volume to the MySQL data directory.
@@ -160,15 +173,23 @@ the leading dashes, of course).
 
 --mount=string::
   Specifies the pathname for the 'mount' program.
-  The default is '/bin/mount'.
+  The default is 'mount'.
 
 --umount=string::
   Specifies the pathname for the 'umount' program.
-  The default is '/bin/umount'.
+  The default is 'umount'.
 
 --tar=string::
   Specifies the pathname for the 'tar' program.
-  The default is '/bin/tar'.
+  The default is 'tar'.
+
+--tararg=string::
+  Specifies the initial arguments for the 'tar' program.
+  The default is 'cvzf'.
+
+--tarsuffixarg=string::
+  Specifies the suffix arguments for the 'tar' program.
+  The default is ''.
 
 --xfs::
   Use the 'nouuid' mount option to safely mount snapshot partitions that
