@@ -10,8 +10,6 @@ mylvmbackup TODO list:
  - Allow splitting of archives. Could this be done by being able to modularize
    the backup part and allowing multiple plugins in a pipe? E.g. a generic
    splitting plugin that can split any archives.
- - Create tarballs with an extra suffix as .INCOMPLETE-$RANDOM first and 
-   remove the suffix upon completion of the backup
  - Provide an option to back up my.cnf along with the tarball
  - Ability to exclude the binlog/relay log
  - Further clean up the code, better option and error handling
