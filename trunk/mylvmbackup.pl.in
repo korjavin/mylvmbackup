@@ -48,6 +48,7 @@ my $lvs;
 my $lvsize;
 my $mount;
 my $mysqld_safe;
+my $mycnf;
 my $mountdir;
 my $need_xfsworkaround;
 my $password;
@@ -119,6 +120,8 @@ my $posdir = $backupdir.'/pos';
 
 my $date= time2str($datefmt, time);
 my $pos_filename = $posdir.'/'.$prefix.'-'.$date.'_mysql.pos';
+my $mycnf_basename = File::Basename::basename($mycnf);
+my $mycnf_filename = $posdir.'/'.$prefix.'-'.$date.'_'.$mycnf_basename;
 # No .tar.gz on the end!
 my $archivename  = $backupdir.'/'.$prefix.'-'.$date.'_mysql';
 
@@ -208,6 +211,9 @@ if ($snapshot_created)
       log_msg ("Recovering innodb...", LOG_INFO);
       do_innodb_recover();
     }
+    log_msg ("Copying $mycnf_basename...", LOG_INFO);
+    create_mycnf_file();
+
     log_msg ("Taking actual backup...", LOG_INFO);
     do_backup_tar();
   }    
@@ -230,6 +236,7 @@ sub load_config
   $port = $cfg->val ('mysql', 'port', $port);
   $socket = $cfg->val ('mysql', 'socket', $socket);
   $mysqld_safe = $cfg->val ('mysql', 'mysqld_safe', $mysqld_safe);
+  $mycnf = $cfg->val ('mysql', 'mycnf', $mycnf);
 
   $vgname=$cfg->val ('lvm', 'vgname', $vgname);
   $lvname=$cfg->val ('lvm', 'lvname', $lvname);
@@ -278,6 +285,7 @@ sub load_args
     "port=i" => \$port,
     "socket=s" => \$socket,
     "mysqld_safe=s" => \$mysqld_safe,
+    "mycnf=s" => \$mycnf,
 
 # lvm    
     "vgname=s" => \$vgname,
@@ -327,6 +335,7 @@ sub load_defaults
   $port = 3306;
   $socket = '';
   $mysqld_safe='mysqld_safe';
+  $mycnf = '/etc/my.cnf';
 
 # lvm
   $vgname='mysql';
@@ -375,6 +384,12 @@ sub create_pos_file
  close $pos_file;
 }
 
+sub create_mycnf_file
+{
+  use File::Copy;
+  copy($mycnf, $mycnf_filename);
+}
+
 sub _create_pos_file_single
 {
 	my $dbh = shift; my $query = shift; my $fh = shift; my $pos_prefix = shift;
@@ -402,8 +417,12 @@ sub do_backup_tar
   my $pos_filename_rel = $posmountdir . '/' . File::Basename::basename($pos_filename);
   $pos_filename_rel =~ s/^$topmountdir//g;
   $pos_filename_rel =~ s/^\/+//g;
+  my $mycnf_filename_rel = $posmountdir . '/' . File::Basename::basename($mycnf_filename);
+  $mycnf_filename_rel =~ s/^$topmountdir//g;
+  $mycnf_filename_rel =~ s/^\/+//g;
   my $command = "$tar $tararg $tarballtmp -C $topmountdir $mountdir_rel/$relpath $tarsuffixarg";
   $command .= " $pos_filename_rel" if (-f $pos_filename );
+  $command .= " $mycnf_filename_rel" if (-f $mycnf_filename );
   if ( system($command) == 0 )
   {
     rename $tarballtmp, $tarball;
@@ -502,6 +521,7 @@ sub cleanup
   system("$umount $mountdir") if ($mounted);
   system("$umount $posmountdir") if ($posmounted);
   unlink $pos_filename;
+  unlink $mycnf_filename;
   rmdir $mountdir;
   rmdir $posmountdir;
   rmdir $posdir;
