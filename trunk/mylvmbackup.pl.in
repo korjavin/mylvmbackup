@@ -59,6 +59,7 @@ my $socket;
 my $tar;
 my $tararg;
 my $tarsuffixarg;
+my $tarfilesuffix;
 my $umount;
 my $user;
 my $vgname;
@@ -118,7 +119,8 @@ my $posdir = $backupdir.'/pos';
 
 my $date= time2str($datefmt, time);
 my $pos_filename = $posdir.'/'.$prefix.'-'.$date.'_mysql.pos';
-my $archivename  = $backupdir.'/'.$prefix.'-'.$date.'_mysql.tar.gz';
+# No .tar.gz on the end!
+my $archivename  = $backupdir.'/'.$prefix.'-'.$date.'_mysql';
 
 my $mounted = 0;
 my $posmounted = 0;
@@ -207,7 +209,7 @@ if ($snapshot_created)
       do_innodb_recover();
     }
     log_msg ("Taking actual backup...", LOG_INFO);
-    do_backup();
+    do_backup_tar();
   }    
 }
 
@@ -241,6 +243,7 @@ sub load_config
   $skip_flush_tables=$cfg->val ('misc', 'skip_flush_tables', $skip_flush_tables);
   $tararg=$cfg->val ('misc', 'tararg', $tararg);
   $tarsuffixarg=$cfg->val ('misc', 'tarsuffixarg', $tarsuffixarg);
+  $tarfilesuffix = $cfg->val ('misc', 'tarfilesuffix', $tarfilesuffix);
 
   $mountdir=$cfg->val ('fs', 'mountdir', $mountdir);
   $backupdir=$cfg->val ('fs', 'backupdir', $backupdir);
@@ -290,6 +293,7 @@ sub load_args
     "skip_flush_tables" => \&skip_flush_tables,
     "tararg=s" => \$tararg,
     "tarsuffixarg=s" => \$tarsuffixarg,
+    "tarfilesuffix=s" => \$tarfilesuffix,
 
 # fs
     "mountdir=s" => \$mountdir,
@@ -338,6 +342,7 @@ sub load_defaults
   $skip_flush_tables=0;
   $tararg='cvzf';
   $tarsuffixarg='';
+  $tarfilesuffix='.tar.gz';
 
 # fs
   $mountdir='/var/tmp/mylvmbackup/mnt/';
@@ -386,16 +391,17 @@ sub _create_pos_file_single
  $sth->finish;
 }
 
-sub do_backup
+sub do_backup_tar
 {
-  log_msg ("Creating archive $archivename", LOG_INFO);
+  my $tarball = $archivename.$tarfilesuffix;
+  log_msg ("Creating tar archive $tarball", LOG_INFO);
   my $mountdir_rel = $mountdir;
   $mountdir_rel =~ s/^$topmountdir//g;
   $mountdir_rel =~ s/^\/+//g;
   my $pos_filename_rel = $posmountdir . '/' . File::Basename::basename($pos_filename);
   $pos_filename_rel =~ s/^$topmountdir//g;
   $pos_filename_rel =~ s/^\/+//g;
-  my $command = "$tar $tararg $archivename -C $topmountdir $mountdir_rel/$relpath $tarsuffixarg";
+  my $command = "$tar $tararg $tarball -C $topmountdir $mountdir_rel/$relpath $tarsuffixarg";
   $command .= " $pos_filename_rel" if (-f $pos_filename );
   if ( system($command) == 0 )
   {

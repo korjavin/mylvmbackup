@@ -191,6 +191,10 @@ the leading dashes, of course).
   Specifies the suffix arguments for the 'tar' program.
   The default is ''.
 
+--tarfilesuffix=string::
+  Specifies the suffix for the tarball.
+  The default is '.tar.gz'.
+
 --xfs::
   Use the 'nouuid' mount option to safely mount snapshot partitions that
   use the XFS file system.
