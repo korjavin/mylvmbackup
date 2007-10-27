@@ -29,12 +29,12 @@ of the time at which the backup occurred. The prefix 'backup', date format and
 file suffix may be modified. The use of timestamped archive names allows you
 to run mylvmbackup many times without danger of overwriting old archives.
 
-Alternatively, in place in 'tar', you may use 'rsync'. This process is nearly
+Alternatively, instead of 'tar', you may use 'rsync'. This process is nearly
 identical, with the exception that the file suffix is not used.
 
 GENERAL HINTS
 -------------
-It is necessary to run mylvmbackup on the same host where the MySQL server
+It is required to run mylvmbackup on the same host where the MySQL server
 runs. If your MySQL daemon is not listening on localhost or using the default
 socket location, you must specify '--host' or '--socket'. Even though
 mylvmbackup communicates with the server through a normal client connection to

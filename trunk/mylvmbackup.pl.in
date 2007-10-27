@@ -21,6 +21,7 @@ use Config::IniFiles;
 use Date::Format;
 use DBI;
 use File::Basename;
+use File::Temp;
 use Getopt::Long;
 
 use diagnostics;
@@ -433,7 +434,8 @@ sub _create_pos_file_single
 sub do_backup_tar
 {
   my $tarball = $archivename.$tarfilesuffix;
-  my $tarballtmp = sprintf('%s.INCOMPLETE-%07d',$tarball,int(rand(2**16)));
+  my $tarballtmp = mktemp("$tarball.INCOMPLETE-XXXXXXX");
+
   log_msg ("Creating tar archive $tarball", LOG_INFO);
   my $mountdir_rel = $mountdir;
   $mountdir_rel =~ s/^$topmountdir//g;
@@ -459,7 +461,7 @@ sub do_backup_tar
 sub do_backup_rsync
 {
   my $destdir = $archivename;
-  my $destdirtmp = sprintf('%s.INCOMPLETE-%07d',$destdir,int(rand(2**16)));
+  my $destdirtmp = mkdtemp("$destdir.INCOMPLETE-XXXXXXX");
   log_msg ("Archving with rsync to $destdir", LOG_INFO);
 
   # Trailing slash is bad
@@ -469,7 +471,7 @@ sub do_backup_rsync
   my $command = "$rsync $rsyncarg $mountdir/$relpath_noslash";
   $command .= " $pos_filename" if (-f $pos_filename );
   $command .= " $mycnf_filename" if (-f $mycnf_filename );
-  $command .= " $destdirtmp/";
+  $command .= " $destdirtmp";
   if ( system($command) == 0 )
   {
     rename $destdirtmp, $destdir;

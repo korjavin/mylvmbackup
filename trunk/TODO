@@ -1,12 +1,12 @@
 mylvmbackup TODO list:
 
  - Document the new logging options in the man page and help output
- - Use File::Temp instead random generator to generate the temp file name
  - Make backing up of my.cnf optional, verify that the file actually exists
    before copying it
  - Modularize the backup portion
  - Support other backup methods than tar after modularizing
-     * rsync - http://rsync.samba.org/ (already available as a hack)
+     * rsync - http://rsync.samba.org/ (already available as a hack, add
+       support for remote backups)
      * rsnapshot - http://www.rsnapshot.org/
      * duplicity - http://duplicity.nongnu.org/
      * unison - http://www.cis.upenn.edu/~bcpierce/unison/
