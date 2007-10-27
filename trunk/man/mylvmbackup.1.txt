@@ -25,9 +25,12 @@ The LVM snapshot is mounted to a temporary directory and all data is backed up
 using the 'tar' program. By default, the archive file is created using a name
 of the form 'backup-YYYYMMDD_hhmmss_mysql.tar.gz', where 'YYYY', 'MM', 'DD',
 'hh', 'mm', and 'ss' represent the year, month, day, hour, minute, and second
-of the time at which the backup occurred. The prefix 'backup' and the date
-format can be modified. The use of timestamped archive names allows you to run
-mylvmbackup many times without danger of overwriting old archives.
+of the time at which the backup occurred. The prefix 'backup', date format and
+file suffix may be modified. The use of timestamped archive names allows you
+to run mylvmbackup many times without danger of overwriting old archives.
+
+Alternatively, in place in 'tar', you may use 'rsync'. This process is nearly
+identical, with the exception that the file suffix is not used.
 
 GENERAL HINTS
 -------------
@@ -159,6 +162,10 @@ the leading dashes, of course).
   Specifies the size for the snapshot volume.
   The default is '5G' (5 gigabytes).
 
+--backuptype=string::
+  Specifies what type of backup to perform. The available options are 'tar'
+  and 'rsync'.
+
 --prefix=string::
   Prefix added to the backup file names. It is also appended to
   the name of the directory used to mount the snapshot volume.
@@ -198,11 +205,21 @@ the leading dashes, of course).
 
 --tarsuffixarg=string::
   Specifies the suffix arguments for the 'tar' program.
-  The default is ''.
+  The default is ''. 
+  To exclude a database, you would pass '--exclude dbname' here.
 
 --tarfilesuffix=string::
   Specifies the suffix for the tarball.
   The default is '.tar.gz'.
+
+--rsync=string::
+  Specifies the pathname for the 'rsync' program.
+  The default is 'rsync'.
+
+--rsyncarg=string::
+  Specifies the arguments for the 'rsync' program.
+  The default is '-avWP'. Should must ensure that the recursive option is
+  included either implicitly by '-a', or explicitly.
 
 --xfs::
   Use the 'nouuid' mount option to safely mount snapshot partitions that
@@ -254,10 +271,11 @@ It also requires several other external programs: GNU 'tar' and 'gzip' to back
 up the data, LVM utilities ('lvcreate', 'lvremove' and 'lvs') to create and
 remove the LVM snapshot, and the system utilities 'mount' and 'umount'.
 
+'rsync' may be used in place of 'tar' and 'gzip'.
 
 SEE ALSO
 --------
-'mount(8)', 'tar(1)', 'lvcreate(8)', 'lvremove(8)', lvs(8)', 'umount(8)'
+'mount(8)', 'tar(1)', 'lvcreate(8)', 'lvremove(8)', lvs(8)', 'umount(8)', 'rsync(1)'
 
 
 AUTHOR

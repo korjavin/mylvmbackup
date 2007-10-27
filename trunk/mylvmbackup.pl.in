@@ -55,9 +55,12 @@ my $need_xfsworkaround;
 my $password;
 my $pidfile;
 my $port;
+my $backuptype;
 my $prefix;
 my $relpath;
 my $socket;
+my $rsync;
+my $rsyncarg;
 my $tar;
 my $tararg;
 my $tarsuffixarg;
@@ -203,7 +206,7 @@ log_msg ("Taking snapshot...", LOG_INFO);
 create_snapshot();
 
 log_msg ("Unlocking tables...", LOG_INFO);
-$dbh->do("unlock tables") 
+$dbh->do("UNLOCK TABLES") 
   or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
 
 log_msg ("Disconnecting from database...", LOG_INFO);
@@ -223,7 +226,8 @@ if ($snapshot_created)
     create_mycnf_file();
 
     log_msg ("Taking actual backup...", LOG_INFO);
-    do_backup_tar();
+    do_backup_tar() if ($backuptype eq 'tar');
+    do_backup_rsync() if ($backuptype eq 'rsync');
   }    
 }
 
@@ -251,12 +255,14 @@ sub load_config
   $lvsize=$cfg->val ('lvm', 'lvsize', $lvsize);
   $backuplv = $cfg->val ('lvm', 'backuplv', $backuplv);
   
+  $backuptype=$cfg->val ('misc', 'backuptype', $backuptype);
   $prefix=$cfg->val ('misc', 'prefix', $prefix);
   $datefmt=$cfg->val ('misc', 'datefmt', $datefmt);
   $innodb_recover=$cfg->val ('misc', 'innodb_recover', $innodb_recover);
   $pidfile=$cfg->val ('misc', 'pidfile', $pidfile);
   $skip_flush_tables=$cfg->val ('misc', 'skip_flush_tables', $skip_flush_tables);
   $extra_flush_tables=$cfg->val ('misc', 'extra_flush_tables', $extra_flush_tables);
+  $rsyncarg=$cfg->val ('misc', 'rsyncarg', $rsyncarg);
   $tararg=$cfg->val ('misc', 'tararg', $tararg);
   $tarsuffixarg=$cfg->val ('misc', 'tarsuffixarg', $tarsuffixarg);
   $tarfilesuffix = $cfg->val ('misc', 'tarfilesuffix', $tarfilesuffix);
@@ -272,6 +278,7 @@ sub load_config
   $mount=$cfg->val ('tools', 'mount', $mount);
   $umount=$cfg->val ('tools', 'umount', $umount);
   $tar=$cfg->val ('tools', 'tar', $tar);
+  $rsync=$cfg->val ('tools', 'rsync', $rsync);
 
   $log_method = $cfg->val('logging', 'log_method', $log_method);
   $syslog_socktype = $cfg->val ('logging', 'syslog_socktype', $syslog_socktype);
@@ -303,6 +310,7 @@ sub load_args
     "backuplv=s" => \$backuplv,
 
 # misc
+    "backuptype=s" => \$backuptype,
     "prefix=s" => \$prefix,
     "datefmt=s" => \$datefmt,
     "innodb_recover" => \&innodb_recover,
@@ -312,6 +320,7 @@ sub load_args
     "tararg=s" => \$tararg,
     "tarsuffixarg=s" => \$tarsuffixarg,
     "tarfilesuffix=s" => \$tarfilesuffix,
+    "rsyncarg=s" => \$rsyncarg,
 
 # fs
     "mountdir=s" => \$mountdir,
@@ -326,6 +335,7 @@ sub load_args
     "mount=s" => \$mount,
     "umount=s" => \$umount,
     "tar=s" => \$tar,
+    "rsync=s" => \$rsync,
 
 # logging
     "log_method=s" => \$log_method,
@@ -354,6 +364,7 @@ sub load_defaults
   $backuplv = '';
 
 # misc
+  $backuptype='tar';
   $prefix='backup';
   $datefmt='%Y%m%d_%H%M%S';
   $innodb_recover=0;
@@ -363,6 +374,7 @@ sub load_defaults
   $tararg='cvzf';
   $tarsuffixarg='';
   $tarfilesuffix='.tar.gz';
+  $rsyncarg='-avPW';
 
 # fs
   $mountdir='/var/tmp/mylvmbackup/mnt/';
@@ -377,6 +389,7 @@ sub load_defaults
   $mount='mount';
   $umount='umount';
   $tar='tar';
+  $rsync='rsync';
 
 # logging
   $log_method = 'console';
@@ -437,6 +450,29 @@ sub do_backup_tar
   if ( system($command) == 0 )
   {
     rename $tarballtmp, $tarball;
+    log_msg ("DONE", LOG_INFO);
+  } else {
+    log_msg ("FAIL $!", LOG_ERR);
+  }    
+}
+
+sub do_backup_rsync
+{
+  my $destdir = $archivename;
+  my $destdirtmp = sprintf('%s.INCOMPLETE-%07d',$destdir,int(rand(2**16)));
+  log_msg ("Archving with rsync to $destdir", LOG_INFO);
+
+  # Trailing slash is bad
+  my $relpath_noslash = $relpath;
+  $relpath_noslash =~ s/\/+$//g;
+
+  my $command = "$rsync $rsyncarg $mountdir/$relpath_noslash";
+  $command .= " $pos_filename" if (-f $pos_filename );
+  $command .= " $mycnf_filename" if (-f $mycnf_filename );
+  $command .= " $destdirtmp/";
+  if ( system($command) == 0 )
+  {
+    rename $destdirtmp, $destdir;
     log_msg ("DONE", LOG_INFO);
   } else {
     log_msg ("FAIL $!", LOG_ERR);

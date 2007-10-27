@@ -4,8 +4,9 @@ mylvmbackup TODO list:
  - Use File::Temp instead random generator to generate the temp file name
  - Make backing up of my.cnf optional, verify that the file actually exists
    before copying it
- - Support other backup methods than tar by modularizing the backup part:
-     * rsync - http://rsync.samba.org/
+ - Modularize the backup portion
+ - Support other backup methods than tar after modularizing
+     * rsync - http://rsync.samba.org/ (already available as a hack)
      * rsnapshot - http://www.rsnapshot.org/
      * duplicity - http://duplicity.nongnu.org/
      * unison - http://www.cis.upenn.edu/~bcpierce/unison/
@@ -18,3 +19,5 @@ mylvmbackup TODO list:
  - Providing an option to shut down the server instead of using FLUSH TABLES
    WITH READ LOCK before taking the snapshot, for consistent InnoDB snapshots
    (e.g. on a replication slave)
+ - Allow running custom scripts before/after each phase: (flush, lvcreate,
+   mount, recover, backup, umount)
