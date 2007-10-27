@@ -264,8 +264,9 @@ For proper operation 'mylvmbackup' requires Perl 5 with the 'DBI' and
 'DBD::mysql' modules. It also needs the 'Config::IniFiles' to read the global
 configuration file of the program and 'Sys::Syslog' in case you want to enable
 the syslog log facility. 'Date::Format' is required to create the time stamp
-used in the backup file names. In addition, it utilizes 'Getopt::Long' and
-'File::Basename' which usually are part of the default Perl distribution.
+used in the backup file names. In addition, it utilizes 'Getopt::Long',
+'File::Basename' and 'File::Temp', which usually are part of the default Perl
+distribution.
 
 It also requires several other external programs: GNU 'tar' and 'gzip' to back
 up the data, LVM utilities ('lvcreate', 'lvremove' and 'lvs') to create and

@@ -1,3 +1,32 @@
+2007-10-27  Lenz Grimmer <lenz@grimmer.com>
+
+ - Use mktemp/mkdtemp to generate the random temporary file/directory names
+
+2007-10-27  Robin H. Johnson <robbat2@gentoo.org>
+
+ - Add rsync backup type. This is very useful if you want to use mylvmbackup to
+   create the initial state for your slave servers.
+ - Shrink the --help output by only listing common options, and referring the
+   user to the manpage for further information.
+
+2007-10-20  Robin H. Johnson <robbat2@gentoo.org>
+
+ - Add support for a trailing argument to tar, can be used for excluding
+   files.
+ - Clean up variable ordering and manpage to ensure that all
+   arguments/configopts are documented.
+ - Do not start NDB or a replication slave when performing InnoDB recovery
+ - Seperate out the suffix of the tarball (Preperation for rsync and users
+   that want to use bzip2 or no compression.)
+ - Use a temporary suffix at the end of the tar backup file to indicate that
+   it is incomplete.
+ - Applied patch from Robin H. Johnson: Include the my.cnf file in the backup.
+   (TODO: make this optional and check for the existence of the file before
+   copying it)
+ - Add the ability to run an extra FLUSH TABLES for busy databases where
+   lvcreate might take a long time (and may overrun the interactivity timeout
+   on the connection, losing the lock).
+
 2007-09-13  Lenz Grimmer <lenz@grimmer.com>
 
  - Added option "--pidfile" to provide an alternative PID file location for
