@@ -604,44 +604,26 @@ mylvmbackup Version $version
 This script performs a MySQL backup by using an LVM snapshot volume.
 It requires the MySQL server's data directory to be placed on a logical
 volume, and creates an LVM snapshot to create a copy of the MySQL datadir.
-Afterwards, all data files are backed using GNU tar to an archive directory.
-See the manual page for more info.
+Afterwards, all data files are archived to a backup directory.
+See the manual page for more info including a complete list of options.
  
-Options:
+Common options:
 
   --user=<username>             MySQL username (def: $user)
   --password=<password>         MySQL password
   --host=<host>                 Hostname for MySQL
   --port=<port>                 TCP port for MySQL
   --socket=<socket>             UNIX socket for MySQL
-  --innodb_recover              Run InnoDB recovery on the writable snapshot (LVM2 only)
-                                prior to performing the backup
-  --skip_flush_tables           Skip the (probably time intensive) flushing of buffers to
-                                disk (in case you want to back up InnoDB tables which don't
-                                support FLUSH TABLES anyway)
-  --pidfile=<filename>          Path to the PID file of the server instance started to
-                                perform the InnoDB recovery (def: $pidfile)
-  --lvcreate=<filename>         Path for lvcreate (def: $lvcreate)
-  --lvremove=<filename>         Path for lvremove (def: $lvremove)
+
   --vgname=<name>               VG containing datadir (def: $vgname)
   --lvname=<name>               LV containing datadir (def: $lvname)
   --relpath=<name>              Relative path on LV to datadir (def: $relpath)
   --lvsize=<size>               Size for snapshot volume (def: $lvsize)
+
   --prefix=<prefix>             Prefix for naming the backup (def: $prefix)
-  --datefmt=<format>            Specify the format of the date string (def: $datefmt)
-  --mountdir=<dirname>          Path for mountpoint (def: $mountdir)
   --backupdir=<dirname>         Path for archives (def: $backupdir)
-  --mount=<filename>            Path for mount (def: $mount)
-  --umount=<filename>           Path for umount (def: $umount)
-  --tar=<filename>              Path for tar (def: $tar)
-  --xfs                         Use the "nouuid" mount option to safely mount XFS snapshots
-  --log_method=<method>         How to log output from this script. Valid options are
-                                "console", "syslog" or "both" (def: $log_method)
-  --syslog_socktype=<type>      What type of socket to use for connecting to the syslog
-                                service. Valid options are "native", "tcp" and "udp".
-                                (def: $syslog_socktype)
-  --syslog_facility=<facility>  Define a particular syslog facility (def: $syslog_facility)
-  --syslog_remotehost=<host>    Host name of a remote syslog server (def: $syslog_remotehost)
+  --backuptype=(tar|rsync)      Use tar or rsync for performing the backup.
+
   --configfile=<file>           Specify an alternative configuration file (def: $configfile)
   --help                        Print this help
 
