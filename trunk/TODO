@@ -11,6 +11,8 @@ mylvmbackup TODO list:
      * duplicity - http://duplicity.nongnu.org/
      * unison - http://www.cis.upenn.edu/~bcpierce/unison/
      * zip - http://www.info-zip.org/Zip.html
+ - tar backup: check if the "z" option is used for tar, change the archive
+   name suffix accordingly (.tar.gz vs. .tar)
  - Allow splitting of archives. Could this be done by being able to modularize
    the backup part and allowing multiple plugins in a pipe? E.g. a generic
    splitting plugin that can split any archives.
