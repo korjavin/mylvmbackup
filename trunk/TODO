@@ -3,6 +3,10 @@ mylvmbackup TODO list:
  - Document the new logging options in the man page and help output
  - Make backing up of my.cnf optional, verify that the file actually exists
    before copying it
+ - Improve the InnoDB recovery function: create a separate my.cnf for the
+   server instance that performs the recovery on the snapshot, including the
+   InnoDB-related parameters from the main my.cnf file (particularly table spaces,
+   log files) as well as other options (e.g. sane buffer sizes)
  - Modularize the backup portion
  - Support other backup methods than tar after modularizing
      * rsync - http://rsync.samba.org/ (already available as a hack, add
