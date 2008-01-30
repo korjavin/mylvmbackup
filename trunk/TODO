@@ -15,12 +15,17 @@ mylvmbackup TODO list:
    on separate block devices?
  - Modularize the backup portion
  - Support other backup methods than tar after modularizing
-     * rsync - http://rsync.samba.org/ (already available as a hack, add
-       support for remote backups)
+     * rsync - http://rsync.samba.org/ (already available as a hack, needs
+       some cleanups/improvements)
      * rsnapshot - http://www.rsnapshot.org/
      * duplicity - http://duplicity.nongnu.org/
      * unison - http://www.cis.upenn.edu/~bcpierce/unison/
      * zip - http://www.info-zip.org/Zip.html
+ - rsync backup: add support for remote backups
+ - rsync backup: allow backing up into the same directory (no time stamps),
+   to increase backup speed (using the differential capabilities of rsync)
+ - rsync backup: support the --link-dest option, to preserve disk space on
+   the backup drive
  - tar backup: check if the "z" option is used for tar, change the archive
    name suffix accordingly (.tar.gz vs. .tar)
  - Support other snapshot options in addition to LVM snapshots (e.g. Sun's ZFS
