@@ -494,7 +494,7 @@ sub mount_snapshot
 
 sub do_innodb_recover
 {
-  if ( system("echo 'select 1;' | $mysqld_safe --pidfile=$pidfile --datadir=$mountdir --skip-networking --skip-grant --bootstrap --skip-ndbcluster --skip-slave-start") != 0 )
+  if ( system("echo 'select 1;' | $mysqld_safe --pid-file=$pidfile --datadir=$mountdir --skip-networking --skip-grant --bootstrap --skip-ndbcluster --skip-slave-start") != 0 )
   {
     log_msg ("Failed to perform InnoDB recovery on the snapshot!", LOG_ERR);
   }
