@@ -42,6 +42,7 @@ my $datefmt;
 my $host;
 my $innodb_recover;
 my $skip_flush_tables;
+my $skip_mycnf;
 my $extra_flush_tables;
 my $lvcreate;
 my $lvname;
@@ -223,8 +224,11 @@ if ($snapshot_created)
       log_msg ("Recovering innodb...", LOG_INFO);
       do_innodb_recover();
     }
-    log_msg ("Copying $mycnf_basename...", LOG_INFO);
-    create_mycnf_file();
+    if (-f $mycnf && $skip_mycnf == 0)
+    {
+      log_msg ("Copying $mycnf_basename...", LOG_INFO);
+      create_mycnf_file();
+    }
 
     log_msg ("Taking actual backup...", LOG_INFO);
     do_backup_tar() if ($backuptype eq 'tar');
@@ -263,6 +267,7 @@ sub load_config
   $pidfile=$cfg->val ('misc', 'pidfile', $pidfile);
   $skip_flush_tables=$cfg->val ('misc', 'skip_flush_tables', $skip_flush_tables);
   $extra_flush_tables=$cfg->val ('misc', 'extra_flush_tables', $extra_flush_tables);
+  $skip_mycnf=$cfg->val ('misc', 'skip_mycnf', $skip_mycnf);
   $rsyncarg=$cfg->val ('misc', 'rsyncarg', $rsyncarg);
   $tararg=$cfg->val ('misc', 'tararg', $tararg);
   $tarsuffixarg=$cfg->val ('misc', 'tarsuffixarg', $tarsuffixarg);
@@ -318,6 +323,7 @@ sub load_args
     "pidfile=s" => \$pidfile,
     "skip_flush_tables" => \&skip_flush_tables,
     "extra_flush_tables" => \&extra_flush_tables,
+    "skip_mycnf" => \&skip_mycnf,
     "tararg=s" => \$tararg,
     "tarsuffixarg=s" => \$tarsuffixarg,
     "tarfilesuffix=s" => \$tarfilesuffix,
@@ -372,6 +378,7 @@ sub load_defaults
   $pidfile = '/var/tmp/mylvmbackup_recoverserver.pid';
   $skip_flush_tables=0;
   $extra_flush_tables=0;
+  $skip_mycnf=0;
   $tararg='cvzf';
   $tarsuffixarg='';
   $tarfilesuffix='.tar.gz';
@@ -403,7 +410,7 @@ sub create_pos_file
 {
  my $dbh = shift;
  my $pos_file;
- open $pos_file, ">$pos_filename" or log_msg ("Cannot open $pos_filename for write", LOG_ERR) && die ("Cannot open $pos_filename for write");
+ open $pos_file, ">$pos_filename" or log_msg ("Cannot open $pos_filename for writing: $!", LOG_ERR) && die ("Cannot open $pos_filename for writing: $!");
  &_create_pos_file_single($dbh,'SHOW MASTER STATUS',$pos_file,'Master');
  &_create_pos_file_single($dbh,'SHOW SLAVE STATUS',$pos_file,'Slave');
  close $pos_file;
@@ -412,7 +419,7 @@ sub create_pos_file
 sub create_mycnf_file
 {
   use File::Copy;
-  copy($mycnf, $mycnf_filename);
+  copy($mycnf, $mycnf_filename) or log_msg ("Could not copy $mycnf to $mycnf_filename: $!") && die ("Could not copy $mycnf to $mycnf_filename: $!\n");
 }
 
 sub _create_pos_file_single
@@ -590,8 +597,13 @@ sub innodb_recover {
 sub skip_flush_tables {
   $skip_flush_tables = 1;
 }
+
 sub extra_flush_tables {
   $extra_flush_tables = 1;
+}
+
+sub skip_mycnf {
+  $skip_mycnf = 1;
 }
 
 sub need_xfsworkaround {

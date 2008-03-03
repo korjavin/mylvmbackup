@@ -137,8 +137,12 @@ the leading dashes, of course).
   Only used to perform InnoDB recovery.
 
 --mycnf=string::
-  Specifies the pathname for the MySQL config file to include in the backup.
+  Specifies the name of the MySQL config file to include in the backup.
   The default is '/etc/my.cnf'.
+
+--skip_mycnf::
+  Skip backing up the MySQL configuration file.
+  The default is to include a copy of the configuration file in the backup.
 
 --vgname=string::
   Specifies the volume group of the logical volume where the MySQL

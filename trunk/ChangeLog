@@ -3,6 +3,9 @@
  - Bug fix: use the correct mysqld parameter to provide an alternative PID
    file (--pid-file instead of --pidfile) - thanks to Guillaume Boddaert for
    reporting this!
+ - Added option "--skip_mycnf" to skip including a copy of the MySQL
+   configuration file in the backup, added a safety check that the file
+   actually exists prior to backing it up.
 
 2007-10-27  Lenz Grimmer <lenz@grimmer.com>
 
