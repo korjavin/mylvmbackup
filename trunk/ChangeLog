@@ -1,3 +1,7 @@
+2008-04-04  Lenz Grimmer <lenz@grimmer.com>
+
+ - Bumped up version number to 0.8
+
 2008-03-03  Lenz Grimmer <lenz@grimmer.com>
 
  - Bug fix: use the correct mysqld parameter to provide an alternative PID
