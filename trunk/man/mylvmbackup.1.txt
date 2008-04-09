@@ -59,11 +59,18 @@ to spend after restoring a server and trying to get it back on its feet as
 fast as possible), consider using the option '--innodb_recover', which will
 perform the recovery operation on the backup snapshot prior to archiving it.
 
-Note that this only works when using writable LVM snapshots and thus requires
-LVMv2 (the script performs a test for this and will disable log recovery in
-the case it finds an LVM1 system). This will prolong the time needed to
-perform the actual backup, but will save you precious time when you eventually
-have to restore from this backup set.
+The recovery operation is performed by spawning a second mysqld instance that
+uses the snapshot volume as the data directory. Note that this functionality
+currently assumes the default InnoDB configuration - it does not work properly
+if you use options like '--innodb-file-per-table', '--innodb-data-home-dir',
+'--innodb-data-file-path' or '--innodb-log-group-home-dir' that modify the
+default file layout for InnoDB tables.
+
+Also note that this only works when using writable LVM snapshots and thus
+requires LVM2 (the script performs a test for this and will disable log
+recovery in the case it finds an LVM1 system). This will prolong the time
+needed to perform the actual backup, but will save you precious time when you
+eventually have to restore from this backup set.
 
 If you use InnoDB tables exclusively, you may also want to consider to include
 the option '--skip_flush_tables', to avoid the probably time-consuming and in

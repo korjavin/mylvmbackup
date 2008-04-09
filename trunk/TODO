@@ -4,6 +4,8 @@ mylvmbackup TODO list:
    server instance that performs the recovery on the snapshot, including the
    InnoDB-related parameters from the main my.cnf file (particularly table spaces,
    log files) as well as other options (e.g. sane buffer sizes)
+   (Maybe the script could just parse the original my.cnf file for the related
+   options and add these to the mysqld_safe call?)
  - Investigate further about the need of calling xfs_freeze prior to taking
    the snapshot when using XFS file systems. According to the docs, this is
    not needed when using LVM2 (and may even lead to deadlocks), but may be

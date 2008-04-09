@@ -1,3 +1,11 @@
+2008-04-09  Lenz Grimmer <lenz@grimmer.com>
+
+ - Fixed a bug in the InnoDB recovery function: the second mysqld process
+   clobbered the socket file of the primary MySQL instance
+   (thanks to Alain Hoang for reporting this)
+ - Updated the man page, noted some other limitations of the InnoDB recovery
+   function
+
 2008-04-04  Lenz Grimmer <lenz@grimmer.com>
 
  - Bumped up version number to 0.8
