@@ -39,3 +39,4 @@ mylvmbackup TODO list:
    (e.g. on a replication slave)
  - Allow running custom scripts before/after each phase: (flush, lvcreate,
    mount, recover, backup, umount)
+ - RPM packaging: fix Requires for distributions (e.g. perl-Config-IniFiles)
