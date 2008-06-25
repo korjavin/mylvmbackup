@@ -20,7 +20,6 @@ mylvmbackup TODO list:
      * duplicity - http://duplicity.nongnu.org/
      * unison - http://www.cis.upenn.edu/~bcpierce/unison/
      * zip - http://www.info-zip.org/Zip.html
- - rsync backup: add support for remote backups
  - rsync backup: allow backing up into the same directory (no time stamps),
    to increase backup speed (using the differential capabilities of rsync)
  - rsync backup: support the --link-dest option, to preserve disk space on

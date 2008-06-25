@@ -30,7 +30,10 @@ file suffix may be modified. The use of timestamped archive names allows you
 to run mylvmbackup many times without danger of overwriting old archives.
 
 Alternatively, instead of 'tar', you may use 'rsync'. This process is nearly
-identical, with the exception that the file suffix is not used.
+identical, with the exception that the file suffix is not used. Currently,
+the rsync backup is primarily developed for performing local backups. You
+can configure it for backing up to a remote rsync server, but this is not
+fully tested in all possible configurations yet and may change at some point.
 
 GENERAL HINTS
 -------------
@@ -195,7 +198,11 @@ the leading dashes, of course).
 --backupdir=string::
   Specifies the pathname of the directory where the archive files will be
   written to. The backup directory must not be on the same volume as the MySQL
-  data directory.
+  data directory. Instead of a local directory, you can also provide a
+  valid rsync URL here, e.g. 'hostname::rsync-module/path'. This requires a
+  properly configured remote rsync setup (e.g. pre-setup SSH keys and a
+  valid rsyncd.conf file). Note that using rsync for remote backups is still
+  under development and the way to configure it may change!
   The default is '/var/tmp/mylvmbackup/backup/'
 
 --mount=string::
