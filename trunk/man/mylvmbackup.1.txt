@@ -302,6 +302,7 @@ RESOURCES
 ---------
 Main web site: http://www.lenzg.org/mylvmbackup/[]
 Mailing list: http://www.freelists.org/list/mylvmbackup/[]
+Source code, bug tracker: https://launchpad.net/mylvmbackup/[]
 
 
 CREDITS
