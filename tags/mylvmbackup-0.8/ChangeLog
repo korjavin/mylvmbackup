@@ -1,0 +1,226 @@
+2008-04-10  Lenz Grimmer <lenz@grimmer.com>
+
+ - Bumped up version number to 0.9
+
+2008-04-09  Lenz Grimmer <lenz@grimmer.com>
+
+ - Fixed a bug in the InnoDB recovery function: the second mysqld process
+   clobbered the socket file of the primary MySQL instance
+   (thanks to Alain Hoang for reporting this)
+ - Updated the man page, noted some other limitations of the InnoDB recovery
+   function
+
+2008-04-04  Lenz Grimmer <lenz@grimmer.com>
+
+ - Bumped up version number to 0.8
+
+2008-03-03  Lenz Grimmer <lenz@grimmer.com>
+
+ - Bug fix: use the correct mysqld parameter to provide an alternative PID
+   file (--pid-file instead of --pidfile) - thanks to Guillaume Boddaert and
+   Jim Wilson for reporting this!
+ - Added option "--skip_mycnf" to skip including a copy of the MySQL
+   configuration file in the backup, added a safety check that the file
+   actually exists prior to backing it up.
+
+2007-10-27  Lenz Grimmer <lenz@grimmer.com>
+
+ - Bumped up version number to 0.7
+
+2007-10-27  Lenz Grimmer <lenz@grimmer.com>
+
+ - Use mktemp/mkdtemp to generate the random temporary file/directory names
+
+2007-10-27  Robin H. Johnson <robbat2@gentoo.org>
+
+ - Add rsync backup type. This is very useful if you want to use mylvmbackup to
+   create the initial state for your slave servers.
+ - Shrink the --help output by only listing common options, and referring the
+   user to the manpage for further information.
+
+2007-10-20  Robin H. Johnson <robbat2@gentoo.org>
+
+ - Add support for a trailing argument to tar, can be used for excluding
+   files.
+ - Clean up variable ordering and manpage to ensure that all
+   arguments/configopts are documented.
+ - Do not start NDB or a replication slave when performing InnoDB recovery
+ - Seperate out the suffix of the tarball (Preperation for rsync and users
+   that want to use bzip2 or no compression.)
+ - Use a temporary suffix at the end of the tar backup file to indicate that
+   it is incomplete.
+ - Applied patch from Robin H. Johnson: Include the my.cnf file in the backup.
+   (TODO: make this optional and check for the existence of the file before
+   copying it)
+ - Add the ability to run an extra FLUSH TABLES for busy databases where
+   lvcreate might take a long time (and may overrun the interactivity timeout
+   on the connection, losing the lock).
+
+2007-09-13  Lenz Grimmer <lenz@grimmer.com>
+
+ - Added option "--pidfile" to provide an alternative PID file location for
+   the second server instance that is started to perform the InnoDB recovery
+   on the snapshot prior to backing it up (Otherwise it may default to using
+   the same pid file location that the running server uses and safe_mysqld
+   will abort) - thanks to Kristian Köhntopp for making me aware of this
+   problem
+ - Before discarding the snapshot LV, the output of "lvs <snapshot>" is now
+   printed out for diagnostics. It contains useful information like "how much
+   percent of the backing store was used, which helps tuning the size of the
+   snapshot LV.
+ - Updated the man page, documented the new pidfile option and added a section
+   with general hints
+
+2007-07-03  Lenz Grimmer <lenz@grimmer.com>
+
+ - Added option "--skip-flush-tables" that performs the snapshot without
+   flushing the tables to disk beforehand (which is not supported by InnoDB
+   tables anyway) - this would save time, as the flushing can take some time,
+   depending on the buffer sizes. (Thanks to Peter Zaitsev for the suggestion)
+
+2007-05-31  Lenz Grimmer <lenz@grimmer.com>
+
+ - Bumped up version number to 0.6
+ - Updated man page and README to list all required Perl modules
+   (thanks to Scott Kaminiski for pointing this out)
+ - Replaced the call to the external /bin/date binary for creating
+   the timestamp string with a builtin function (using Date::Format)
+
+2007-05-07  Lenz Grimmer <lenz@grimmer.com>
+
+ - Bumped up version number to 0.5
+ - Slightly reworked Eric's patch and performed some minor code cleanup
+ - Documented the InnoDB recovery option in the man page
+
+2007-04-12  Eric Bergen <eric@provenscaling.com>
+
+ - Added Option "--innodb-recover", which provides an option to run InnoDB
+   recovery on LVM2 snapshots (which provide write access to the device) prior
+   to creating the backup archive. This speeds up resuming a MySQL instance
+   from a restored backup. Also fixed a bug with the default value handling
+   for command line options. In version 0.4 if a config file was specified
+   default values in the script were all changed to blank. This means that
+   the config file had to supply values for every variable instead of just
+   the values that need to be changed from default.
+
+2007-01-14  Lenz Grimmer <lenz@grimmer.com>
+
+ - Bumped up version number to 0.4
+ - Fixed DSN string handling (thanks to Peter Zaitsev for spotting this)
+ - removed a few unused configuration options from the config file (we can
+   re-add them once they are really used)
+ - Slightly cleaned up Robin's changes, updated the man page and help output
+ - Fixed logging to the console (log levels were not printed)
+
+2007-01-12  Robin H. Johnson <robbat2@gentoo.org>
+
+ - Clean up option handling to load the defaults, followed by the default
+   configuration file, followed by an alternative configuration file
+   (specified via CLI arguments), followed by the remainer of the CLI
+   arguments.
+ - Do cleanups on directory inputs for spaces and trailing slashes.
+ - Enforce a non-empty prefix at all times.
+ - Change the capture of the position file and tarball creation to not use
+   absolute pathes, and instead use them relative to $mountdir.
+ - Utilize a bindmount to get the position directory near the $mountdir for
+   the tarball creation.
+ - 'use vars' has been deprecated by upstream way back in Perl-5.6.0
+   http://perldoc.perl.org/vars.html, use 'my' instead.
+
+2006-11-24  Lenz Grimmer <lenz@grimmer.com>
+
+ - Cleaned up Fred's patch a bit: added --help output and corrected the option
+   handling. Provide sane default values when no option file is used.
+ - Only require SyS::Syslog if we actually use syslog for logging (less
+   Perl module dependencies)
+ - Slightly beefed up the console logging by printing a time stamp in front
+   of the message and display "Info/Warning/Error/" according to the log
+   level.
+ - Removed syslog_ident and syslog_args from the command line options and
+   config file (these remain hardcoded)
+ - added check for hostname, if remote logging is requested
+ - Updated and reformatted the help output
+ - Changed the name of the default logging from "standard" to "console"
+ - Added descriptions of the new logging options to the man page
+ - Released as version 0.3
+
+2006-11-23  Fred Blaise <fred.blaise@gmail.com>
+
+ - Added functionality to use syslog for logging activity. This requires
+   the Sys::Syslog Perl module.
+ - Bugfix: in GetOptions, tar and umount were pointing to the mount binary.
+ - Do not append a '/' to $mountdir if $prefix is empty.
+ - Bugfix: Corrected variable 'date_format' back to 'datefmt'
+ - Bugfix: Removed tailing slash for backupdir and mountdir in config file to
+   avoid resulting double slash with unused variable
+ - Bugfix: Fixed wrong section assignation of $prefix (misc, instead of lvm),
+   which resulted in uninitialized value.
+
+2006-11-23  Lenz Grimmer <lenz@grimmer.com>
+
+ - slighty cleaned up Fred's patch, reverted using the previous default values
+   and match the variables used in the config file with the command line
+   options
+ - Updated TODO (supporting external config files is done, thanks)
+ - bumped up version number to 0.3
+ - Added installing of the config file to the Makefile
+ - Changed the default LVM snapshot size from 10M to 5G to match the defaults
+ - Added the config file to the RPM file list
+ - Changed the script to still work without the configfile, falling back to
+   builtin defaults (to revert the previous behavior).
+ - Started converting the man page to asciidoc for easier maintenance and
+   more possibilities to convert to other formats like HTML or DocBook.
+ - Renamed the man page input file, added man page building with a2x to the
+   Makefile
+
+2006-11-22  Fred Blaise <fred.blaise@gmail.com>
+
+ - Added initial support for using an external /etc/mylvmbackup.conf
+   configuration file (requiring the Config::IniFiles Perl module)
+
+2006-11-21  Lenz Grimmer <lenz@grimmer.com>
+
+ - Removed the START/STOP SLAVE calls (They cause problems where the box isn't
+   a slave, and don't actually help anything where the box is a slave) - thanks
+   to Robin H. Johnson <robbat2@gentoo.org> for reporting this and Fred Blaise
+   for verifying it.
+
+2006-11-15  Lenz Grimmer <lenz@grimmer.com>
+
+ - Added Makefile to perform various build and installation tasks
+ - Renamed the mylvmbackup source file to mylvmbackup.pl.in, which
+   is turned into the mylvmbackup executable by the Makefile
+ - Added RPM spec file to build RPM packages
+ - Updated Version to 0.2 (now defined in the Makefile)
+ - Updated INSTALL file, now one can run "make install" instead of manually
+   copying the files
+ - Updated TODO list
+ - Released as version 0.2
+
+2006-11-14  Lenz Grimmer <lenz@grimmer.com>
+
+ - Documented Robin's changes in the man page, cleaned up the man page
+   in general
+ - Added new option: 'datefmt' that allows one to define the format of
+   the date time stamp in the backup file name
+
+2006-11-12  Robin H. Johnson <robbat2@gentoo.org>
+
+ - General cleanup, intended to make mylvmbackup usable for distributions.
+ - Add --xfs to help with using XFS snapshots (adds nouuid per LVM HOWTO)
+ - Support for relative paths within the datadir LV.
+ - Sane default locations for the snapshot mount point and the backup
+   directory. Distributions should create /var/tmp/mylvmbackup/mnt/ and
+   /var/tmp/mylvmbackup/backup/ on installation of mylvmbackup.
+ - Add a prefix name for backups, to enable multiple parallel backups.
+ - Add host/port/socket support for connecting to MySQL properly.
+ - Give a little more output during the backup process.
+ - Change the position file format to be a key/value pair style.
+ - Capture the slave and master status during position capture.
+ - Hidden option: 'tararg' to override the default 'cvzf' parameter to tar.
+ - Hidden option: 'backuplv' to control the name of the snapshot LV.
+
+2006-05-05  Lenz Grimmer <lenz@grimmer.com>
+
+ - Initial version 0.1
+ - Moved out of the internal BK repository, added GPL license and additional info
