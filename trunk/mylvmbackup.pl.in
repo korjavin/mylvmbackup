@@ -119,31 +119,30 @@ $backupdir = clean_dirname($backupdir);
 die "You must specify a non-empty prefix to name your backup!\n" unless ($prefix ne "");
 
 $backuplv = $lvname.'_snapshot' if length($backuplv) == 0;
+my $date= time2str($datefmt, time);
+my $fullprefix = $prefix.'-'.$date;
 
 my $topmountdir = $mountdir;
 
-my $posdir = $backupdir.'/pos';
+my $posbasedir = tempdir ( 'mylvmbackup-'.$fullprefix.'-XXXXXX', TMPDIR => 1, CLEANUP => 1 );
+my $posdir = $posbasedir.'/pos';
+mkdir $posdir;
 
-my $date= time2str($datefmt, time);
-my $pos_filename = $posdir.'/'.$prefix.'-'.$date.'_mysql.pos';
+my $pos_filename = $posdir.'/'.$fullprefix.'_mysql.pos';
 my $mycnf_basename = File::Basename::basename($mycnf);
-my $mycnf_filename = $posdir.'/'.$prefix.'-'.$date.'_'.$mycnf_basename;
+my $mycnf_filename = $posdir.'/'.$fullprefix.'_'.$mycnf_basename;
 # No .tar.gz on the end!
-my $archivename  = $backupdir.'/'.$prefix.'-'.$date.'_mysql';
+my $archivename  = $backupdir.'/'.$fullprefix.'_mysql';
 
 my $mounted = 0;
 my $posmounted = 0;
 my $snapshot_created = 0;
 
 # Check the backupdir, it must exist, and it must be readable/writable
-check_dir($backupdir,'backupdir');
-
-# Ensure sub-directory for position file exists. Old position files can be
-# ignored, hence we do not check for them.
-mkdir $posdir;
+check_dir($backupdir, 'backupdir') unless ($backupdir =~ /::/ and $backuptype eq 'rsync');
 
 # Check the mountdir, it must exist, and be readable/writeable
-check_dir($mountdir,'mountdir');
+check_dir($mountdir, 'mountdir');
 
 # Append the prefix to the mountdir, to allow multiple parallel backups. The
 # extra / is to ensure we go a level under it. An empty prefix is disallowed.
@@ -157,7 +156,7 @@ mkdir $mountdir;
 mkdir $posmountdir;
 
 # Check it again for existence and read/write.
-check_dir($mountdir,'mountdir');
+check_dir($mountdir, 'mountdir');
 
 # Now make sure it's empty
 my @mountdir_content = glob "$mountdir/*" ;
@@ -468,7 +467,11 @@ sub do_backup_tar
 sub do_backup_rsync
 {
   my $destdir = $archivename;
-  my $destdirtmp = mkdtemp("$destdir.INCOMPLETE-XXXXXXX");
+  my $destdirtmp = $destdir;
+  # Do not use mkdtemp here, as we can't touch the remote side yet.
+  if($destdir !~ /::/) {
+    $destdirtmp = sprintf('%s.INCOMPLETE-%07d',$destdir,int(rand(2**16)));
+  }
   log_msg ("Archving with rsync to $destdir", LOG_INFO);
 
   # Trailing slash is bad
@@ -478,10 +481,10 @@ sub do_backup_rsync
   my $command = "$rsync $rsyncarg $mountdir/$relpath_noslash";
   $command .= " $pos_filename" if (-f $pos_filename );
   $command .= " $mycnf_filename" if (-f $mycnf_filename );
-  $command .= " $destdirtmp";
+  $command .= " $destdirtmp/";
   if ( system($command) == 0 )
   {
-    rename $destdirtmp, $destdir;
+    rename $destdirtmp, $destdir if($destdirtmp ne $destdir);
     log_msg ("DONE", LOG_INFO);
   } else {
     log_msg ("FAIL $!", LOG_ERR);
