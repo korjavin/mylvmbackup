@@ -119,12 +119,12 @@ $backupdir = clean_dirname($backupdir);
 die "You must specify a non-empty prefix to name your backup!\n" unless ($prefix ne "");
 
 $backuplv = $lvname.'_snapshot' if length($backuplv) == 0;
-my $date= time2str($datefmt, time);
+my $date = time2str($datefmt, time);
 my $fullprefix = $prefix.'-'.$date;
 
 my $topmountdir = $mountdir;
 
-my $posbasedir = tempdir ( 'mylvmbackup-'.$fullprefix.'-XXXXXX', TMPDIR => 1, CLEANUP => 1 );
+my $posbasedir = tempdir('mylvmbackup-'.$fullprefix.'-XXXXXX', TMPDIR => 1, CLEANUP => 1);
 my $posdir = $posbasedir.'/pos';
 mkdir $posdir;
 
