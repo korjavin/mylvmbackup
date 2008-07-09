@@ -1,3 +1,15 @@
+2008-07-09  Lenz Grimmer <lenz@grimmer.com>
+
+ - Applied patch from Robin H. Johnson: Full support for an rsync:// service
+   as the backup destination. If you include any path fragments with the rsync
+   module name, they must already exist!
+ - Updated documentation to reflect this change
+
+2008-06-25  Lenz Grimmer <lenz@grimmer.com>
+
+ - The mylvmbackup source tree was moved from Subversion to Bazaar and is now
+   hosted on Launchpad.net: 
+
 2008-04-10  Lenz Grimmer <lenz@grimmer.com>
 
  - Bumped up version number to 0.9

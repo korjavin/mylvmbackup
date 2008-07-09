@@ -21,7 +21,7 @@ use Config::IniFiles;
 use Date::Format;
 use DBI;
 use File::Basename;
-use File::Temp;
+use File::Temp qw/ tempdir mktemp /;
 use Getopt::Long;
 
 use diagnostics;
