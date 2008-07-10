@@ -1,3 +1,15 @@
+2008-07-10  Lenz Grimmer <lenz@grimmer.com>
+
+ - Applied patch from Patrick Hahn: provide an option to call external
+   scripts/applications (hooks) at various stages of the backup
+   process. See the man page for instructions
+ - Added options "--skip_hooks" to disable the execution of hooks and
+   "--hooksdir" to define the location for these (default is
+   /usr/share/mylvmbackup)
+ - Updated documentation: added new options and instructions on how
+   to use hooks
+ - Updated TODO
+
 2008-07-09  Lenz Grimmer <lenz@grimmer.com>
 
  - Applied patch from Robin H. Johnson: Full support for an rsync:// service

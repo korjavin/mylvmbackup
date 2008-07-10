@@ -36,6 +36,4 @@ mylvmbackup TODO list:
  - Providing an option to shut down the server instead of using FLUSH TABLES
    WITH READ LOCK before taking the snapshot, for consistent InnoDB snapshots
    (e.g. on a replication slave)
- - Allow running custom scripts before/after each phase: (flush, lvcreate,
-   mount, recover, backup, umount)
  - RPM packaging: fix Requires for distributions (e.g. perl-Config-IniFiles)

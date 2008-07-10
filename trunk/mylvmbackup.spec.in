@@ -51,3 +51,4 @@ make DESTDIR=$RPM_BUILD_ROOT prefix=%{_prefix} mandir=%{_mandir} install
 %doc ChangeLog COPYING INSTALL README TODO
 %doc %{_mandir}/man1/%{name}.1*
 %{_bindir}/%{name}
+%{_datadir}/%{name}

@@ -4,7 +4,7 @@ Lenz Grimmer <lenz@grimmer.com>
 
 NAME
 ----
-mylvmbackup - utility for creating MySQL backups via LVM snapshots
+mylvmbackup - a utility for creating MySQL backups using LVM snapshots
 
 
 SYNOPSIS
@@ -43,7 +43,7 @@ socket location, you must specify '--host' or '--socket'. Even though
 mylvmbackup communicates with the server through a normal client connection to
 obtain the read lock and flush data, it performs the actual backup by
 accessing the file system directly. It is also a requirement that the MySQL
-server data directory resides on an LVM volume. (It is, however, a good idea
+server's data directory resides on an LVM volume. (It is, however, a good idea
 to do the LVM backup to a different partition than the one where the data
 directory resides.  Otherwise, there is a good chance that LVM will run out of
 undo space for LVM snapshot maintenance and the backup will fail.)
@@ -79,6 +79,36 @@ If you use InnoDB tables exclusively, you may also want to consider to include
 the option '--skip_flush_tables', to avoid the probably time-consuming and in
 this case unnecessary flushing of buffers. But don't enable this option when
 MyISAM tables are involved!
+
+
+HOOKS
+-----
+It is possible to run arbitrary external programs or scripts (hooks) at
+various stages of the backup process, to perform additional actions as part
+of the backup process.
+
+These scripts or symbolic links to executables should be placed in the
+directory that the 'hooksdir' configuration option points to
+('/usr/share/mylvmbackup' by default). They should return zero upon successful
+completion, any non-zero return value will be considered a failure which will
+be logged.
+
+The names of the scripts or symbolic links reflect the stage in which the hook
+will be called. Currently, the following stages exist:
+
+* 'preconnect': before a connection to the database server is established
+* 'preflush': before calling FLUSH TABLES
+* 'presnapshot': before the file system snapshot is created
+* 'preunlock': before the database tables are unlocked again
+* 'predisconnect': before the connection to the database server is released
+* 'premount': before the snapshot volume is mounted
+* 'prebackup': before the snapshot backup will be performed
+* 'precleanup': before the snapshot is unmounted and discarded
+
+These hooks are optional and will only be called if a file for the particular
+stage exists and is executable.  The execution of all hooks can be supressed
+by passing the '--skip_hooks' option or by setting the 'skip_hooks'
+configuration option to '1';
 
 OPTIONS
 -------
@@ -153,6 +183,15 @@ the leading dashes, of course).
 --skip_mycnf::
   Skip backing up the MySQL configuration file.
   The default is to include a copy of the configuration file in the backup.
+
+--hooksdir=string::
+  The location of external scripts or executable to be called during various
+  stages of the backup. See the HOOKS section in this manual page for more
+  info.
+  The default is '/usr/share/mylvmbackup'.
+
+--skip_hooks::
+  Skip invoking any external hooks during the backup.
 
 --vgname=string::
   Specifies the volume group of the logical volume where the MySQL

@@ -44,6 +44,7 @@ CLEANFILES = $(NAME).spec $(NAME) $(MAN1) $(MAN1).html
 prefix = /usr/local
 sysconfdir = /etc
 bindir = $(prefix)/bin
+datadir = $(prefix)/share/mylvmbackup
 distdir = $(NAME)-$(VERSION)
 mandir = $(prefix)/man
 man1dir = $(mandir)/man1
@@ -69,6 +70,7 @@ install: all
 	test -d $(DESTDIR)$(bindir) || $(INSTALL) -d $(DESTDIR)$(bindir)
 	test -d $(DESTDIR)$(man1dir) || $(INSTALL) -d $(DESTDIR)$(man1dir)
 	test -d $(DESTDIR)$(sysconfdir) || $(INSTALL) -d $(DESTDIR)$(sysconfdir)
+	test -d $(DESTDIR)$(datadir) || $(INSTALL) -d $(DESTDIR)$(datadir)
 	$(INSTALL_PROGRAM) $(NAME) $(DESTDIR)$(bindir)
 	$(INSTALL_DATA) $(MAN1) $(DESTDIR)$(man1dir)/$(NAME).1
 	$(INSTALL_CONF) $(NAME).conf $(DESTDIR)$(sysconfdir)

@@ -39,9 +39,11 @@ my $configfile2 = "";
 my $backupdir;
 my $backuplv;
 my $datefmt;
+my $hooksdir;
 my $host;
 my $innodb_recover;
 my $skip_flush_tables;
+my $skip_hooks;
 my $skip_mycnf;
 my $extra_flush_tables;
 my $lvcreate;
@@ -182,12 +184,14 @@ if(length($port) > 0) {
  $dsn .= ";port=".$port;
 }
 
+run_hook ("preconnect");
 log_msg ("Connecting to database...", LOG_INFO);
 my $dbh= DBI->connect($dsn,$user,$password)
   or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
 
 unless ($skip_flush_tables == 1)
 {
+  run_hook ("preflush");
   if($extra_flush_tables == 1)
   {
     log_msg ("Flushing tables (initial)...", LOG_INFO);
@@ -203,18 +207,22 @@ unless ($skip_flush_tables == 1)
 log_msg ("Taking position record...", LOG_INFO);
 &create_pos_file($dbh);
 
+run_hook ("presnapshot");
 log_msg ("Taking snapshot...", LOG_INFO);
 create_snapshot();
 
+run_hook ("preunlock");
 log_msg ("Unlocking tables...", LOG_INFO);
 $dbh->do("UNLOCK TABLES") 
   or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
 
+run_hook ("predisconnect");
 log_msg ("Disconnecting from database...", LOG_INFO);
 $dbh->disconnect;
 
 if ($snapshot_created)
 {
+  run_hook("premount");
   log_msg ("Mounting snapshot...", LOG_INFO);
   if (mount_snapshot() and mount_posdir_bind())
   {
@@ -229,12 +237,14 @@ if ($snapshot_created)
       create_mycnf_file();
     }
 
+    run_hook("prebackup");
     log_msg ("Taking actual backup...", LOG_INFO);
     do_backup_tar() if ($backuptype eq 'tar');
     do_backup_rsync() if ($backuptype eq 'rsync');
   }    
 }
 
+run_hook("precleanup");
 log_msg ("Cleaning up...", LOG_INFO);
 cleanup();
 exit 0;
@@ -271,6 +281,8 @@ sub load_config
   $tararg=$cfg->val ('misc', 'tararg', $tararg);
   $tarsuffixarg=$cfg->val ('misc', 'tarsuffixarg', $tarsuffixarg);
   $tarfilesuffix = $cfg->val ('misc', 'tarfilesuffix', $tarfilesuffix);
+  $hooksdir = $cfg->val ('misc', 'hooksdir', $hooksdir);
+  $skip_hooks=$cfg->val ('misc', 'skip_hooks', $skip_hooks);
 
   $mountdir=$cfg->val ('fs', 'mountdir', $mountdir);
   $backupdir=$cfg->val ('fs', 'backupdir', $backupdir);
@@ -327,6 +339,8 @@ sub load_args
     "tarsuffixarg=s" => \$tarsuffixarg,
     "tarfilesuffix=s" => \$tarfilesuffix,
     "rsyncarg=s" => \$rsyncarg,
+    "hooksdir=s" => \$hooksdir,
+    "skip_hooks" => \&skip_hooks,
 
 # fs
     "mountdir=s" => \$mountdir,
@@ -382,6 +396,8 @@ sub load_defaults
   $tarsuffixarg='';
   $tarfilesuffix='.tar.gz';
   $rsyncarg='-avPW';
+  $hooksdir='/usr/share/mylvmbackup';
+  $skip_hooks=0;
 
 # fs
   $mountdir='/var/tmp/mylvmbackup/mnt/';
@@ -605,6 +621,10 @@ sub extra_flush_tables {
   $extra_flush_tables = 1;
 }
 
+sub skip_hooks {
+  $skip_hooks = 1;
+}
+
 sub skip_mycnf {
   $skip_mycnf = 1;
 }
@@ -622,6 +642,7 @@ This script performs a MySQL backup by using an LVM snapshot volume.
 It requires the MySQL server's data directory to be placed on a logical
 volume, and creates an LVM snapshot to create a copy of the MySQL datadir.
 Afterwards, all data files are archived to a backup directory.
+
 See the manual page for more info including a complete list of options.
  
 Common options:
@@ -687,6 +708,25 @@ sub clean_dirname
  $d =~ s/^\s*//g;
  $d =~ s/\s$//g;
  return File::Basename::dirname($d.'/foo')
+}
+
+#
+# Script hooks
+#
+sub run_hook
+{
+  return if $skip_hooks;
+  my $hookname = shift;
+  my $hookfile = $hooksdir."/".$hookname;
+  if (-x $hookfile)
+  {
+    log_msg ("Running hook ".$hookname, LOG_INFO);
+    system($hookfile);
+    if ( $? >> 8 != 0)
+    {
+      log_msg (sprintf("Hook $hookname failed with nonzero exit value %d", $? >> 8), LOG_ERR);
+    }
+  }
 }
 
 sub lvm_version
