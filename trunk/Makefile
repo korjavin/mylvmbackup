@@ -84,7 +84,6 @@ distdir: all
 	if test -d $(distdir) ; then $(RM) -rf $(distdir) ; fi
 	mkdir $(distdir)
 	$(CP) -a $(DISTFILES) $(distdir)
-	$(RM) -rf `$(FIND) $(distdir) -type d -name .svn -print`
 
 dist: distdir
 	$(TAR) chof - $(distdir) | $(GZIP) -c > $(distdir).tar.gz
