@@ -406,13 +406,13 @@ sub load_defaults
   $need_xfsworkaround=0;
 
 # tools
-  $lvcreate='lvcreate';
-  $lvremove='lvremove';
-  $lvs='lvs';
-  $mount='mount';
-  $umount='umount';
-  $tar='tar';
-  $rsync='rsync';
+  $lvcreate='/sbin/lvcreate';
+  $lvremove='/sbin/lvremove';
+  $lvs='/sbin/lvs';
+  $mount='/bin/mount';
+  $umount='/bin/umount';
+  $tar='/bin/tar';
+  $rsync='/usr/bin/rsync';
 
 # logging
   $log_method = 'console';
