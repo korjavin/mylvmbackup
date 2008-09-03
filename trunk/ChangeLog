@@ -5,6 +5,8 @@
    Providing the option "--backuptype=none" will now skip creating a backup
    using the builtin backup modules. Both option provide more flexibility
    when using hooks for performing the actual backup tasks.
+ - Added two new hooks: "backupsuccess" and "backupfailure" which are called
+   respectively upon success of failure of the backup operation
  - Updated documentation
 
 2008-07-18  Lenz Grimmer <lenz@grimmer.com>

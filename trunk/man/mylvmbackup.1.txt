@@ -108,6 +108,8 @@ will be called. Currently, the following stages exist:
 * 'predisconnect': before the connection to the database server is released
 * 'premount': before the snapshot volume is mounted
 * 'prebackup': before the snapshot backup will be performed
+* 'backupsuccess': after a successful backup
+* 'backupfailure': after a failed backup
 * 'precleanup': before the snapshot is unmounted and discarded
 
 These hooks are optional and will only be called if a file for the particular

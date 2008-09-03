@@ -239,9 +239,17 @@ if ($snapshot_created)
     }
 
     run_hook("prebackup");
-    if ($backuptype eq 'tar') {do_backup_tar()}
-    elsif ($backuptype eq 'rsync') {do_backup_rsync()}
-    else {do_backup_none()};
+    my $backupsuccess=0;
+    if ($backuptype eq 'tar') {$backupsuccess = do_backup_tar()}
+    elsif ($backuptype eq 'rsync') {$backupsuccess = do_backup_rsync()}
+    else {$backupsuccess = do_backup_none()};
+
+    if ($backupsuccess == 1)
+    {
+      run_hook("backupsuccess");
+    } else {
+      run_hook("backupfailure");
+    }
   }    
 }
 
@@ -480,14 +488,17 @@ sub do_backup_tar
   {
     rename $tarballtmp, $tarball;
     log_msg ("DONE", LOG_INFO);
+    return 1;
   } else {
     log_msg ("FAIL $!", LOG_ERR);
+    return 0;
   }    
 }
 
 sub do_backup_none
 {
   log_msg ("Backuptype none selected, not doing backup... DONE", LOG_INFO);
+  return 1;
 }
 
 sub do_backup_rsync
@@ -513,8 +524,10 @@ sub do_backup_rsync
   {
     rename $destdirtmp, $destdir if($destdirtmp ne $destdir);
     log_msg ("DONE", LOG_INFO);
+    return 1;
   } else {
     log_msg ("FAIL $!", LOG_ERR);
+    return 0;
   }    
 }
 
