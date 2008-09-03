@@ -46,6 +46,7 @@ my $skip_flush_tables;
 my $skip_hooks;
 my $skip_mycnf;
 my $extra_flush_tables;
+my $keep_snapshot;
 my $lvcreate;
 my $lvname;
 my $lvremove;
@@ -238,9 +239,9 @@ if ($snapshot_created)
     }
 
     run_hook("prebackup");
-    log_msg ("Taking actual backup...", LOG_INFO);
-    do_backup_tar() if ($backuptype eq 'tar');
-    do_backup_rsync() if ($backuptype eq 'rsync');
+    if ($backuptype eq 'tar') {do_backup_tar()}
+    elsif ($backuptype eq 'rsync') {do_backup_rsync()}
+    else {do_backup_none()};
   }    
 }
 
@@ -283,6 +284,7 @@ sub load_config
   $tarfilesuffix = $cfg->val ('misc', 'tarfilesuffix', $tarfilesuffix);
   $hooksdir = $cfg->val ('misc', 'hooksdir', $hooksdir);
   $skip_hooks=$cfg->val ('misc', 'skip_hooks', $skip_hooks);
+  $keep_snapshot=$cfg->val ('misc', 'keep_snapshot', $keep_snapshot);
 
   $mountdir=$cfg->val ('fs', 'mountdir', $mountdir);
   $backupdir=$cfg->val ('fs', 'backupdir', $backupdir);
@@ -341,6 +343,7 @@ sub load_args
     "rsyncarg=s" => \$rsyncarg,
     "hooksdir=s" => \$hooksdir,
     "skip_hooks" => \&skip_hooks,
+    "keep_snapshot" => \&keep_snapshot,
 
 # fs
     "mountdir=s" => \$mountdir,
@@ -398,6 +401,7 @@ sub load_defaults
   $rsyncarg='-avPW';
   $hooksdir='/usr/share/mylvmbackup';
   $skip_hooks=0;
+  $keep_snapshot=0;
 
 # fs
   $mountdir='/var/tmp/mylvmbackup/mnt/';
@@ -458,6 +462,7 @@ sub do_backup_tar
   my $tarball = $archivename.$tarfilesuffix;
   my $tarballtmp = mktemp("$tarball.INCOMPLETE-XXXXXXX");
 
+  log_msg ("Taking actual backup...", LOG_INFO);
   log_msg ("Creating tar archive $tarball", LOG_INFO);
   my $mountdir_rel = $mountdir;
   $mountdir_rel =~ s/^$topmountdir//g;
@@ -480,6 +485,11 @@ sub do_backup_tar
   }    
 }
 
+sub do_backup_none
+{
+  log_msg ("Backuptype none selected, not doing backup... DONE", LOG_INFO);
+}
+
 sub do_backup_rsync
 {
   my $destdir = $archivename;
@@ -488,6 +498,7 @@ sub do_backup_rsync
   if($destdir !~ /::/) {
     $destdirtmp = sprintf('%s.INCOMPLETE-%07d',$destdir,int(rand(2**16)));
   }
+  log_msg ("Taking actual backup...", LOG_INFO);
   log_msg ("Archving with rsync to $destdir", LOG_INFO);
 
   # Trailing slash is bad
@@ -606,7 +617,11 @@ sub cleanup
   foreach my $lvs_info (@lvs_info) {
     log_msg ($lvs_info, LOG_INFO);
   }
-  system("$lvremove -f /dev/$vgname/$backuplv") if ($snapshot_created);
+  if( $keep_snapshot == 0 ) {
+      system("$lvremove -f /dev/$vgname/$backuplv") if ($snapshot_created);
+  } else {
+      log_msg("Not removing snapshot as requested by configuration", LOG_INFO);
+  }
 }
 
 sub innodb_recover {
@@ -623,6 +638,10 @@ sub extra_flush_tables {
 
 sub skip_hooks {
   $skip_hooks = 1;
+}
+
+sub keep_snapshot {
+  $keep_snapshot = 1;
 }
 
 sub skip_mycnf {
@@ -660,7 +679,7 @@ Common options:
 
   --prefix=<prefix>             Prefix for naming the backup (def: $prefix)
   --backupdir=<dirname>         Path for archives (def: $backupdir)
-  --backuptype=(tar|rsync)      Use tar or rsync for performing the backup.
+  --backuptype=(tar|rsync|none) Select backup type: tar, rsync or no backup
 
   --configfile=<file>           Specify an alternative configuration file (def: $configfile)
   --help                        Print this help

@@ -35,6 +35,11 @@ the rsync backup is primarily developed for performing local backups. You
 can configure it for backing up to a remote rsync server, but this is not
 fully tested in all possible configurations yet and may change at some point.
 
+Additionally, a backup type 'none' is provided for cases where the user wants
+to use mylvmbackup only for creating the snapshots and intends to perform the
+actual backup by using the appropriate hooks. (Or for cases where the snapshot
+itself is considered to be the backup).
+
 GENERAL HINTS
 -------------
 It is required to run mylvmbackup on the same host where the MySQL server
@@ -207,6 +212,11 @@ the leading dashes, of course).
   Specifies the name of the logical volume for the snapshot volume.
   The default is appending "_snapshot" to the lvname.
 
+--keep_snapshot::
+  If this option is given, mylvmbackup will not remove the snapshot
+  before terminating. Note that keeping multiple LVM snapshots open at
+  the same time can reduce I/O performance.
+
 --relpath=string::
   Relative path on the logical volume to the MySQL data directory.
   The default is the empty string.
@@ -216,8 +226,8 @@ the leading dashes, of course).
   The default is '5G' (5 gigabytes).
 
 --backuptype=string::
-  Specifies what type of backup to perform. The available options are 'tar'
-  and 'rsync'.
+  Specifies what type of backup to perform. The available options are
+  'tar', 'rsync', and 'none'.
 
 --prefix=string::
   Prefix added to the backup file names. It is also appended to
