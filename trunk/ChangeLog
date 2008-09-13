@@ -3,7 +3,7 @@
  - Applied patch from Marc Haber: added option "--keep_snapshot" that will
    skip the removal of the backup snapshot before terminating the script.
    Providing the option "--backuptype=none" will now skip creating a backup
-   using the builtin backup modules. Both option provide more flexibility
+   using the builtin backup modules. Both options provide more flexibility
    when using hooks for performing the actual backup tasks.
  - Added two new hooks: "backupsuccess" and "backupfailure" which are called
    respectively upon success of failure of the backup operation
