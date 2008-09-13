@@ -1,6 +1,0 @@
-This directory contains the previous tagged versions of mylvmbackup,
-when the code was still maintained in Subversion. Since the source tree
-has been moved to Bazaar, tags are maintained as bzr tags, not by
-creating new subdirectories in here. You can use "bzr tags" to see
-all available tags, "bzr clone -r tag:<tag>" to branch from a certain
-tagged version.
