@@ -14,6 +14,7 @@ INSTALL = /usr/bin/install
 INSTALL_DATA = $(INSTALL) -m 644
 INSTALL_PROGRAM = $(INSTALL) -m 755
 INSTALL_CONF = $(INSTALL) -m 600
+MV = /bin/mv
 POD2MAN = /usr/bin/pod2man
 POD2TEXT = /usr/bin/pod2text
 RM = /bin/rm
@@ -73,6 +74,7 @@ install: all
 	test -d $(DESTDIR)$(datadir) || $(INSTALL) -d $(DESTDIR)$(datadir)
 	$(INSTALL_PROGRAM) $(NAME) $(DESTDIR)$(bindir)
 	$(INSTALL_DATA) $(MAN1) $(DESTDIR)$(man1dir)/$(NAME).1
+	if test -f $(DESTDIR)$(sysconfdir)/$(NAME).conf ; then $(MV) $(DESTDIR)$(sysconfdir)/$(NAME).conf $(DESTDIR)$(sysconfdir)/$(NAME).conf.bak ; fi
 	$(INSTALL_CONF) $(NAME).conf $(DESTDIR)$(sysconfdir)
 
 uninstall:
