@@ -1,3 +1,12 @@
+2008-09-23  Lenz Grimmer <lenz@grimmer.com>
+
+ - Bumped up version number to 0.11
+ - Applied patch from Matt Lohier to support rsnap as a backup backend
+ - Updated man page
+ - Moved the list of contributors from the man page into a separate CREDITS
+   file, added missing names
+ - Updated the RPM spec file to include CREDITS
+
 2008-09-03  Lenz Grimmer <lenz@grimmer.com>
 
  - Applied patch from Marc Haber: added option "--keep_snapshot" that will
@@ -6,13 +15,14 @@
    using the builtin backup modules. Both options provide more flexibility
    when using hooks for performing the actual backup tasks.
  - Added two new hooks: "backupsuccess" and "backupfailure" which are called
-   respectively upon success of failure of the backup operation
+   respectively upon success of failure of the backup operation (Bug #264089)
  - Updated documentation
 
 2008-07-18  Lenz Grimmer <lenz@grimmer.com>
 
  - Make sure that binaries are being found ($PATH may not include /sbin when
    called from cron), added missing entry for "lvs" to mylvmbackup.conf
+   (Bug #255703)
 
 2008-07-10  Lenz Grimmer <lenz@grimmer.com>
 
