@@ -65,7 +65,9 @@ my $prefix;
 my $relpath;
 my $socket;
 my $rsync;
+my $rsnap;
 my $rsyncarg;
+my $rsnaparg;
 my $tar;
 my $tararg;
 my $tarsuffixarg;
@@ -142,7 +144,7 @@ my $posmounted = 0;
 my $snapshot_created = 0;
 
 # Check the backupdir, it must exist, and it must be readable/writable
-check_dir($backupdir, 'backupdir') unless ($backupdir =~ /::/ and $backuptype eq 'rsync');
+check_dir($backupdir, 'backupdir') unless ($backupdir =~ /::/ and (($backuptype eq 'rsync') or ($backuptype eq 'rsnap')));
 
 # Check the mountdir, it must exist, and be readable/writeable
 check_dir($mountdir, 'mountdir');
@@ -242,6 +244,7 @@ if ($snapshot_created)
     my $backupsuccess=0;
     if ($backuptype eq 'tar') {$backupsuccess = do_backup_tar()}
     elsif ($backuptype eq 'rsync') {$backupsuccess = do_backup_rsync()}
+    elsif ($backuptype eq 'rsnap') {$backupsuccess = do_backup_rsnap()}
     else {$backupsuccess = do_backup_none()};
 
     if ($backupsuccess == 1)
@@ -287,6 +290,7 @@ sub load_config
   $extra_flush_tables=$cfg->val ('misc', 'extra_flush_tables', $extra_flush_tables);
   $skip_mycnf=$cfg->val ('misc', 'skip_mycnf', $skip_mycnf);
   $rsyncarg=$cfg->val ('misc', 'rsyncarg', $rsyncarg);
+  $rsnaparg=$cfg->val ('misc', 'rsnaparg', $rsnaparg);
   $tararg=$cfg->val ('misc', 'tararg', $tararg);
   $tarsuffixarg=$cfg->val ('misc', 'tarsuffixarg', $tarsuffixarg);
   $tarfilesuffix = $cfg->val ('misc', 'tarfilesuffix', $tarfilesuffix);
@@ -306,6 +310,7 @@ sub load_config
   $umount=$cfg->val ('tools', 'umount', $umount);
   $tar=$cfg->val ('tools', 'tar', $tar);
   $rsync=$cfg->val ('tools', 'rsync', $rsync);
+  $rsnap=$cfg->val ('tools', 'rsnap', $rsnap);
 
   $log_method = $cfg->val('logging', 'log_method', $log_method);
   $syslog_socktype = $cfg->val ('logging', 'syslog_socktype', $syslog_socktype);
@@ -349,6 +354,7 @@ sub load_args
     "tarsuffixarg=s" => \$tarsuffixarg,
     "tarfilesuffix=s" => \$tarfilesuffix,
     "rsyncarg=s" => \$rsyncarg,
+    "rsnaparg=s" => \$rsnaparg,
     "hooksdir=s" => \$hooksdir,
     "skip_hooks" => \&skip_hooks,
     "keep_snapshot" => \&keep_snapshot,
@@ -367,6 +373,7 @@ sub load_args
     "umount=s" => \$umount,
     "tar=s" => \$tar,
     "rsync=s" => \$rsync,
+    "rsnap=s" => \$rsnap,
 
 # logging
     "log_method=s" => \$log_method,
@@ -407,6 +414,7 @@ sub load_defaults
   $tarsuffixarg='';
   $tarfilesuffix='.tar.gz';
   $rsyncarg='-avPW';
+  $rsnaparg='7';
   $hooksdir='/usr/share/mylvmbackup';
   $skip_hooks=0;
   $keep_snapshot=0;
@@ -425,6 +433,7 @@ sub load_defaults
   $umount='/bin/umount';
   $tar='/bin/tar';
   $rsync='/usr/bin/rsync';
+  $rsnap='/usr/bin/rsnap';
 
 # logging
   $log_method = 'console';
@@ -499,6 +508,31 @@ sub do_backup_none
 {
   log_msg ("Backuptype none selected, not doing backup... DONE", LOG_INFO);
   return 1;
+}
+
+sub do_backup_rsnap
+{
+  my $destdir = $backupdir;
+  
+  log_msg ("Archiving with rsnap to $destdir", LOG_INFO);
+
+  # Trailing slash is bad
+  my $relpath_noslash = $relpath;
+  $relpath_noslash =~ s/\/+$//g;
+
+  my $command = "$rsnap $rsnaparg $mountdir/$relpath_noslash";
+  $command .= " $destdir/";
+
+  log_msg("$command", LOG_INFO);
+
+  if ( system($command) == 0 )
+  {
+    log_msg ("DONE", LOG_INFO);
+    return 1;
+  } else {
+    log_msg ("FAIL $!", LOG_ERR);
+    return 0;
+  }
 }
 
 sub do_backup_rsync

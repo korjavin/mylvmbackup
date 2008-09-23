@@ -1,0 +1,23 @@
+Several people have contributed to the script since it has been released.
+See the ChangeLog for more details.
+
+Robin H. Johnson from the Gentoo project cleaned up the code and added
+several useful features, e.g. rsync backup support.
+
+Fred Blaise contributed the initial support to use an external
+configuration file and logging via syslog.
+
+Eric Bergen provided the code that performs the InnoDB recovery prior
+to performing the backup of LVM2 snapshot volumes. He also fixed the
+broken handling of default options.
+
+Kristian Köhntopp suggested the '--pidfile' option and to add the output
+of the LVM statistics for being able to better tune the snapshot size.
+
+Marc Haber provided a patch for keeping snapshots and using "none"
+as a backup type.
+
+Patrick Hahn provided an option to call external scripts/applications
+(hooks) at various stages of the backup process.
+
+Matt Lohier submitted the patch to support rsnap as a backup backend.

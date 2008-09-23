@@ -27,7 +27,7 @@ TAR = /bin/tar
 # define some variables
 
 NAME = mylvmbackup
-VERSION = 0.10
+VERSION = 0.11
 MAN1 = man/$(NAME).1
 DISTFILES = COPYING \
 	INSTALL \

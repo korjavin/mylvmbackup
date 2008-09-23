@@ -48,7 +48,7 @@ make DESTDIR=$RPM_BUILD_ROOT prefix=%{_prefix} mandir=%{_mandir} install
 %files
 %defattr(-, root, root)
 %config(noreplace,missingok) %attr(600, root, root) %{_sysconfdir}/mylvmbackup.conf
-%doc ChangeLog COPYING INSTALL README TODO
+%doc ChangeLog COPYING CREDITS INSTALL README TODO
 %doc %{_mandir}/man1/%{name}.1*
 %{_bindir}/%{name}
 %{_datadir}/%{name}

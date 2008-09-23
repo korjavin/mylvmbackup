@@ -35,6 +35,11 @@ the rsync backup is primarily developed for performing local backups. You
 can configure it for backing up to a remote rsync server, but this is not
 fully tested in all possible configurations yet and may change at some point.
 
+mylvmbackup also supports creating backups by using 'rsnap', which is a
+wrapper around 'rsync' to automatically maintain and rotate a given number of
+last backups (7 by default). It utilizes hard links to link to unchanged files
+for saving disk space.
+
 Additionally, a backup type 'none' is provided for cases where the user wants
 to use mylvmbackup only for creating the snapshots and intends to perform the
 actual backup by using the appropriate hooks. (Or for cases where the snapshot
@@ -229,7 +234,7 @@ the leading dashes, of course).
 
 --backuptype=string::
   Specifies what type of backup to perform. The available options are
-  'tar', 'rsync', and 'none'.
+  'tar', 'rsync', 'rsnap' and 'none'.
 
 --prefix=string::
   Prefix added to the backup file names. It is also appended to
@@ -280,6 +285,15 @@ the leading dashes, of course).
 --tarfilesuffix=string::
   Specifies the suffix for the tarball.
   The default is '.tar.gz'.
+
+--rsnap=string::
+  Specifies the pathname for the 'rsnap' program.
+  The default is 'rsnap'.
+
+--rsnaparg=string::
+  Specifies the arguments for the 'rsnap' program.
+  The default is '7', which causes it to keep the last 7 snapshot (useful
+  when running 'mylvmbackup' once per day).
 
 --rsync=string::
   Specifies the pathname for the 'rsync' program.
@@ -341,11 +355,12 @@ It also requires several other external programs: GNU 'tar' and 'gzip' to back
 up the data, LVM utilities ('lvcreate', 'lvremove' and 'lvs') to create and
 remove the LVM snapshot, and the system utilities 'mount' and 'umount'.
 
-'rsync' may be used in place of 'tar' and 'gzip'.
+Optionally, 'rsync' or 'rsnap' may be required instead of 'tar' and 'gzip',
+depending on which backup type you choose.
 
 SEE ALSO
 --------
-'mount(8)', 'tar(1)', 'lvcreate(8)', 'lvremove(8)', lvs(8)', 'umount(8)', 'rsync(1)'
+'mount(8)', 'tar(1)', 'lvcreate(8)', 'lvremove(8)', 'lvs(8)', 'umount(8)', 'rsync(1)'
 
 
 AUTHOR
@@ -365,22 +380,8 @@ Source code, bug tracker: https://launchpad.net/mylvmbackup/[]
 
 CREDITS
 -------
-Several people have contributed to the script since it has been released.
-See the ChangeLog for more details.
-
-Robin H. Johnson from the Gentoo project cleaned up the code and added
-several useful features.
-
-Fred Blaise contributed the initial support to use an external configuration
-file and logging via syslog.
-
-Eric Bergen provided the code that performs the InnoDB recovery prior
-to performing the backup of LVM2 snapshot volumes. He also fixed the
-broken handling of default options.
-
-Kristian Köhntopp for suggesting the '--pidfile' option and suggesting to
-add the output of the LVM statistics for being able to better tune the
-snapshot size.
+See the file CREDITS included in the distribution for a list of individual
+contributors.
 
 COPYING
 -------
