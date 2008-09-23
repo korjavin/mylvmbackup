@@ -30,6 +30,7 @@ NAME = mylvmbackup
 VERSION = 0.11
 MAN1 = man/$(NAME).1
 DISTFILES = COPYING \
+	CREDITS \
 	INSTALL \
 	ChangeLog \
 	Makefile \
