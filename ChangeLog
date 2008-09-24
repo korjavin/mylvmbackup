@@ -1,3 +1,9 @@
+2008-09-24  Lenz Grimmer <lenz@grimmer.com>
+
+ - Applied patch from Matthew Boehm to make the backup file name
+   suffix configurable via a "--suffix" option. Updated the man
+   page accordingly.
+
 2008-09-23  Lenz Grimmer <lenz@grimmer.com>
 
  - Bumped up version number to 0.11

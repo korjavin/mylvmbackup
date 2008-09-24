@@ -21,3 +21,6 @@ Patrick Hahn provided an option to call external scripts/applications
 (hooks) at various stages of the backup process.
 
 Matt Lohier submitted the patch to support rsnap as a backup backend.
+
+Matthew Boehm contributed a patch to make the backup file name suffix
+configurable via a "--suffix" option.

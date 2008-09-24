@@ -62,6 +62,7 @@ my $pidfile;
 my $port;
 my $backuptype;
 my $prefix;
+my $suffix;
 my $relpath;
 my $socket;
 my $rsync;
@@ -116,7 +117,6 @@ if ($innodb_recover == 1 && $lvm_version =~ /^1/)
 }
 
 # Clean up directory inputs
-$prefix = clean_dirname($prefix);
 $mountdir = clean_dirname($mountdir);
 $backupdir = clean_dirname($backupdir);
 
@@ -125,7 +125,7 @@ die "You must specify a non-empty prefix to name your backup!\n" unless ($prefix
 
 $backuplv = $lvname.'_snapshot' if length($backuplv) == 0;
 my $date = time2str($datefmt, time);
-my $fullprefix = $prefix.'-'.$date;
+my $fullprefix = $prefix.'-'.$date.$suffix;
 
 my $topmountdir = $mountdir;
 
@@ -133,11 +133,11 @@ my $posbasedir = tempdir('mylvmbackup-'.$fullprefix.'-XXXXXX', TMPDIR => 1, CLEA
 my $posdir = $posbasedir.'/pos';
 mkdir $posdir;
 
-my $pos_filename = $posdir.'/'.$fullprefix.'_mysql.pos';
+my $pos_filename = $posdir.'/'.$fullprefix.'.pos';
 my $mycnf_basename = File::Basename::basename($mycnf);
 my $mycnf_filename = $posdir.'/'.$fullprefix.'_'.$mycnf_basename;
 # No .tar.gz on the end!
-my $archivename  = $backupdir.'/'.$fullprefix.'_mysql';
+my $archivename  = $backupdir.'/'.$fullprefix;
 
 my $mounted = 0;
 my $posmounted = 0;
@@ -283,6 +283,7 @@ sub load_config
   
   $backuptype=$cfg->val ('misc', 'backuptype', $backuptype);
   $prefix=$cfg->val ('misc', 'prefix', $prefix);
+  $suffix=$cfg->val ('misc', 'suffix', $suffix);
   $datefmt=$cfg->val ('misc', 'datefmt', $datefmt);
   $innodb_recover=$cfg->val ('misc', 'innodb_recover', $innodb_recover);
   $pidfile=$cfg->val ('misc', 'pidfile', $pidfile);
@@ -344,6 +345,7 @@ sub load_args
 # misc
     "backuptype=s" => \$backuptype,
     "prefix=s" => \$prefix,
+    "suffix=s" => \$suffix,
     "datefmt=s" => \$datefmt,
     "innodb_recover" => \&innodb_recover,
     "pidfile=s" => \$pidfile,
@@ -404,6 +406,7 @@ sub load_defaults
 # misc
   $backuptype='tar';
   $prefix='backup';
+  $suffix='_mysql';
   $datefmt='%Y%m%d_%H%M%S';
   $innodb_recover=0;
   $pidfile = '/var/tmp/mylvmbackup_recoverserver.pid';
@@ -725,6 +728,7 @@ Common options:
   --lvsize=<size>               Size for snapshot volume (def: $lvsize)
 
   --prefix=<prefix>             Prefix for naming the backup (def: $prefix)
+  --suffix=<suffix>             Prefix for naming the backup (def: $suffix)
   --backupdir=<dirname>         Path for archives (def: $backupdir)
   --backuptype=(tar|rsync|none) Select backup type: tar, rsync or no backup
 

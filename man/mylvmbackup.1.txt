@@ -25,9 +25,10 @@ The LVM snapshot is mounted to a temporary directory and all data is backed up
 using the 'tar' program. By default, the archive file is created using a name
 of the form 'backup-YYYYMMDD_hhmmss_mysql.tar.gz', where 'YYYY', 'MM', 'DD',
 'hh', 'mm', and 'ss' represent the year, month, day, hour, minute, and second
-of the time at which the backup occurred. The prefix 'backup', date format and
-file suffix may be modified. The use of timestamped archive names allows you
-to run mylvmbackup many times without danger of overwriting old archives.
+of the time at which the backup occurred. The default prefix 'backup', date
+format and file suffix may be modified. The use of timestamped archive names
+allows you to run mylvmbackup many times without danger of overwriting old
+archives.
 
 Alternatively, instead of 'tar', you may use 'rsync'. This process is nearly
 identical, with the exception that the file suffix is not used. Currently,
@@ -240,6 +241,10 @@ the leading dashes, of course).
   Prefix added to the backup file names. It is also appended to
   the name of the directory used to mount the snapshot volume.
   The default value is 'backup'.
+
+--suffix=string::
+  Suffix added to the backup file names (after the time stamp).
+  The default value is '_mysql'.
 
 --datefmt=string::
   Format of the time stamp included in the backup file name. See
