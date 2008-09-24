@@ -3,9 +3,8 @@
 #
 
 # required programs
-A2X = /usr/bin/a2x
-A2XMANFLAGS = -d manpage -f manpage
-A2XHTMLFLAGS = -d manpage -f xhtml
+POD2MAN = /usr/bin/pod2man
+POD2HTML = /usr/bin/pod2html
 CHMOD = /bin/chmod
 CP = /bin/cp
 FIND = /usr/bin/find
@@ -15,8 +14,6 @@ INSTALL_DATA = $(INSTALL) -m 644
 INSTALL_PROGRAM = $(INSTALL) -m 755
 INSTALL_CONF = $(INSTALL) -m 600
 MV = /bin/mv
-POD2MAN = /usr/bin/pod2man
-POD2TEXT = /usr/bin/pod2text
 RM = /bin/rm
 RPMBUILD = /usr/bin/rpmbuild
 RPMFLAGS = -ta --clean
@@ -61,12 +58,11 @@ $(NAME): $(NAME).pl.in
 	$(CHMOD) 755 $@
 
 $(MAN1):
-	$(A2X) $(A2XMANFLAGS) $(MAN1).txt
-	$(RM) $(MAN1).xml
+	$(POD2MAN) man/$(NAME).pod > $(MAN1)
 
 htmlman:
-	$(A2X) $(A2XHTMLFLAGS) $(MAN1).txt
-	$(RM) $(MAN1).xml
+	$(POD2HTML) man/$(NAME).pod > man/$(NAME).html
+	$(RM) -f pod2htmd.tmp  pod2htmi.tmp
 
 install: all
 	test -d $(DESTDIR)$(bindir) || $(INSTALL) -d $(DESTDIR)$(bindir)

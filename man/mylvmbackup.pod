@@ -1,0 +1,474 @@
+=head1 NAME
+
+mylvmbackup - a utility for creating MySQL backups using LVM snapshots
+
+=head1 SYNOPSIS
+
+mylvmbackup [OPTIONS]
+
+=head1 DESCRIPTION
+
+mylvmbackup is a tool for quickly creating backups of MySQL server's data
+files. To perform a backup, mylvmbackup obtains a read lock on all tables and
+flushes all server caches to disk, makes an LVM snapshot of the volume
+containing the MySQL data directory, and unlocks the tables again. The
+snapshot process takes only a small amount of time. When it is done, the
+server can continue normal operations, while the actual file backup proceeds.
+
+The LVM snapshot is mounted to a temporary directory and all data is backed up
+using the I<tar> program. By default, the archive file is created using a name
+of the form I<backup-YYYYMMDD_hhmmss_mysql.tar.gz>, where I<YYYY>, I<MM>, I<DD>,
+I<hh>, I<mm>, and I<ss> represent the year, month, day, hour, minute, and second
+of the time at which the backup occurred. The default prefix I<backup>, date
+format and file suffix may be modified. The use of timestamped archive names
+allows you to run mylvmbackup many times without danger of overwriting old
+archives.
+
+Alternatively, instead of I<tar>, you may use I<rsync>. This process is nearly
+identical, with the exception that the file suffix is not used. Currently,
+the rsync backup is primarily developed for performing local backups. You
+can configure it for backing up to a remote rsync server, but this is not
+fully tested in all possible configurations yet and may change at some point.
+
+mylvmbackup also supports creating backups by using I<rsnap>, which is a
+wrapper around I<rsync> to automatically maintain and rotate a given number of
+last backups (7 by default). It utilizes hard links to link to unchanged files
+for saving disk space.
+
+Additionally, a backup type I<none> is provided for cases where the user wants
+to use mylvmbackup only for creating the snapshots and intends to perform the
+actual backup by using the appropriate hooks. (Or for cases where the snapshot
+itself is considered to be the backup).
+
+=head1 GENERAL HINTS
+
+It is required to run mylvmbackup on the same host where the MySQL server
+runs. If your MySQL daemon is not listening on localhost or using the default
+socket location, you must specify I<--host> or I<--socket>. Even though
+mylvmbackup communicates with the server through a normal client connection to
+obtain the read lock and flush data, it performs the actual backup by
+accessing the file system directly. It is also a requirement that the MySQL
+server's data directory resides on an LVM volume. (It is, however, a good idea
+to do the LVM backup to a different partition than the one where the data
+directory resides.  Otherwise, there is a good chance that LVM will run out of
+undo space for LVM snapshot maintenance and the backup will fail.)
+
+The user who invokes mylvmbackup must have sufficient filesystem permissions
+to create the LVM snapshot and mount it. This includes read/write access to
+the backup directory.
+
+If you plan to back up InnoDB tables using LVM snapshots, be advised that it
+is not sufficient to lock the tables and issue the I<FLUSH TABLES> command to
+get the table files into a consistent state. When starting the MySQL server
+from these restored files, InnoDB will detect these tables as being in an
+inconsistent state and will perform a recovery run before the tables can be
+accessed again. As this can potentially take some time (which you may not want
+to spend after restoring a server and trying to get it back on its feet as
+fast as possible), consider using the option I<--innodb_recover>, which will
+perform the recovery operation on the backup snapshot prior to archiving it.
+
+The recovery operation is performed by spawning a second mysqld instance that
+uses the snapshot volume as the data directory. Note that this functionality
+currently assumes the default InnoDB configuration - it does not work properly
+if you use options like I<--innodb-file-per-table>, I<--innodb-data-home-dir>,
+I<--innodb-data-file-path> or I<--innodb-log-group-home-dir> that modify the
+default file layout for InnoDB tables.
+
+Also note that this only works when using writable LVM snapshots and thus
+requires LVM2 (the script performs a test for this and will disable log
+recovery in the case it finds an LVM1 system). This will prolong the time
+needed to perform the actual backup, but will save you precious time when you
+eventually have to restore from this backup set.
+
+If you use InnoDB tables exclusively, you may also want to consider to include
+the option I<--skip_flush_tables>, to avoid the probably time-consuming and in
+this case unnecessary flushing of buffers. But don't enable this option when
+MyISAM tables are involved!
+
+=head1 HOOKS
+
+It is possible to run arbitrary external programs or scripts (hooks) at
+various stages of the backup process, to perform additional actions as part
+of the backup process.
+
+These scripts or symbolic links to executables should be placed in the
+directory that the I<hooksdir> configuration option points to
+(I</usr/share/mylvmbackup> by default). They should return zero upon successful
+completion, any non-zero return value will be considered a failure which will
+be logged.
+
+The names of the scripts or symbolic links reflect the stage in which the hook
+will be called. Currently, the following stages exist:
+
+=over 4
+
+=item B<preconnect>
+
+before a connection to the database server is established
+
+=item B<preflush>
+
+before calling FLUSH TABLES
+
+=item B<presnapshot>
+
+before the file system snapshot is created
+
+=item B<preunlock>
+
+before the database tables are unlocked again
+
+=item B<predisconnect>
+
+before the connection to the database server is released
+
+=item B<premount>
+
+before the snapshot volume is mounted
+
+=item B<prebackup>
+
+before the snapshot backup will be performed
+
+=item B<backupsuccess>
+
+after a successful backup
+
+=item B<backupfailure>
+
+after a failed backup
+
+=item B<precleanup>
+
+before the snapshot is unmounted and discarded
+
+=back
+
+These hooks are optional and will only be called if a file for the particular
+stage exists and is executable.  The execution of all hooks can be supressed
+by passing the I<--skip_hooks> option or by setting the I<skip_hooks>
+configuration option to I<1>;
+
+=head1 OPTIONS
+
+mylvmbackup supports the following command line options. The same options can
+also be defined in the I</etc/mylvmbackup.conf> configuration file (omitting
+the leading dashes, of course).
+
+=over 4
+
+=item B<--user=string>
+
+Specifies the username to use for connecting to the MySQL server.
+The default is I<root>.
+
+=item B<--password=string>
+
+Specifies the password to use for connecting to the MySQL server.
+The default is the empty string (no password).
+
+=item B<--host=string>
+
+Specifies the host name to use for connecting to the MySQL server.
+The default is the empty string.
+
+=item B<--port=number>
+
+Specifies the TCP port number to use for connecting to the MySQL server.
+The default is I<3306>.
+
+=item B<--socket=string>
+
+Specifies the path to the local socket file, if it is not located at the
+default location. The default is the empty string.
+
+=item B<--innodb_recover>
+
+Run InnoDB recovery on the writable snapshot (LVM2 only) prior to
+performing the backup.
+
+=item B<--skip_flush_tables>
+
+Don't issue a I<FLUSH TABLES WITH READ LOCK> command before creating
+the snapshot. Only use this option when backing up InnoDB tables (as
+they don't support this function anyway and will require recovery in
+any case). This option skips the (probably time consuming) flushing
+of buffers.
+
+=item B<--extra_flush_tables>
+
+If your database performs a lot of writes, it may help to perform an
+extra initial I<FLUSH TABLES> so that the I<lvcreate> can finish within
+the interactivity timeout during the read-locked flush.
+
+=item B<--pidfile=string>
+
+Specifies the full path and file name to the PID file of the server instance
+that is spawned to perform the InnoDB recovery (see option
+I<--innodb_recover>). Must be different from the PID file that the actual
+running server uses.
+The default is I</var/tmp/mylvmbackup_recoverserver.pid>
+
+=item B<--lvcreate=string>
+
+Specifies the pathname for the I<lvcreate> program.
+The default is I<lvcreate>.
+
+=item B<--lvremove=string>
+
+Specifies the pathname for the I<lvremove> program.
+The default is I<lvremove>.
+
+=item B<--lvs=string>
+
+Specifies the pathname for the I<lvs> program.
+The default is I<lvs>.
+
+=item B<--mysqld_safe=string>
+
+Specifies the pathname for the I<mysqld_safe> program.
+The default is I<mysqld_safe>. 
+Only used to perform InnoDB recovery.
+
+=item B<--mycnf=string>
+
+Specifies the name of the MySQL config file to include in the backup.
+The default is I</etc/my.cnf>.
+
+=item B<--skip_mycnf>
+
+Skip backing up the MySQL configuration file.
+The default is to include a copy of the configuration file in the backup.
+
+=item B<--hooksdir=string>
+
+The location of external scripts or executable to be called during various
+stages of the backup. See the HOOKS section in this manual page for more
+info.
+The default is I</usr/share/mylvmbackup>.
+
+=item B<--skip_hooks>
+
+Skip invoking any external hooks during the backup.
+
+=item B<--vgname=string>
+
+Specifies the volume group of the logical volume where the MySQL
+data directory is located.
+The default is I<mysql>.
+
+=item B<--lvname=string>
+
+Specifies the name of the logical volume where the MySQL data
+directory is located.
+The default is I<data>.
+
+=item B<--backuplv=string>
+
+Specifies the name of the logical volume for the snapshot volume.
+The default is appending B<_snapshot> to the lvname.
+
+=item B<--keep_snapshot>
+
+If this option is given, mylvmbackup will not remove the snapshot
+before terminating. Note that keeping multiple LVM snapshots open at
+the same time can reduce I/O performance.
+
+=item B<--relpath=string>
+
+Relative path on the logical volume to the MySQL data directory.
+The default is the empty string.
+
+=item B<--lvsize=string>
+
+Specifies the size for the snapshot volume.
+The default is I<5G> (5 gigabytes).
+
+=item B<--backuptype=string>
+
+Specifies what type of backup to perform. The available options are
+I<tar>, I<rsync>, I<rsnap> and I<none>.
+
+=item B<--prefix=string>
+
+Prefix added to the backup file names. It is also appended to
+the name of the directory used to mount the snapshot volume.
+The default value is I<backup>.
+
+=item B<--suffix=string>
+
+Suffix added to the backup file names (after the time stamp).
+The default value is I<_mysql>.
+
+=item B<--datefmt=string>
+
+Format of the time stamp included in the backup file name. See
+the I<Date::Format> perldoc page for a description of the format.
+The default value is I<%Y%m%d_%H%M%S>, which creates a time stamp
+like I<YYYYMMDD_HHMMSS>, e.g. I<20070531_112549>
+
+=item B<--mountdir=string>
+
+Path for mounting the snapshot volume to.
+The default value is I</var/tmp/mylvmbackup/mnt/>.
+
+=item B<--backupdir=string>
+
+Specifies the pathname of the directory where the archive files will be
+written to. The backup directory must not be on the same volume as the MySQL
+data directory. Instead of a local directory, you can also provide a
+valid rsync URL here, e.g. I<hostname::rsync-module/path>. This requires a
+properly configured remote rsync setup (e.g. pre-setup SSH keys and a
+valid rsyncd.conf file). Note that using rsync for remote backups is still
+under development and the way to configure it may change!
+The default is I</var/tmp/mylvmbackup/backup/>
+
+=item B<--mount=string>
+
+Specifies the pathname for the I<mount> program.
+The default is I<mount>.
+
+=item B<--umount=string>
+
+Specifies the pathname for the I<umount> program.
+The default is I<umount>.
+
+=item B<--tar=string>
+
+Specifies the pathname for the I<tar> program.
+The default is I<tar>.
+
+=item B<--tararg=string>
+
+Specifies the initial arguments for the I<tar> program.
+The default is I<cvzf>.
+
+=item B<--tarsuffixarg=string>
+
+Specifies the suffix arguments for the I<tar> program.
+The default is the empty string.
+To exclude a database, you would pass I<--exclude dbname> here.
+
+=item B<--tarfilesuffix=string>
+
+Specifies the suffix for the tarball.
+The default is I<.tar.gz>.
+
+=item B<--rsnap=string>
+
+Specifies the pathname for the I<rsnap> program.
+The default is I<rsnap>.
+
+=item B<--rsnaparg=string>
+
+Specifies the arguments for the I<rsnap> program.
+The default is I<7>, which causes it to keep the last 7 snapshot (useful
+when running I<mylvmbackup> once per day).
+
+=item B<--rsync=string>
+
+Specifies the pathname for the I<rsync> program.
+The default is I<rsync>.
+
+=item B<--rsyncarg=string>
+
+Specifies the arguments for the I<rsync> program.
+The default is I<-avWP>. Should must ensure that the recursive option is
+included either implicitly by I<-a>, or explicitly.
+
+=item B<--xfs>
+
+Use the I<nouuid> mount option to safely mount snapshot partitions that
+use the XFS file system.
+
+=item B<--log_method=string>
+
+How to log output from this script. Valid options are I<console>, I<syslog>
+or I<both>.
+The default value is I<console>.
+
+=item B<--syslog_socktype=string>
+
+What type of socket to use for connecting to the syslog service. Valid
+options are I<native>, I<tcp> and I<udp>.
+The default value is I<native>.
+
+=item B<--syslog_facility=string>
+
+Define a particular syslog facility
+Default value is the empty string.
+
+=item B<--syslog_remotehost=string>
+
+Host name of a remote syslog server.
+
+=item B<--configfile=string>
+
+Specify an alternative configuration file.
+The default is I</etc/mylvmbackup.conf>.
+
+=item B<--help>
+
+Displays a help message showing the available options.
+
+=back
+
+=head1 FILES
+
+=over 4
+
+=item B</etc/mylvbackup.conf>
+
+The I<mylvmbackup> configuration file
+
+=item B<mylvmbackup>
+
+The executable Perl script that performs the work.
+
+=back
+
+=head1 REQUIREMENTS
+
+For proper operation I<mylvmbackup> requires Perl 5 with the I<DBI> and
+I<DBD::mysql> modules. It also needs the I<Config::IniFiles> to read the global
+configuration file of the program and I<Sys::Syslog> in case you want to enable
+the syslog log facility. I<Date::Format> is required to create the time stamp
+used in the backup file names. In addition, it utilizes I<Getopt::Long>,
+I<File::Basename> and I<File::Temp>, which usually are part of the default Perl
+distribution.
+
+It also requires several other external programs: GNU I<tar> and I<gzip> to back
+up the data, LVM utilities (I<lvcreate>, I<lvremove> and I<lvs>) to create and
+remove the LVM snapshot, and the system utilities I<mount> and I<umount>.
+
+Optionally, I<rsync> or I<rsnap> may be required instead of I<tar> and I<gzip>,
+depending on which backup type you choose.
+
+=head1 SEE ALSO
+
+mount(8), tar(1), lvcreate(8), lvremove(8), lvs(8), umount(8), rsync(1)
+
+=head1 AUTHOR
+
+This program was initially written by Aleksey "Walrus" Kishkin from
+MySQL AB, with suggestions from Peter Zaitsev and Lenz Grimmer.
+
+It is currently maintained by Lenz Grimmer, <lenz@grimmer.com>
+
+=head1 RESOURCES
+
+Main web site: http://www.lenzg.org/mylvmbackup
+
+Mailing list: http://www.freelists.org/list/mylvmbackup
+
+Source code, bug tracker: https://launchpad.net/mylvmbackup
+
+=head1 CREDITS
+
+See the file CREDITS included in the distribution for a list of individual
+contributors.
+
+=head1 COPYING
+
+mylvmbackup is distributed under the GNU public license. See the file
+COPYING for details.
