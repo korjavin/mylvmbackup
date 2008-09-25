@@ -1,3 +1,10 @@
+2008-09-25  Lenz Grimmer <lenz@grimmer.com>
+
+ - Merged patch from Matthew Boehm: Removed old asciidoc documentation in
+   favor of POD style. This removes the dependency on the external program a2x
+   for creating documentation and uses the 'built-in' pod2html and pod2man
+   instead. Updated the Makefile to accommodate the change.
+
 2008-09-24  Lenz Grimmer <lenz@grimmer.com>
 
  - Applied patch from Matthew Boehm to make the backup file name
