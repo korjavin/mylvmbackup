@@ -192,27 +192,13 @@ log_msg ("Connecting to database...", LOG_INFO);
 my $dbh= DBI->connect($dsn,$user,$password)
   or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
 
-unless ($skip_flush_tables == 1)
-{
-  run_hook ("preflush");
-  if($extra_flush_tables == 1)
-  {
-    log_msg ("Flushing tables (initial)...", LOG_INFO);
-    $dbh->do("FLUSH TABLES") 
-      or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
-  }
+run_hook ("preflush");
+flush_tables($dbh) unless ($skip_flush_tables == 1);
 
-  log_msg ("Flushing tables with read lock...", LOG_INFO);
-  $dbh->do("FLUSH TABLES WITH READ LOCK") 
-    or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
-}
-
-log_msg ("Taking position record...", LOG_INFO);
-&create_pos_file($dbh);
+create_pos_file($dbh);
 
 run_hook ("presnapshot");
-log_msg ("Taking snapshot...", LOG_INFO);
-create_snapshot();
+$snapshot_created= create_lvm_snapshot();
 
 run_hook ("preunlock");
 log_msg ("Unlocking tables...", LOG_INFO);
@@ -226,17 +212,16 @@ $dbh->disconnect;
 if ($snapshot_created)
 {
   run_hook("premount");
-  log_msg ("Mounting snapshot...", LOG_INFO);
-  if (mount_snapshot() and mount_posdir_bind())
+  $mounted= mount_snapshot();
+  $posmounted= mount_posdir_bind();
+  if ($mounted and $posmounted)
   {
     if ($innodb_recover == 1)
     {
-      log_msg ("Recovering innodb...", LOG_INFO);
       do_innodb_recover();
     }
     if (-f $mycnf && $skip_mycnf == 0)
     {
-      log_msg ("Copying $mycnf_basename...", LOG_INFO);
       create_mycnf_file();
     }
 
@@ -254,10 +239,11 @@ if ($snapshot_created)
       run_hook("backupfailure");
     }
   }    
+} else {
+  cleanup();
+  exit 1;
 }
 
-run_hook("precleanup");
-log_msg ("Cleaning up...", LOG_INFO);
 cleanup();
 exit 0;
 
@@ -445,20 +431,39 @@ sub load_defaults
   $syslog_remotehost = '';
 }
 
+sub flush_tables 
+{
+  my $dbh = shift;
+  if($extra_flush_tables == 1)
+  {
+    log_msg ("Flushing tables (initial)...", LOG_INFO);
+    $dbh->do("FLUSH TABLES") 
+      or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
+  }
+
+  log_msg ("Flushing tables with read lock...", LOG_INFO);
+  $dbh->do("FLUSH TABLES WITH READ LOCK") 
+    or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
+}
+
 sub create_pos_file
 {
- my $dbh = shift;
- my $pos_file;
- open $pos_file, ">$pos_filename" or log_msg ("Cannot open $pos_filename for writing: $!", LOG_ERR) && die ("Cannot open $pos_filename for writing: $!");
- &_create_pos_file_single($dbh,'SHOW MASTER STATUS',$pos_file,'Master');
- &_create_pos_file_single($dbh,'SHOW SLAVE STATUS',$pos_file,'Slave');
- close $pos_file;
+  log_msg ("Taking position record...", LOG_INFO);
+  my $dbh = shift;
+  my $pos_file;
+  open $pos_file, ">$pos_filename"
+   or log_msg ("Cannot open $pos_filename for writing: $!", LOG_ERR) && die ("Cannot open $pos_filename for writing: $!");
+  _create_pos_file_single($dbh, 'SHOW MASTER STATUS', $pos_file, 'Master');
+  _create_pos_file_single($dbh, 'SHOW SLAVE STATUS', $pos_file, 'Slave');
+  close $pos_file;
 }
 
 sub create_mycnf_file
 {
+  log_msg ("Copying $mycnf_basename...", LOG_INFO);
   use File::Copy;
-  copy($mycnf, $mycnf_filename) or log_msg ("Could not copy $mycnf to $mycnf_filename: $!") && die ("Could not copy $mycnf to $mycnf_filename: $!\n");
+  copy($mycnf, $mycnf_filename)
+   or log_msg ("Could not copy $mycnf to $mycnf_filename: $!", LOG_ERR) && die ("Could not copy $mycnf to $mycnf_filename: $!\n");
 }
 
 sub _create_pos_file_single
@@ -499,10 +504,10 @@ sub do_backup_tar
   if ( system($command) == 0 )
   {
     rename $tarballtmp, $tarball;
-    log_msg ("DONE", LOG_INFO);
+    log_msg ("DONE creating tar archive", LOG_INFO);
     return 1;
   } else {
-    log_msg ("FAIL $!", LOG_ERR);
+    log_msg ("FAILED to create tar archive: $!", LOG_ERR);
     return 0;
   }    
 }
@@ -530,10 +535,10 @@ sub do_backup_rsnap
 
   if ( system($command) == 0 )
   {
-    log_msg ("DONE", LOG_INFO);
+    log_msg ("DONE creating rsnap archive", LOG_INFO);
     return 1;
   } else {
-    log_msg ("FAIL $!", LOG_ERR);
+    log_msg ("FAILED to create rsnap archive: $!", LOG_ERR);
     return 0;
   }
 }
@@ -547,7 +552,7 @@ sub do_backup_rsync
     $destdirtmp = sprintf('%s.INCOMPLETE-%07d',$destdir,int(rand(2**16)));
   }
   log_msg ("Taking actual backup...", LOG_INFO);
-  log_msg ("Archving with rsync to $destdir", LOG_INFO);
+  log_msg ("Archiving with rsync to $destdir", LOG_INFO);
 
   # Trailing slash is bad
   my $relpath_noslash = $relpath;
@@ -560,28 +565,35 @@ sub do_backup_rsync
   if ( system($command) == 0 )
   {
     rename $destdirtmp, $destdir if($destdirtmp ne $destdir);
-    log_msg ("DONE", LOG_INFO);
+    log_msg ("DONE creating rsync archive", LOG_INFO);
     return 1;
   } else {
-    log_msg ("FAIL $!", LOG_ERR);
+    log_msg ("FAILED to create rsync archive: $!", LOG_ERR);
     return 0;
   }    
 }
 
 sub mount_snapshot
 { 
-  my $params = 'ro';
-  $params = 'rw' if $innodb_recover;
+  log_msg ("Mounting snapshot...", LOG_INFO);
+  my $params= 'ro';
+  $params= 'rw' if $innodb_recover;
 
-  $params .= ',nouuid' if $need_xfsworkaround;
-  $mounted = 1 if (system("$mount -o $params /dev/$vgname/$backuplv $mountdir") == 0);
-  log_msg ("Cannot mount snapshot: $!", LOG_ERR) unless $mounted eq 1;
-  return $mounted; 
+  $params.= ',nouuid' if $need_xfsworkaround;
+  my $command= "$mount -o $params /dev/$vgname/$backuplv $mountdir";
+  if ( system($command) == 0 )
+  {
+    return 1;
+  } else {
+    log_msg ("Cannot mount snapshot: $!", LOG_ERR);
+  }
 }
 
 sub do_innodb_recover
 {
-  if ( system("echo 'select 1;' | $mysqld_safe --socket=/tmp/mylvmbackup.sock --pid-file=$pidfile --datadir=$mountdir --skip-networking --skip-grant --bootstrap --skip-ndbcluster --skip-slave-start") != 0 )
+  log_msg ("Recovering InnoDB...", LOG_INFO);
+  my $command="echo 'select 1;' | $mysqld_safe --socket=/tmp/mylvmbackup.sock --pid-file=$pidfile --datadir=$mountdir --skip-networking --skip-grant --bootstrap --skip-ndbcluster --skip-slave-start";
+  if ( system($command) != 0 )
   {
     log_msg ("Failed to perform InnoDB recovery on the snapshot!", LOG_ERR);
   }
@@ -589,20 +601,29 @@ sub do_innodb_recover
 
 sub mount_posdir_bind
 {
-  $posmounted = 1 if(system("$mount -o bind,ro $posdir $posmountdir") == 0);
-  log_msg ("Cannot bind-mount position directory: $1", LOG_ERR) unless $posmounted eq 1;
-  return $posmounted;
+  my $command= "$mount -o bind,ro $posdir $posmountdir";
+  if(system($command) == 0)
+  {
+    return 1;
+  } else {
+    log_msg ("Cannot bind-mount position directory: $1", LOG_ERR);
+    return 0;
+  }
 }
 
-sub create_snapshot 
+sub create_lvm_snapshot 
 { 
-  $snapshot_created=1 if 
-   ( system("$lvcreate",'-s',"--size=$lvsize",
-            "--name=$backuplv","/dev/$vgname/$lvname") == 0); 
-  log_msg ("Cannot create snapshot: $!", LOG_ERR) unless $snapshot_created eq 1;
-  return $snapshot_created;
+  log_msg ("Taking LVM snapshot...", LOG_INFO);
+  my $command= "$lvcreate -s --size=$lvsize --name=$backuplv /dev/$vgname/$lvname";
+  if ( system($command) == 0 )
+  {
+    log_msg ("DONE taking LVM snapshot.", LOG_INFO);
+    return 1;
+  } else {
+    log_msg ("FAILED to create LVM snapshot: $!", LOG_ERR);
+    return 0;
+  }
 }
-
 
 sub log_msg
 {
@@ -651,9 +672,14 @@ sub log_msg
   }
 }
 
-
+#
+# Unmount file systems, clean up temp files and discard the snapshot (if
+# required)
+#
 sub cleanup
 {
+  run_hook("precleanup");
+  log_msg ("Cleaning up...", LOG_INFO);
   system("$umount $mountdir") if ($mounted);
   system("$umount $posmountdir") if ($posmounted);
   unlink $pos_filename;
@@ -667,8 +693,9 @@ sub cleanup
   foreach my $lvs_info (@lvs_info) {
     log_msg ($lvs_info, LOG_INFO);
   }
-  if( $keep_snapshot == 0 ) {
-      system("$lvremove -f /dev/$vgname/$backuplv") if ($snapshot_created);
+  if( $keep_snapshot == 0 && $snapshot_created == 1 ) {
+      my $command= "$lvremove -f /dev/$vgname/$backuplv";
+      system($command);
   } else {
       log_msg("Not removing snapshot as requested by configuration", LOG_INFO);
   }
@@ -762,7 +789,7 @@ DIRERROR
 
    log_msg ("The directory $dirname does not exist or I don't have sufficient privileges to read/write/access it.", LOG_ERR);
 
-   &help;
+   help();
   }
 }  
 
