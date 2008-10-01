@@ -1,5 +1,10 @@
 2008-10-01  Lenz Grimemr <lenz@grimmer.com>
 
+ - Fixed Bug #271671: "overloading parameters does not work" by removing
+   the default values for host and port from the configuration file and
+   removing the unnecessary check for passing both host and socket at
+   the same time. Updated documentation and configuration file comments
+   accordingly.
  - Applied patch suggested by "Jonas" to fix Bug #267944: "backup returns
    successfully when snapshot creation fails"
  - Code cleanup: moved flushing of tables in a separate subroutine

@@ -61,7 +61,7 @@ If you plan to back up InnoDB tables using LVM snapshots, be advised that it
 is not sufficient to lock the tables and issue the I<FLUSH TABLES> command to
 get the table files into a consistent state. When starting the MySQL server
 from these restored files, InnoDB will detect these tables as being in an
-inconsistent state and will perform a recovery run before the tables can be
+inconsistent state and will perform a log recovery run before the tables can be
 accessed again. As this can potentially take some time (which you may not want
 to spend after restoring a server and trying to get it back on its feet as
 fast as possible), consider using the option I<--innodb_recover>, which will
@@ -169,13 +169,19 @@ The default is the empty string (no password).
 
 =item B<--host=string>
 
-Specifies the host name to use for connecting to the MySQL server.
+Specifies the host name to use for connecting to the MySQL server. Note that
+mylvmbackup needs to be run on the same system that the MySQL server to be
+backed up runs on - do not enter a remote host's host name or IP adress here!
+A non-empty value for I<host> other than I<localhost> overrides any given
+I<socket> path value.
 The default is the empty string.
 
 =item B<--port=number>
 
 Specifies the TCP port number to use for connecting to the MySQL server.
-The default is I<3306>.
+This value is only honoured, if I<host> is provided as well and is not
+equal to I<localhost>.
+The default is the empty string.
 
 =item B<--socket=string>
 
