@@ -1,3 +1,29 @@
+2008-10-01  Lenz Grimmer <lenz@grimmer.com>
+
+ - Fixed Bug #271671: "overloading parameters does not work" by removing
+   the default values for host and port from the configuration file and
+   removing the unnecessary check for passing both host and socket at
+   the same time. Updated documentation and configuration file comments
+   accordingly.
+ - Applied patch suggested by "Jonas" to fix Bug #267944: "backup returns
+   successfully when snapshot creation fails"
+ - Code cleanup: moved flushing of tables in a separate subroutine
+   flush_tables()
+ - Code cleanup: moved log messages into the respective subroutines
+ - Code cleanup: use return values of subroutines instead of updating global
+   variables
+ - Improved some log messages to explain what was DONE or FAILED
+ - Code cleanup: build up long command strings in a $command variable before
+   passing it to system()
+ - Renamed subroutine create_snapshot() to create_lvm_snapshot()
+
+2008-09-25  Lenz Grimmer <lenz@grimmer.com>
+
+ - Merged patch from Matthew Boehm: Removed old asciidoc documentation in
+   favor of POD style. This removes the dependency on the external program a2x
+   for creating documentation and uses the 'built-in' pod2html and pod2man
+   instead. Updated the Makefile to accommodate the change.
+
 2008-09-24  Lenz Grimmer <lenz@grimmer.com>
 
  - Applied patch from Matthew Boehm to make the backup file name
