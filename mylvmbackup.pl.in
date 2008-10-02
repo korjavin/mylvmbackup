@@ -782,6 +782,13 @@ EOF
 sub check_dir 
 {
  my ($dirname,$optioname) = @_;
+ if (!(-d $dirname)) {
+    eval { File::Path::mkpath($dirname) };
+    if($@) {
+      log_msg ("The directory $dirname does not exist and I was unable to create it.", LOG_ERR);
+      help();
+    }
+ }
  unless ( (-d $dirname) and 
      (-w $dirname) and (-r $dirname) and  (-x $dirname))
  {
@@ -809,6 +816,7 @@ DIRERROR
 sub clean_dirname
 {
  my ($d) = @_;
+ $d = time2str($d, time) if($d =~ /(%[Ymdhis])+/);
  $d =~ s/^\s*//g;
  $d =~ s/\s$//g;
  return File::Basename::dirname($d.'/foo')
