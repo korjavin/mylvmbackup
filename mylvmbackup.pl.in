@@ -83,12 +83,15 @@ my $syslog_remotehost;
 
 # Load defaults into variables
 load_defaults();
+
 # Initialize variables from config file, if it exists
 if (-r $configfile) {
   load_config($configfile);
 }
+
 # Load the commandline arguments
 load_args();
+
 # If they specified an alternative config file
 if ($configfile2 ne "") {
   die ("Unable to load specified config file: $!\n") unless (-r $configfile2);
@@ -366,6 +369,9 @@ sub load_args
     "syslog_facility=s" => \$syslog_facility,
     "syslog_remotehost=s" => \$syslog_remotehost,
   ) or help();
+
+  # As this function is called last, append to @INC here.
+  eval "use lib '$hooksdir'";
 }
 
 # Please keep all 3 functions in the same order: load_config, load_args, load_defaults 
@@ -634,7 +640,11 @@ sub log_msg
   } elsif ($log_method eq "both") {
     __print_it ($syslog_level, $msg);
     __log_it ($syslog_level, $msg);
-}
+  }
+
+  if ($syslog_level eq LOG_ERR) {
+    run_hook ("logerr", $msg);
+  }
 
   sub __print_it
   {
@@ -642,7 +652,7 @@ sub log_msg
     my $msg = shift;
     my $logmsg = '';
 
-  if ($syslog_level eq LOG_WARNING) {
+    if ($syslog_level eq LOG_WARNING) {
       $logmsg = " Warning: ";
     } elsif ($syslog_level eq LOG_INFO) {
       $logmsg = " Info: ";
@@ -810,15 +820,30 @@ sub clean_dirname
 sub run_hook
 {
   return if $skip_hooks;
-  my $hookname = shift;
+  my ($hookname, $hookarg) = @_;
   my $hookfile = $hooksdir."/".$hookname;
-  if (-x $hookfile)
+
+  eval "use $hookname";
+  if($@)
   {
-    log_msg ("Running hook ".$hookname, LOG_INFO);
-    system($hookfile);
-    if ( $? >> 8 != 0)
+    # couldn't find hook as perl module. see if it's a shell script.
+    if (-x $hookfile)
     {
-      log_msg (sprintf("Hook $hookname failed with nonzero exit value %d", $? >> 8), LOG_ERR);
+      log_msg ("Running hook '$hookname' with arg '$hookarg'", LOG_INFO);
+      system($hookfile $hookarg);
+      if ( $? >> 8 != 0)
+      {
+        log_msg (sprintf("Hook $hookname failed with nonzero exit value %d", $? >> 8), LOG_ERR);
+      }
+    }
+  }
+  else
+  {
+    log_msg ("Running hook '$hookname' as perl module.", LOG_INFO);
+    my $ret = $hookname->execute($dbh->clone(), $hookarg);
+    if(!$ret)
+    {
+      log_msg ("Perl module '$hookname' did not return a true result: " . $hookname->errmsg(), LOG_ERR);
     }
   }
 }
