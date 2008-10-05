@@ -347,7 +347,7 @@ The default is I<tar>.
 =item B<--tararg=string>
 
 Specifies the initial arguments for the I<tar> program.
-The default is I<cvzf>.
+The default is I<cvf>.
 
 =item B<--tarsuffixarg=string>
 
@@ -359,6 +359,23 @@ To exclude a database, you would pass I<--exclude dbname> here.
 
 Specifies the suffix for the tarball.
 The default is I<.tar.gz>.
+
+=item B<--compress=string>
+
+Specifies the name of the compression program. Only used if I<backuptype> is
+set to I<tar>.
+The program must support reading the to be compressed data from I<stdin> and
+writing to I<stdout>, without requiring intermediate temporary files (for this
+reason, 7zip cannot be used). It's also possible to use I<cat>. In this case,
+no compression will be done.
+The default is I<gzip>. Can be left empty.
+
+=item B<--compressarg=string>
+
+Specifies the command line options given to the I<compress> program. For I<gzip>,
+that would be I<--stdout --verbose --best>, for I<lzma> I<--stdout --verbose -7>
+and for I<cat>, it would be empty.
+The default is I<--stdout --verbose --best>.
 
 =item B<--rsnap=string>
 

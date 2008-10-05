@@ -73,6 +73,8 @@ my $tar;
 my $tararg;
 my $tarsuffixarg;
 my $tarfilesuffix;
+my $compress;
+my $compressarg;
 my $umount;
 my $user;
 my $vgname;
@@ -278,6 +280,7 @@ sub load_config
   $tararg=$cfg->val ('misc', 'tararg', $tararg);
   $tarsuffixarg=$cfg->val ('misc', 'tarsuffixarg', $tarsuffixarg);
   $tarfilesuffix = $cfg->val ('misc', 'tarfilesuffix', $tarfilesuffix);
+  $compressarg=$cfg->val ('misc', 'compressarg', $compressarg);
   $hooksdir = $cfg->val ('misc', 'hooksdir', $hooksdir);
   $skip_hooks=$cfg->val ('misc', 'skip_hooks', $skip_hooks);
   $keep_snapshot=$cfg->val ('misc', 'keep_snapshot', $keep_snapshot);
@@ -293,6 +296,7 @@ sub load_config
   $mount=$cfg->val ('tools', 'mount', $mount);
   $umount=$cfg->val ('tools', 'umount', $umount);
   $tar=$cfg->val ('tools', 'tar', $tar);
+  $compress=$cfg->val ('tools', 'compress', $compress);
   $rsync=$cfg->val ('tools', 'rsync', $rsync);
   $rsnap=$cfg->val ('tools', 'rsnap', $rsnap);
 
@@ -338,6 +342,7 @@ sub load_args
     "tararg=s" => \$tararg,
     "tarsuffixarg=s" => \$tarsuffixarg,
     "tarfilesuffix=s" => \$tarfilesuffix,
+    "compressarg=s" => \$compressarg,
     "rsyncarg=s" => \$rsyncarg,
     "rsnaparg=s" => \$rsnaparg,
     "hooksdir=s" => \$hooksdir,
@@ -357,6 +362,7 @@ sub load_args
     "mount=s" => \$mount,
     "umount=s" => \$umount,
     "tar=s" => \$tar,
+    "compress=s" => \$compress,
     "rsync=s" => \$rsync,
     "rsnap=s" => \$rsnap,
 
@@ -399,6 +405,7 @@ sub load_defaults
   $tararg='cvzf';
   $tarsuffixarg='';
   $tarfilesuffix='.tar.gz';
+  $compressarg='--stdout --verbose --best';
   $rsyncarg='-avPW';
   $rsnaparg='7';
   $hooksdir='/usr/share/mylvmbackup';
@@ -418,6 +425,7 @@ sub load_defaults
   $mount='/bin/mount';
   $umount='/bin/umount';
   $tar='/bin/tar';
+  $compress='/bin/gzip';
   $rsync='/usr/bin/rsync';
   $rsnap='/usr/bin/rsnap';
 
@@ -495,9 +503,26 @@ sub do_backup_tar
   my $mycnf_filename_rel = $posmountdir . '/' . File::Basename::basename($mycnf_filename);
   $mycnf_filename_rel =~ s/^$topmountdir//g;
   $mycnf_filename_rel =~ s/^\/+//g;
-  my $command = "$tar $tararg $tarballtmp -C $topmountdir $mountdir_rel/$relpath $tarsuffixarg";
+  
+  # To be portable, do a "cd" before calling tar (ie. don't do "tar ... -C ...")
+  my $cmd = "cd '$topmountdir' ;";
+  # Check if a compress program has been set.
+  # If NOT, then make tar write directly to $tarballtmp.
+  # Otherwise make tar pipe to stdout and pipe stdin to compress program.
+  
+  # Build the primary tar command.
+  $cmd .= sprintf("'%s' %s %s %s %s", 
+    $tar, $tararg,
+    # If the user does not want compression, directly write the tar
+    # file. Else write to "-", ie. stdout.
+    ($compress eq "") ? $tarballtmp : "-",
+    "$mountdir_rel/$relpath", $tarsuffixarg);
+  # Maybe some additional files are to be added
   $command .= " $pos_filename_rel" if (-f $pos_filename );
   $command .= " $mycnf_filename_rel" if (-f $mycnf_filename );
+  # If the stuff should be compressed (ie. a compress program has been set),
+  # then the stream has to be piped to the $compress program.
+  $command .= "| $compress $compressarg -> $tarballtmp" unless ($compress eq "");
   if ( system($command) == 0 )
   {
     rename $tarballtmp, $tarball;
