@@ -186,8 +186,12 @@ if(length($port) > 0) {
 
 run_hook ("preconnect");
 log_msg ("Connecting to database...", LOG_INFO);
-my $dbh= DBI->connect($dsn,$user,$password)
-  or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
+my $dbh= DBI->connect($dsn,$user,$password);
+if (!$dbh)
+{
+  log_msg ($DBI::errstr, LOG_ERR);
+  die $DBI::errstr;
+}
 
 run_hook ("preflush");
 flush_tables($dbh) unless ($skip_flush_tables == 1);
