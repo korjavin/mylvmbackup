@@ -509,13 +509,13 @@ sub do_backup_tar
   $mycnf_filename_rel =~ s/^\/+//g;
   
   # To be portable, do a "cd" before calling tar (ie. don't do "tar ... -C ...")
-  my $cmd = "cd '$topmountdir' ;";
+  my $command= "cd '$topmountdir' ;";
   # Check if a compress program has been set.
   # If NOT, then make tar write directly to $tarballtmp.
   # Otherwise make tar pipe to stdout and pipe stdin to compress program.
   
   # Build the primary tar command.
-  $cmd .= sprintf("'%s' %s %s %s %s", 
+  $command.= sprintf("'%s' %s %s %s %s", 
     $tar, $tararg,
     # If the user does not want compression, directly write the tar
     # file. Else write to "-", ie. stdout.
