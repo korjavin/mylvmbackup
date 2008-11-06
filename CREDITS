@@ -24,4 +24,9 @@ Matt Lohier submitted the patch to support rsnap as a backup backend.
 
 Matthew Boehm contributed a patch to make the backup file name suffix
 configurable via a "--suffix" option and also converted the documentation
-from asciidoc to Perl POD.
+from asciidoc to Perl POD. He also contributed a patch to improve the
+error handling in case of a failed database connection.
+
+Alexander Skwar contributed a patch to support backups using different
+compression methods other than gzip for the tar backup as well as support
+for using a non-GNU tar for the archiving.
