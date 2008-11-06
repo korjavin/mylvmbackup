@@ -1,7 +1,7 @@
 2008-10-22  Lenz Grimmer <lenz@grimmer.com>
 
    - Fixed error handling in case of a failed DB connection (patch submitted
-     by Matthew Boehm)
+     by Matthew Boehm, Bug #280989)
 
 2008-10-01  Lenz Grimmer <lenz@grimmer.com>
 
