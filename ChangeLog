@@ -2,7 +2,7 @@
 
  - Fixed error handling in case of a failed DB connection (patch submitted
    by Matthew Boehm, Bug #280989)
- - Merged changes from Aleaxnder Skwar: Fix for Bug #278478 and implemented
+ - Merged changes from Alexander Skwar: Fix for Bug #278478 and implemented
    Blueprint "Improve the tar backup backend of mylvmbackup"
 
 2008-10-01  Lenz Grimmer <lenz@grimmer.com>
