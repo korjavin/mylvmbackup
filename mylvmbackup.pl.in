@@ -82,6 +82,7 @@ my $log_method;
 my $syslog_socktype;
 my $syslog_facility;
 my $syslog_remotehost;
+my $running_backup;
 
 # Load defaults into variables
 load_defaults();
@@ -212,40 +213,34 @@ run_hook ("predisconnect");
 log_msg ("Disconnecting from database...", LOG_INFO);
 $dbh->disconnect;
 
-if ($snapshot_created)
+run_hook("premount");
+$mounted = mount_snapshot();
+$posmounted = mount_posdir_bind();
+
+if ($innodb_recover == 1)
 {
-  run_hook("premount");
-  $mounted= mount_snapshot();
-  $posmounted= mount_posdir_bind();
-  if ($mounted and $posmounted)
-  {
-    if ($innodb_recover == 1)
-    {
-      do_innodb_recover();
-    }
-    if (-f $mycnf && $skip_mycnf == 0)
-    {
-      create_mycnf_file();
-    }
-
-    run_hook("prebackup");
-    my $backupsuccess=0;
-    if ($backuptype eq 'tar') {$backupsuccess = do_backup_tar()}
-    elsif ($backuptype eq 'rsync') {$backupsuccess = do_backup_rsync()}
-    elsif ($backuptype eq 'rsnap') {$backupsuccess = do_backup_rsnap()}
-    else {$backupsuccess = do_backup_none()};
-
-    if ($backupsuccess == 1)
-    {
-      run_hook("backupsuccess");
-    } else {
-      run_hook("backupfailure");
-    }
-  }    
-} else {
-  cleanup();
-  exit 1;
+  do_innodb_recover();
 }
+if (-f $mycnf && $skip_mycnf == 0)
+{
+  create_mycnf_file();
+}
+
+run_hook("prebackup");
+$running_backup = 1;
+
+if ($backuptype eq 'tar') {
+  do_backup_tar();
+} elsif ($backuptype eq 'rsync') {
+  do_backup_rsync();
+} elsif ($backuptype eq 'rsnap') {
+  do_backup_rsnap();
+} else {
+  do_backup_none();
+}
+
+$running_backup = 0;
+run_hook("backupsuccess");
 
 cleanup();
 exit 0;
@@ -406,7 +401,7 @@ sub load_defaults
   $skip_flush_tables=0;
   $extra_flush_tables=0;
   $skip_mycnf=0;
-  $tararg='cvzf';
+  $tararg='cvf';
   $tarsuffixarg='';
   $tarfilesuffix='.tar.gz';
   $compressarg='--stdout --verbose --best';
@@ -446,13 +441,11 @@ sub flush_tables
   if($extra_flush_tables == 1)
   {
     log_msg ("Flushing tables (initial)...", LOG_INFO);
-    $dbh->do("FLUSH TABLES") 
-      or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
+    $dbh->do("FLUSH TABLES") or log_msg ($DBI::errstr, LOG_ERR);
   }
 
   log_msg ("Flushing tables with read lock...", LOG_INFO);
-  $dbh->do("FLUSH TABLES WITH READ LOCK") 
-    or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
+  $dbh->do("FLUSH TABLES WITH READ LOCK") or log_msg ($DBI::errstr, LOG_ERR);
 }
 
 sub create_pos_file
@@ -461,10 +454,10 @@ sub create_pos_file
   my $dbh = shift;
   my $pos_file;
   open $pos_file, ">$pos_filename"
-   or log_msg ("Cannot open $pos_filename for writing: $!", LOG_ERR) && die ("Cannot open $pos_filename for writing: $!");
+    or log_msg ("Cannot open $pos_filename for writing: $!", LOG_ERR);
   _create_pos_file_single($dbh, 'SHOW MASTER STATUS', $pos_file, 'Master');
   _create_pos_file_single($dbh, 'SHOW SLAVE STATUS', $pos_file, 'Slave');
-  close $pos_file;
+  close $pos_file or log_msg ("Closing $pos_filename failed: $!", LOG_ERR);
 }
 
 sub create_mycnf_file
@@ -472,14 +465,14 @@ sub create_mycnf_file
   log_msg ("Copying $mycnf_basename...", LOG_INFO);
   use File::Copy;
   copy($mycnf, $mycnf_filename)
-   or log_msg ("Could not copy $mycnf to $mycnf_filename: $!", LOG_ERR) && die ("Could not copy $mycnf to $mycnf_filename: $!\n");
+      or log_msg ("Could not copy $mycnf to $mycnf_filename: $!", LOG_ERR);
 }
 
 sub _create_pos_file_single
 {
 	my $dbh = shift; my $query = shift; my $fh = shift; my $pos_prefix = shift;
-	my $sth = $dbh->prepare($query) or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
-	$sth->execute or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
+	my $sth = $dbh->prepare($query) or log_msg ($DBI::errstr, LOG_ERR);
+	$sth->execute or log_msg ($DBI::errstr, LOG_ERR);
 	while (my $r = $sth->fetchrow_hashref) {
 		foreach my $f (@{$sth->{NAME}}) {
 			my $v = $r->{$f};
@@ -527,13 +520,11 @@ sub do_backup_tar
   # If the stuff should be compressed (ie. a compress program has been set),
   # then the stream has to be piped to the $compress program.
   $command .= "| $compress $compressarg -> $tarballtmp" unless ($compress eq "");
-  if ( system($command) == 0 )
+  if (run_command("create tar archive", $command))
   {
     rename $tarballtmp, $tarball;
-    log_msg ("DONE creating tar archive", LOG_INFO);
     return 1;
   } else {
-    log_msg ("FAILED to create tar archive: $!", LOG_ERR);
     return 0;
   }    
 }
@@ -557,16 +548,7 @@ sub do_backup_rsnap
   my $command = "$rsnap $rsnaparg $mountdir/$relpath_noslash";
   $command .= " $destdir/";
 
-  log_msg("$command", LOG_INFO);
-
-  if ( system($command) == 0 )
-  {
-    log_msg ("DONE creating rsnap archive", LOG_INFO);
-    return 1;
-  } else {
-    log_msg ("FAILED to create rsnap archive: $!", LOG_ERR);
-    return 0;
-  }
+  return run_command("create rsnap archive", $command);
 }
 
 sub do_backup_rsync
@@ -588,13 +570,11 @@ sub do_backup_rsync
   $command .= " $pos_filename" if (-f $pos_filename );
   $command .= " $mycnf_filename" if (-f $mycnf_filename );
   $command .= " $destdirtmp/";
-  if ( system($command) == 0 )
+  if (run_command("create rsync archive", $command))
   {
     rename $destdirtmp, $destdir if($destdirtmp ne $destdir);
-    log_msg ("DONE creating rsync archive", LOG_INFO);
     return 1;
   } else {
-    log_msg ("FAILED to create rsync archive: $!", LOG_ERR);
     return 0;
   }    
 }
@@ -607,48 +587,26 @@ sub mount_snapshot
 
   $params.= ',nouuid' if $need_xfsworkaround;
   my $command= "$mount -o $params /dev/$vgname/$backuplv $mountdir";
-  if ( system($command) == 0 )
-  {
-    return 1;
-  } else {
-    log_msg ("Cannot mount snapshot: $!", LOG_ERR);
-  }
+  return run_command("mount snapshot", $command);
 }
 
 sub do_innodb_recover
 {
   log_msg ("Recovering InnoDB...", LOG_INFO);
   my $command="echo 'select 1;' | $mysqld_safe --socket=/tmp/mylvmbackup.sock --pid-file=$pidfile --datadir=$mountdir --skip-networking --skip-grant --bootstrap --skip-ndbcluster --skip-slave-start";
-  if ( system($command) != 0 )
-  {
-    log_msg ("Failed to perform InnoDB recovery on the snapshot!", LOG_ERR);
-  }
+  return run_command("InnoDB recovery on snapshot", $command);
 }
 
 sub mount_posdir_bind
 {
   my $command= "$mount -o bind,ro $posdir $posmountdir";
-  if(system($command) == 0)
-  {
-    return 1;
-  } else {
-    log_msg ("Cannot bind-mount position directory: $1", LOG_ERR);
-    return 0;
-  }
+  return run_command("bind-mount position directory", $command);
 }
 
 sub create_lvm_snapshot 
 { 
-  log_msg ("Taking LVM snapshot...", LOG_INFO);
   my $command= "$lvcreate -s --size=$lvsize --name=$backuplv /dev/$vgname/$lvname";
-  if ( system($command) == 0 )
-  {
-    log_msg ("DONE taking LVM snapshot.", LOG_INFO);
-    return 1;
-  } else {
-    log_msg ("FAILED to create LVM snapshot: $!", LOG_ERR);
-    return 0;
-  }
+  return run_command("taking LVM snapshot", $command);
 }
 
 sub log_msg
@@ -663,7 +621,15 @@ sub log_msg
   } elsif ($log_method eq "both") {
     __print_it ($syslog_level, $msg);
     __log_it ($syslog_level, $msg);
-}
+  }
+
+  if ($syslog_level <= LOG_ERR) # LOG_ERR or more critical
+  {
+    run_hook("backupfailure") if $running_backup;
+    cleanup();
+
+    exit(1);
+  }
 
   sub __print_it
   {
@@ -710,20 +676,26 @@ sub cleanup
   system("$umount $posmountdir") if ($posmounted);
   unlink $pos_filename;
   unlink $mycnf_filename;
-  rmdir $mountdir;
-  rmdir $posmountdir;
-  rmdir $posdir;
-  my @lvs_info = `$lvs /dev/$vgname/$backuplv`;
-  chomp (@lvs_info);
-  log_msg ("LVM Usage stats:", LOG_INFO);
-  foreach my $lvs_info (@lvs_info) {
-    log_msg ($lvs_info, LOG_INFO);
+  if ($posmountdir) {
+    rmdir $mountdir;
+    rmdir $posmountdir;
   }
-  if( $keep_snapshot == 0 && $snapshot_created == 1 ) {
-      my $command= "$lvremove -f /dev/$vgname/$backuplv";
-      system($command);
-  } else {
+  rmdir $posdir;
+  if (-e "/dev/$vgname/$backuplv") {
+    my @lvs_info = `$lvs /dev/$vgname/$backuplv`;
+    chomp (@lvs_info);
+    log_msg ("LVM Usage stats:", LOG_INFO);
+    foreach my $lvs_info (@lvs_info) {
+        log_msg ($lvs_info, LOG_INFO);
+    }
+  }
+  if ($snapshot_created)
+  {
+    unless ($keep_snapshot) {
+      system("$lvremove -f /dev/$vgname/$backuplv");
+    } else {
       log_msg("Not removing snapshot as requested by configuration", LOG_INFO);
+    }
   }
 }
 
@@ -814,8 +786,6 @@ by using the option --$optioname=<directory>
 DIRERROR
 
    log_msg ("The directory $dirname does not exist or I don't have sufficient privileges to read/write/access it.", LOG_ERR);
-
-   help();
   }
 }  
 
@@ -834,6 +804,36 @@ sub clean_dirname
 }
 
 #
+# Run system command
+#
+sub run_command
+{
+  my ($message) = shift;
+
+  log_msg("Running: " . join(" ", @_), LOG_INFO);
+
+  if (system(@_) == 0 && $? == 0)
+  {
+    log_msg("DONE: $message", LOG_INFO);
+    return 1;
+  } else {
+    my $err;
+    if ($? & 0xff)
+    {
+      $err = "received signal " . ($? & 0xff);
+    } elsif ($? >> 8)
+    {
+      $err = "exit status " . ($? >> 8);
+    } else
+    {
+      $err = $!;
+    }
+    log_msg("FAILED: $message ($err)", LOG_ERR);
+  }
+  return 0;
+}
+
+#
 # Script hooks
 #
 sub run_hook
@@ -843,11 +843,14 @@ sub run_hook
   my $hookfile = $hooksdir."/".$hookname;
   if (-x $hookfile)
   {
+    # Can't use run_command, since a failing "precleanup" will cause an
+    # infinite loop.
     log_msg ("Running hook ".$hookname, LOG_INFO);
     system($hookfile);
     if ( $? >> 8 != 0)
     {
-      log_msg (sprintf("Hook $hookname failed with nonzero exit value %d", $? >> 8), LOG_ERR);
+      log_msg ("Hook $hookname failed with nonzero exit value ". ($?>>8),
+               $hookname eq "precleanup" ? LOG_WARNING : LOG_ERR);
     }
   }
 }
@@ -855,6 +858,8 @@ sub run_hook
 sub lvm_version
 {
   my $lv = `$lvs --version`;
+
+  log_msg("$lvs: $!", LOG_ERR) if $? != 0;
 
   $lv =~ s/LVM version: //;
   $lv =~ s/^\s*//;

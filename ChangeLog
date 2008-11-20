@@ -1,3 +1,9 @@
+2008-11-20  Lenz Grimmer <lenz@grimmer.com>
+
+ - Applied patch from "kjetilho" that makes mylvmbackup more robust and
+   paraniod when it comes to handling errors/failures (Bug #298175)
+   Now the script aborts cleanly in case of an error.
+
 2008-10-22  Lenz Grimmer <lenz@grimmer.com>
 
  - Fixed error handling in case of a failed DB connection (patch submitted

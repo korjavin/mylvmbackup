@@ -30,3 +30,7 @@ error handling in case of a failed database connection.
 Alexander Skwar contributed a patch to support backups using different
 compression methods other than gzip for the tar backup as well as support
 for using a non-GNU tar for the archiving.
+
+"kjetilho" (https://launchpad.net/~kjetilho-ifi) contributed a patch
+to improve the robustness and error handling of the entire script.
+(Bug #298175)
