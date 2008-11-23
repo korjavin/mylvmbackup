@@ -24,7 +24,7 @@ TAR = /bin/tar
 # define some variables
 
 NAME = mylvmbackup
-VERSION = 0.11
+VERSION = 0.12
 MAN1 = man/$(NAME).1
 DISTFILES = COPYING \
 	CREDITS \
@@ -61,7 +61,7 @@ $(MAN1):
 	$(POD2MAN) man/$(NAME).pod > $(MAN1)
 
 htmlman:
-	$(POD2HTML) man/$(NAME).pod > man/$(NAME).html
+	$(POD2HTML) man/$(NAME).pod > $(MAN1).html
 	$(RM) -f pod2htmd.tmp  pod2htmi.tmp
 
 install: all

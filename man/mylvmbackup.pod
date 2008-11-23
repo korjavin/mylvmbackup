@@ -489,7 +489,7 @@ It is currently maintained by Lenz Grimmer, <lenz@grimmer.com>
 
 Main web site: http://www.lenzg.org/mylvmbackup
 
-Mailing list: http://www.freelists.org/list/mylvmbackup
+Mailing list: https://launchpad.net/~mylvmbackup-discuss
 
 Source code, bug tracker: https://launchpad.net/mylvmbackup
 
