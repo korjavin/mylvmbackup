@@ -1,8 +1,14 @@
+2008-11-23  Lenz Grimmer <lenz@grimmer.com>
+
+ - Added new option "--quiet" that suppresses informal logging output
+   (warnings and errors will still be printed/logged)
+ - Small fixes to kjetilho's patch
+
 2008-11-20  Lenz Grimmer <lenz@grimmer.com>
 
  - Applied patch from "kjetilho" that makes mylvmbackup more robust and
    paraniod when it comes to handling errors/failures (Bug #298175)
-   Now the script aborts cleanly in case of an error.
+   Now the script aborts cleanly in case of any error.
 
 2008-10-22  Lenz Grimmer <lenz@grimmer.com>
 

@@ -60,6 +60,7 @@ my $need_xfsworkaround;
 my $password;
 my $pidfile;
 my $port;
+my $quiet;
 my $backuptype;
 my $prefix;
 my $suffix;
@@ -115,7 +116,7 @@ my $lvm_version = lvm_version();
 
 if ($innodb_recover == 1 && $lvm_version =~ /^1/)
 {
-  log_msg("LVM1 does not support writable snapshots. InnoDB recovery has been disabled.", LOG_INFO); 
+  log_msg("LVM1 does not support writable snapshots. InnoDB recovery has been disabled.", LOG_WARNING); 
   $innodb_recover=0;
 }
 
@@ -283,6 +284,7 @@ sub load_config
   $hooksdir = $cfg->val ('misc', 'hooksdir', $hooksdir);
   $skip_hooks=$cfg->val ('misc', 'skip_hooks', $skip_hooks);
   $keep_snapshot=$cfg->val ('misc', 'keep_snapshot', $keep_snapshot);
+  $quiet=$cfg->val ('misc', 'quiet', $quiet);
 
   $mountdir=$cfg->val ('fs', 'mountdir', $mountdir);
   $backupdir=$cfg->val ('fs', 'backupdir', $backupdir);
@@ -347,6 +349,7 @@ sub load_args
     "hooksdir=s" => \$hooksdir,
     "skip_hooks" => \&skip_hooks,
     "keep_snapshot" => \&keep_snapshot,
+    "quiet" => \&quiet,
 
 # fs
     "mountdir=s" => \$mountdir,
@@ -410,6 +413,7 @@ sub load_defaults
   $hooksdir='/usr/share/mylvmbackup';
   $skip_hooks=0;
   $keep_snapshot=0;
+  $quiet=0;
 
 # fs
   $mountdir='/var/tmp/mylvmbackup/mnt/';
@@ -614,6 +618,9 @@ sub log_msg
   my $msg = shift;
   my $syslog_level = shift;
 
+  # Only log errors and warnings if quiet option is set
+  return if ($quiet) and ($syslog_level eq LOG_INFO);
+
   if ($log_method eq "console") {
     __print_it($syslog_level, $msg);
   } elsif ($log_method eq "syslog") {
@@ -623,7 +630,8 @@ sub log_msg
     __log_it ($syslog_level, $msg);
   }
 
-  if ($syslog_level <= LOG_ERR) # LOG_ERR or more critical
+  # Abort cleanly after logging the error condition
+  if ($syslog_level eq LOG_ERR)
   {
     run_hook("backupfailure") if $running_backup;
     cleanup();
@@ -719,6 +727,10 @@ sub keep_snapshot {
   $keep_snapshot = 1;
 }
 
+sub quiet {
+  $quiet = 1;
+}
+
 sub skip_mycnf {
   $skip_mycnf = 1;
 }
@@ -746,6 +758,8 @@ Common options:
   --host=<host>                 Hostname for MySQL
   --port=<port>                 TCP port for MySQL
   --socket=<socket>             UNIX socket for MySQL
+  --quiet                       Suppress diagnostic output, print warnings
+                                and errors only
 
   --vgname=<name>               VG containing datadir (def: $vgname)
   --lvname=<name>               LV containing datadir (def: $lvname)

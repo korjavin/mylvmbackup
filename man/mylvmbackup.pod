@@ -188,6 +188,12 @@ The default is the empty string.
 Specifies the path to the local socket file, if it is not located at the
 default location. The default is the empty string.
 
+=item B<--quiet>
+
+Suppresses logging of informal messages. Warnings and errors will still
+be printed or logged (depending on the selected logging mechanism).
+The default is verbose logging.
+
 =item B<--innodb_recover>
 
 Run InnoDB recovery on the writable snapshot (LVM2 only) prior to
