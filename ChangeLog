@@ -7,7 +7,7 @@
 2008-11-20  Lenz Grimmer <lenz@grimmer.com>
 
  - Applied patch from "kjetilho" that makes mylvmbackup more robust and
-   paraniod when it comes to handling errors/failures (Bug #298175)
+   paranoid when it comes to handling errors/failures (Bug #298175)
    Now the script aborts cleanly in case of any error.
 
 2008-10-22  Lenz Grimmer <lenz@grimmer.com>
@@ -146,7 +146,7 @@
  - Clean up variable ordering and manpage to ensure that all
    arguments/configopts are documented.
  - Do not start NDB or a replication slave when performing InnoDB recovery
- - Seperate out the suffix of the tarball (Preperation for rsync and users
+ - Separate out the suffix of the tarball (Preparation for rsync and users
    that want to use bzip2 or no compression.)
  - Use a temporary suffix at the end of the tar backup file to indicate that
    it is incomplete.
@@ -217,12 +217,12 @@
 
  - Clean up option handling to load the defaults, followed by the default
    configuration file, followed by an alternative configuration file
-   (specified via CLI arguments), followed by the remainer of the CLI
+   (specified via CLI arguments), followed by the remainder of the CLI
    arguments.
  - Do cleanups on directory inputs for spaces and trailing slashes.
  - Enforce a non-empty prefix at all times.
  - Change the capture of the position file and tarball creation to not use
-   absolute pathes, and instead use them relative to $mountdir.
+   absolute paths, and instead use them relative to $mountdir.
  - Utilize a bindmount to get the position directory near the $mountdir for
    the tarball creation.
  - 'use vars' has been deprecated by upstream way back in Perl-5.6.0
@@ -259,7 +259,7 @@
 
 2006-11-23  Lenz Grimmer <lenz@grimmer.com>
 
- - slighty cleaned up Fred's patch, reverted using the previous default values
+ - slightly cleaned up Fred's patch, reverted using the previous default values
    and match the variables used in the config file with the command line
    options
  - Updated TODO (supporting external config files is done, thanks)

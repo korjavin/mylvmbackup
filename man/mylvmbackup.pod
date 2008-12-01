@@ -145,7 +145,7 @@ before the snapshot is unmounted and discarded
 =back
 
 These hooks are optional and will only be called if a file for the particular
-stage exists and is executable.  The execution of all hooks can be supressed
+stage exists and is executable.  The execution of all hooks can be suppressed
 by passing the I<--skip_hooks> option or by setting the I<skip_hooks>
 configuration option to I<1>;
 
@@ -171,7 +171,7 @@ The default is the empty string (no password).
 
 Specifies the host name to use for connecting to the MySQL server. Note that
 mylvmbackup needs to be run on the same system that the MySQL server to be
-backed up runs on - do not enter a remote host's host name or IP adress here!
+backed up runs on - do not enter a remote host's host name or IP address here!
 A non-empty value for I<host> other than I<localhost> overrides any given
 I<socket> path value.
 The default is the empty string.
@@ -369,7 +369,7 @@ The default is I<.tar.gz>.
 =item B<--compress=string>
 
 Specifies the name of the compression program. Only used if I<backuptype> is
-set to I<tar>. Some possibilites are I<gzip>, I<bzip2> or I<lzma>.
+set to I<tar>. Some possibilities are I<gzip>, I<bzip2> or I<lzma>.
 The program must support reading the to be compressed data from I<stdin> and
 writing to I<stdout>, without requiring intermediate temporary files (for this
 reason, 7zip cannot be used). It's also possible to use I<cat>. In this case,
