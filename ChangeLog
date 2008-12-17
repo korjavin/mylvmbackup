@@ -1,3 +1,12 @@
+2008-12-17  Lenz Grimmer <lenz@grimmer.com>
+
+ - Added project home page URL to the --help output, added note about
+   the existence of a sample config file to the man page
+ - Add build date to the version string in the help output
+ - Fixed check for backupdir to not require it when using rsync to a
+   remote server or when not doing any backups with backuptype=none
+   (Thanks to Ronald Bradford for these suggestions)
+
 2008-11-23  Lenz Grimmer <lenz@grimmer.com>
 
  - Added new option "--quiet" that suppresses informal logging output
