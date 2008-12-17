@@ -153,7 +153,8 @@ configuration option to I<1>;
 
 mylvmbackup supports the following command line options. The same options can
 also be defined in the I</etc/mylvmbackup.conf> configuration file (omitting
-the leading dashes, of course).
+the leading dashes, of course). A sample configuration file is included in
+the distribution.
 
 =over 4
 

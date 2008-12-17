@@ -754,7 +754,8 @@ It requires the MySQL server's data directory to be placed on a logical
 volume, and creates an LVM snapshot to create a copy of the MySQL datadir.
 Afterwards, all data files are archived to a backup directory.
 
-See the manual page for more info including a complete list of options.
+See the manual page for more info including a complete list of options and
+check the home page at http://www.lenzg.org/mylvmbackup for more info.
  
 Common options:
 
