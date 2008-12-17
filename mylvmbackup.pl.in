@@ -147,8 +147,12 @@ my $mounted = 0;
 my $posmounted = 0;
 my $snapshot_created = 0;
 
-# Check the backupdir, it must exist, and it must be readable/writable
-check_dir($backupdir, 'backupdir') unless ($backupdir =~ /::/ and (($backuptype eq 'rsync') or ($backuptype eq 'rsnap')));
+# Check for the backupdir, it must exist, and it must be readable/writable
+# Except when not doing any backups or using rsync to a remote server
+unless (($backuptype eq 'none') or ($backuptype eq 'rsync' and $backupdir =~ /::/))
+{
+  check_dir($backupdir, 'backupdir');
+}
 
 # Check the mountdir, it must exist, and be readable/writeable
 check_dir($mountdir, 'mountdir');
@@ -769,9 +773,11 @@ Common options:
   --prefix=<prefix>             Prefix for naming the backup (def: $prefix)
   --suffix=<suffix>             Prefix for naming the backup (def: $suffix)
   --backupdir=<dirname>         Path for archives (def: $backupdir)
-  --backuptype=(tar|rsync|none) Select backup type: tar, rsync or no backup
+  --backuptype=<type>           Select backup type: none, rsnap, rsync or tar
+                                (def: $backuptype)
 
-  --configfile=<file>           Specify an alternative configuration file (def: $configfile)
+  --configfile=<file>           Specify an alternative configuration file
+                                (def: $configfile)
   --help                        Print this help
 
 If your MySQL daemon is not listening on localhost, or using the default 
