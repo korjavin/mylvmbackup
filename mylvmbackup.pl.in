@@ -29,6 +29,7 @@ use strict;
 
 # Version is set from the Makefile
 my $version='@VERSION@';
+my $build_date='@BUILDDATE@';
 
 # syslog-related options
 my $syslog_ident = 'mylvmbackup';
@@ -746,7 +747,7 @@ sub need_xfsworkaround {
 sub help {
 print <<EOF;
 
-mylvmbackup Version $version
+mylvmbackup Version $version ($build_date)
  
 This script performs a MySQL backup by using an LVM snapshot volume.
 It requires the MySQL server's data directory to be placed on a logical

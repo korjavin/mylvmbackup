@@ -25,6 +25,7 @@ TAR = /bin/tar
 
 NAME = mylvmbackup
 VERSION = 0.12
+BUILDDATE = $(shell date +%Y-%m-%d)
 MAN1 = man/$(NAME).1
 DISTFILES = COPYING \
 	CREDITS \
@@ -54,7 +55,8 @@ $(NAME).spec: $(NAME).spec.in
 	$(SED) -e s/@VERSION@/$(VERSION)/ < $< > $@
 
 $(NAME): $(NAME).pl.in
-	$(SED) -e s/@VERSION@/$(VERSION)/ < $< > $@
+	$(SED) -e s/@BUILDDATE@/$(BUILDDATE)/ \
+	       -e s/@VERSION@/$(VERSION)/ < $< > $@
 	$(CHMOD) 755 $@
 
 $(MAN1):
