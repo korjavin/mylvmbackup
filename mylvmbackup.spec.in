@@ -22,7 +22,7 @@ Release: 0
 License: GPL
 Group: Productivity/Archiving/Backup
 Source: %{name}-%{version}.tar.gz
-URL: http://www.lenzg.org/mylvmbackup/
+URL: http://www.lenzg.net/mylvmbackup/
 BuildRoot:    %{_tmppath}/%{name}-%{version}-build
 BuildArch: noarch
 

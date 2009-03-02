@@ -1,6 +1,6 @@
 mylvmbackup - utility for creating MySQL backups via LVM snapshots
 
-Home page: http://www.lenzg.org/mylvmbackup/
+Home page: http://www.lenzg.net/mylvmbackup/
 Source code, Bug Reports: https://launchpad.net/mylvmbackup
 Maintainer: Lenz Grimmer <lenz@grimmer.com>
 

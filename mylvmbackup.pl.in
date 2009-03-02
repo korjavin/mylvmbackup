@@ -181,7 +181,7 @@ unless ( scalar(@mountdir_content) eq 0)
 };
 
 # Figure out our DSN string
-my $dsn = "DBI:mysql:database=mysql";
+my $dsn = "DBI:mysql:database=mysql;mysql_read_default_group=client";
 
 if(length($socket) > 0) {
  $dsn .= ";mysql_socket=".$socket;
@@ -755,7 +755,7 @@ volume, and creates an LVM snapshot to create a copy of the MySQL datadir.
 Afterwards, all data files are archived to a backup directory.
 
 See the manual page for more info including a complete list of options and
-check the home page at http://www.lenzg.org/mylvmbackup for more info.
+check the home page at http://www.lenzg.net/mylvmbackup for more info.
  
 Common options:
 

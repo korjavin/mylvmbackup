@@ -1,3 +1,8 @@
+2009-03-02  Lenz Grimmer <lenz@grimmer.com>
+
+ - Updated all URL references to point to lenzg.net instead of lenzg.org
+ - Applied small patch from Baron Schwartz to allow reading from ~/.my.cnf
+
 2008-12-17  Lenz Grimmer <lenz@grimmer.com>
 
  - Added project home page URL to the --help output, added note about
