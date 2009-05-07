@@ -287,6 +287,13 @@ If this option is given, mylvmbackup will not remove the snapshot
 before terminating. Note that keeping multiple LVM snapshots open at
 the same time can reduce I/O performance.
 
+=item B<--keep_mount>
+
+If this option is given, mylvmbackup will not remove the mounted 
+partitions and the bindmounts before terminating. This option also
+implies I<keep_snapshot=1>, as it would not be useful if the snapshot
+is removed.
+
 =item B<--relpath=string>
 
 Relative path on the logical volume to the MySQL data directory.

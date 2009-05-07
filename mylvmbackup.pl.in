@@ -48,6 +48,7 @@ my $skip_hooks;
 my $skip_mycnf;
 my $extra_flush_tables;
 my $keep_snapshot;
+my $keep_mount;
 my $lvcreate;
 my $lvname;
 my $lvremove;
@@ -85,6 +86,7 @@ my $syslog_socktype;
 my $syslog_facility;
 my $syslog_remotehost;
 my $running_backup;
+my $tmp_cleanup;
 
 # Load defaults into variables
 load_defaults();
@@ -134,7 +136,14 @@ my $fullprefix = $prefix.'-'.$date.$suffix;
 
 my $topmountdir = $mountdir;
 
-my $posbasedir = tempdir('mylvmbackup-'.$fullprefix.'-XXXXXX', TMPDIR => 1, CLEANUP => 1);
+# Don't try to remove the temporary directory when we want to keep the mounts.
+unless ($keep_mount) {
+  $tmp_cleanup = 1;
+} else {
+  $tmp_cleanup = 0;
+}
+
+my $posbasedir = tempdir('mylvmbackup-'.$fullprefix.'-XXXXXX', TMPDIR => 1, CLEANUP => $tmp_cleanup);
 my $posdir = $posbasedir.'/pos';
 mkdir $posdir;
 
@@ -289,6 +298,7 @@ sub load_config
   $hooksdir = $cfg->val ('misc', 'hooksdir', $hooksdir);
   $skip_hooks=$cfg->val ('misc', 'skip_hooks', $skip_hooks);
   $keep_snapshot=$cfg->val ('misc', 'keep_snapshot', $keep_snapshot);
+  $keep_mount=$cfg->val ('misc', 'keep_mount', $keep_mount);
   $quiet=$cfg->val ('misc', 'quiet', $quiet);
 
   $mountdir=$cfg->val ('fs', 'mountdir', $mountdir);
@@ -354,6 +364,7 @@ sub load_args
     "hooksdir=s" => \$hooksdir,
     "skip_hooks" => \&skip_hooks,
     "keep_snapshot" => \&keep_snapshot,
+    "keep_mount" => \&keep_mount,
     "quiet" => \&quiet,
 
 # fs
@@ -418,6 +429,7 @@ sub load_defaults
   $hooksdir='/usr/share/mylvmbackup';
   $skip_hooks=0;
   $keep_snapshot=0;
+  $keep_mount=0;
   $quiet=0;
 
 # fs
@@ -685,15 +697,19 @@ sub cleanup
 {
   run_hook("precleanup");
   log_msg ("Cleaning up...", LOG_INFO);
-  system("$umount $mountdir") if ($mounted);
-  system("$umount $posmountdir") if ($posmounted);
-  unlink $pos_filename;
-  unlink $mycnf_filename;
-  if ($posmountdir) {
-    rmdir $mountdir;
-    rmdir $posmountdir;
+  unless ($keep_mount) {
+    system("$umount $mountdir") if ($mounted);
+    system("$umount $posmountdir") if ($posmounted);
+    unlink $pos_filename;
+    unlink $mycnf_filename;
+    if ($posmountdir) {
+      rmdir $mountdir;
+      rmdir $posmountdir;
+    }
+    rmdir $posdir;
+  } else {
+    log_msg("Not removing mount as requested by configuration", LOG_INFO);
   }
-  rmdir $posdir;
   if (-e "/dev/$vgname/$backuplv") {
     my @lvs_info = `$lvs /dev/$vgname/$backuplv`;
     chomp (@lvs_info);
@@ -704,7 +720,7 @@ sub cleanup
   }
   if ($snapshot_created)
   {
-    unless ($keep_snapshot) {
+    unless ($keep_snapshot || $keep_mount) {
       system("$lvremove -f /dev/$vgname/$backuplv");
     } else {
       log_msg("Not removing snapshot as requested by configuration", LOG_INFO);
@@ -730,6 +746,10 @@ sub skip_hooks {
 
 sub keep_snapshot {
   $keep_snapshot = 1;
+}
+
+sub keep_mount {
+  $keep_mount = 1;
 }
 
 sub quiet {
