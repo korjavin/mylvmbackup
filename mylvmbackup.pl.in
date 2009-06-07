@@ -117,10 +117,10 @@ if ("$log_method" eq "syslog") {
 
 my $lvm_version = lvm_version();
 
-if ($innodb_recover == 1 && $lvm_version =~ /^1/)
+if ($lvm_version =~ /^1/)
 {
-  log_msg("LVM1 does not support writable snapshots. InnoDB recovery has been disabled.", LOG_WARNING); 
-  $innodb_recover=0;
+  log_msg("Linux LVM Version 2 or higher is required to run mylvmbackup.", LOG_ERR); 
+  exit(1);
 }
 
 # Clean up directory inputs

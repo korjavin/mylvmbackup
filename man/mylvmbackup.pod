@@ -74,12 +74,6 @@ if you use options like I<--innodb-file-per-table>, I<--innodb-data-home-dir>,
 I<--innodb-data-file-path> or I<--innodb-log-group-home-dir> that modify the
 default file layout for InnoDB tables.
 
-Also note that this only works when using writable LVM snapshots and thus
-requires LVM2 (the script performs a test for this and will disable log
-recovery in the case it finds an LVM1 system). This will prolong the time
-needed to perform the actual backup, but will save you precious time when you
-eventually have to restore from this backup set.
-
 If you use InnoDB tables exclusively, you may also want to consider to include
 the option I<--skip_flush_tables>, to avoid the probably time-consuming and in
 this case unnecessary flushing of buffers. But don't enable this option when
@@ -197,8 +191,7 @@ The default is verbose logging.
 
 =item B<--innodb_recover>
 
-Run InnoDB recovery on the writable snapshot (LVM2 only) prior to
-performing the backup.
+Run InnoDB recovery on the writable snapshot prior to performing the backup.
 
 =item B<--skip_flush_tables>
 
@@ -478,6 +471,8 @@ distribution.
 It also requires several other external programs: GNU I<tar> and I<gzip> to back
 up the data, LVM utilities (I<lvcreate>, I<lvremove> and I<lvs>) to create and
 remove the LVM snapshot, and the system utilities I<mount> and I<umount>.
+Please note that mylvmbackup requires Linux LVM Version 2 or higher. It does not
+work on LVMv1, as this version does not support writable snapshots.
 
 Optionally, I<rsync> or I<rsnap> may be required instead of I<tar> and I<gzip>,
 depending on which backup type you choose.

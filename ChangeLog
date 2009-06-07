@@ -1,4 +1,8 @@
-2009-05-07  Lenz Grimmy <lenz@grimmer.com>
+2009-06-07  Lenz Grimmer <lenz@grimmer.com>
+
+ - Made Linux LVMv2 a requirement
+
+2009-05-07  Lenz Grimmer <lenz@grimmer.com>
 
  - Applied patch by Tim Stoop: added option --keep_mount which keeps the
    snapshot mounted after the mylvmbackup run (which also implies
