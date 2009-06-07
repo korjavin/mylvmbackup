@@ -1,3 +1,9 @@
+2009-05-07  Lenz Grimmy <lenz@grimmer.com>
+
+ - Applied patch by Tim Stoop: added option --keep_mount which keeps the
+   snapshot mounted after the mylvmbackup run (which also implies
+   --keep_snapshot)
+
 2009-03-02  Lenz Grimmer <lenz@grimmer.com>
 
  - Updated all URL references to point to lenzg.net instead of lenzg.org
