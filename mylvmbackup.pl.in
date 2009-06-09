@@ -21,7 +21,7 @@ use Config::IniFiles;
 use Date::Format;
 use DBI;
 use File::Basename;
-use File::Temp qw/ tempdir mktemp /;
+use File::Temp qw/ mkstemps mktemp /;
 use Getopt::Long;
 
 use diagnostics;
@@ -86,7 +86,6 @@ my $syslog_socktype;
 my $syslog_facility;
 my $syslog_remotehost;
 my $running_backup;
-my $tmp_cleanup;
 
 # Load defaults into variables
 load_defaults();
@@ -136,25 +135,10 @@ my $fullprefix = $prefix.'-'.$date.$suffix;
 
 my $topmountdir = $mountdir;
 
-# Don't try to remove the temporary directory when we want to keep the mounts.
-unless ($keep_mount) {
-  $tmp_cleanup = 1;
-} else {
-  $tmp_cleanup = 0;
-}
-
-my $posbasedir = tempdir('mylvmbackup-'.$fullprefix.'-XXXXXX', TMPDIR => 1, CLEANUP => $tmp_cleanup);
-my $posdir = $posbasedir.'/pos';
-mkdir $posdir;
-
-my $pos_filename = $posdir.'/'.$fullprefix.'.pos';
-my $mycnf_basename = File::Basename::basename($mycnf);
-my $mycnf_filename = $posdir.'/'.$fullprefix.'_'.$mycnf_basename;
 # No .tar.gz on the end!
 my $archivename  = $backupdir.'/'.$fullprefix;
 
 my $mounted = 0;
-my $posmounted = 0;
 my $snapshot_created = 0;
 
 # Check for the backupdir, it must exist, and it must be readable/writable
@@ -173,6 +157,15 @@ $mountdir .= '/'.$prefix;
 
 my $posmountdir = $mountdir;
 $posmountdir .= '-pos'; # Notice that we do not add a slash.
+
+my $pos_filename = $posmountdir.'/'.$fullprefix.'.pos';
+my $pos_tempfile_fh;
+my $pos_tempfile;
+($pos_tempfile_fh, $pos_tempfile) = mkstemps('mylvmbackup-'.$fullprefix.'-XXXXXX', '.pos')
+  or log_msg ("Cannot create temporary file $pos_tempfile: $!", LOG_ERR);
+
+my $mycnf_basename = File::Basename::basename($mycnf);
+my $mycnf_filename = $posmountdir.'/'.$fullprefix.'_'.$mycnf_basename;
 
 # Now create it
 mkdir $mountdir;
@@ -214,7 +207,7 @@ if (!$dbh)
 run_hook ("preflush");
 flush_tables($dbh) unless ($skip_flush_tables == 1);
 
-create_pos_file($dbh);
+create_posfile($dbh);
 
 run_hook ("presnapshot");
 $snapshot_created= create_lvm_snapshot();
@@ -230,12 +223,13 @@ $dbh->disconnect;
 
 run_hook("premount");
 $mounted = mount_snapshot();
-$posmounted = mount_posdir_bind();
+save_posfile();
 
 if ($innodb_recover == 1)
 {
   do_innodb_recover();
 }
+
 if (-f $mycnf && $skip_mycnf == 0)
 {
   create_mycnf_file();
@@ -469,27 +463,16 @@ sub flush_tables
   $dbh->do("FLUSH TABLES WITH READ LOCK") or log_msg ($DBI::errstr, LOG_ERR);
 }
 
-sub create_pos_file
+sub create_posfile
 {
-  log_msg ("Taking position record...", LOG_INFO);
+  log_msg ("Taking position record into $pos_tempfile...", LOG_INFO);
   my $dbh = shift;
-  my $pos_file;
-  open $pos_file, ">$pos_filename"
-    or log_msg ("Cannot open $pos_filename for writing: $!", LOG_ERR);
-  _create_pos_file_single($dbh, 'SHOW MASTER STATUS', $pos_file, 'Master');
-  _create_pos_file_single($dbh, 'SHOW SLAVE STATUS', $pos_file, 'Slave');
-  close $pos_file or log_msg ("Closing $pos_filename failed: $!", LOG_ERR);
+  _create_posfile_single($dbh, 'SHOW MASTER STATUS', $pos_tempfile_fh, 'Master');
+  _create_posfile_single($dbh, 'SHOW SLAVE STATUS', $pos_tempfile_fh, 'Slave');
+  close $pos_tempfile_fh or log_msg ("Closing $pos_tempfile failed: $!", LOG_ERR);
 }
 
-sub create_mycnf_file
-{
-  log_msg ("Copying $mycnf_basename...", LOG_INFO);
-  use File::Copy;
-  copy($mycnf, $mycnf_filename)
-      or log_msg ("Could not copy $mycnf to $mycnf_filename: $!", LOG_ERR);
-}
-
-sub _create_pos_file_single
+sub _create_posfile_single
 {
 	my $dbh = shift; my $query = shift; my $fh = shift; my $pos_prefix = shift;
 	my $sth = $dbh->prepare($query) or log_msg ($DBI::errstr, LOG_ERR);
@@ -499,10 +482,18 @@ sub _create_pos_file_single
 			my $v = $r->{$f};
 			$v = '' if (!defined($v));
 			my $line = "$pos_prefix:$f=$v\n";
-			print $fh $line;
+			print $fh $line or log_msg ("Writing position record failed: $!", LOG_ERR);
 		}
  }
  $sth->finish;
+}
+
+sub create_mycnf_file
+{
+  log_msg ("Copying $mycnf_basename...", LOG_INFO);
+  use File::Copy;
+  copy($mycnf, $mycnf_filename)
+      or log_msg ("Could not copy $mycnf to $mycnf_filename: $!", LOG_ERR);
 }
 
 sub do_backup_tar
@@ -515,10 +506,10 @@ sub do_backup_tar
   my $mountdir_rel = $mountdir;
   $mountdir_rel =~ s/^$topmountdir//g;
   $mountdir_rel =~ s/^\/+//g;
-  my $pos_filename_rel = $posmountdir . '/' . File::Basename::basename($pos_filename);
+  my $pos_filename_rel = $pos_filename;
   $pos_filename_rel =~ s/^$topmountdir//g;
   $pos_filename_rel =~ s/^\/+//g;
-  my $mycnf_filename_rel = $posmountdir . '/' . File::Basename::basename($mycnf_filename);
+  my $mycnf_filename_rel = $mycnf_filename;
   $mycnf_filename_rel =~ s/^$topmountdir//g;
   $mycnf_filename_rel =~ s/^\/+//g;
   
@@ -536,8 +527,8 @@ sub do_backup_tar
     ($compress eq "") ? $tarballtmp : "-",
     "$mountdir_rel/$relpath", $tarsuffixarg);
   # Maybe some additional files are to be added
-  $command .= " $pos_filename_rel" if (-f $pos_filename );
-  $command .= " $mycnf_filename_rel" if (-f $mycnf_filename );
+  $command .= " $pos_filename_rel" if (-f $pos_filename_rel );
+  $command .= " $mycnf_filename_rel" if ( $skip_mycnf == 0 );
   # If the stuff should be compressed (ie. a compress program has been set),
   # then the stream has to be piped to the $compress program.
   $command .= "| $compress $compressarg -> $tarballtmp" unless ($compress eq "");
@@ -603,8 +594,7 @@ sub do_backup_rsync
 sub mount_snapshot
 { 
   log_msg ("Mounting snapshot...", LOG_INFO);
-  my $params= 'ro';
-  $params= 'rw' if $innodb_recover;
+  my $params= 'rw';
 
   $params.= ',nouuid' if $need_xfsworkaround;
   my $command= "$mount -o $params /dev/$vgname/$backuplv $mountdir";
@@ -618,10 +608,9 @@ sub do_innodb_recover
   return run_command("InnoDB recovery on snapshot", $command);
 }
 
-sub mount_posdir_bind
+sub save_posfile
 {
-  my $command= "$mount -o bind,ro $posdir $posmountdir";
-  return run_command("bind-mount position directory", $command);
+  copy($pos_tempfile, $pos_filename) or log_msg ("Could not copy $pos_tempfile to $pos_filename: $!", LOG_ERR);
 }
 
 sub create_lvm_snapshot 
@@ -699,14 +688,13 @@ sub cleanup
   log_msg ("Cleaning up...", LOG_INFO);
   unless ($keep_mount) {
     system("$umount $mountdir") if ($mounted);
-    system("$umount $posmountdir") if ($posmounted);
     unlink $pos_filename;
     unlink $mycnf_filename;
     if ($posmountdir) {
       rmdir $mountdir;
       rmdir $posmountdir;
     }
-    rmdir $posdir;
+    unlink $pos_tempfile;
   } else {
     log_msg("Not removing mount as requested by configuration", LOG_INFO);
   }
