@@ -1,3 +1,12 @@
+2009-06-13  Lenz Grimmer <lenz@grimmer.com>
+
+ - Removed the bind mount of the position file directory: copy the config
+   files (position record and my.cnf) into the writable snapshot directly
+ - Fixed the backup backends to honor this change, fixed the rsnap plugin
+   to actually include the config files as well
+ - Removed some hardcoded /tmp paths with a $TMP variable
+ - Removed superflous $lvm_version variable
+ 
 2009-06-07  Lenz Grimmer <lenz@grimmer.com>
 
  - Made Linux LVMv2 a requirement

@@ -37,6 +37,8 @@ my $syslog_args = 'pid,ndelay';
 my $configfile = "/etc/mylvmbackup.conf";
 my $configfile2 = "";
 
+my $TMP= ($ENV{TMPDIR} || "/tmp");
+
 my $backupdir;
 my $backuplv;
 my $datefmt;
@@ -114,9 +116,7 @@ if ("$log_method" eq "syslog") {
   log_msg ("Starting new backup...", LOG_INFO);
 }
 
-my $lvm_version = lvm_version();
-
-if ($lvm_version =~ /^1/)
+if (lvm_version() =~ /^1/)
 {
   log_msg("Linux LVM Version 2 or higher is required to run mylvmbackup.", LOG_ERR); 
   exit(1);
@@ -161,7 +161,7 @@ $posmountdir .= '-pos'; # Notice that we do not add a slash.
 my $pos_filename = $posmountdir.'/'.$fullprefix.'.pos';
 my $pos_tempfile_fh;
 my $pos_tempfile;
-($pos_tempfile_fh, $pos_tempfile) = mkstemps('mylvmbackup-'.$fullprefix.'-XXXXXX', '.pos')
+($pos_tempfile_fh, $pos_tempfile) = mkstemps($TMP.'/mylvmbackup-'.$fullprefix.'-XXXXXX', '.pos')
   or log_msg ("Cannot create temporary file $pos_tempfile: $!", LOG_ERR);
 
 my $mycnf_basename = File::Basename::basename($mycnf);
@@ -410,7 +410,7 @@ sub load_defaults
   $suffix='_mysql';
   $datefmt='%Y%m%d_%H%M%S';
   $innodb_recover=0;
-  $pidfile = '/var/tmp/mylvmbackup_recoverserver.pid';
+  $pidfile = '$TMP/mylvmbackup_recoverserver.pid';
   $skip_flush_tables=0;
   $extra_flush_tables=0;
   $skip_mycnf=0;
@@ -490,7 +490,7 @@ sub _create_posfile_single
 
 sub create_mycnf_file
 {
-  log_msg ("Copying $mycnf_basename...", LOG_INFO);
+  log_msg ("Copying $mycnf to $mycnf_filename...", LOG_INFO);
   use File::Copy;
   copy($mycnf, $mycnf_filename)
       or log_msg ("Could not copy $mycnf to $mycnf_filename: $!", LOG_ERR);
@@ -527,8 +527,8 @@ sub do_backup_tar
     ($compress eq "") ? $tarballtmp : "-",
     "$mountdir_rel/$relpath", $tarsuffixarg);
   # Maybe some additional files are to be added
-  $command .= " $pos_filename_rel" if (-f $pos_filename_rel );
-  $command .= " $mycnf_filename_rel" if ( $skip_mycnf == 0 );
+  $command .= " $pos_filename_rel";
+  $command .= " $mycnf_filename_rel" if ($skip_mycnf==0);
   # If the stuff should be compressed (ie. a compress program has been set),
   # then the stream has to be piped to the $compress program.
   $command .= "| $compress $compressarg -> $tarballtmp" unless ($compress eq "");
@@ -558,6 +558,8 @@ sub do_backup_rsnap
   $relpath_noslash =~ s/\/+$//g;
 
   my $command = "$rsnap $rsnaparg $mountdir/$relpath_noslash";
+  $command .= " $pos_filename";
+  $command .= " $mycnf_filename" if ($skip_mycnf==0);
   $command .= " $destdir/";
 
   return run_command("create rsnap archive", $command);
@@ -579,8 +581,8 @@ sub do_backup_rsync
   $relpath_noslash =~ s/\/+$//g;
 
   my $command = "$rsync $rsyncarg $mountdir/$relpath_noslash";
-  $command .= " $pos_filename" if (-f $pos_filename );
-  $command .= " $mycnf_filename" if (-f $mycnf_filename );
+  $command .= " $pos_filename";
+  $command .= " $mycnf_filename" if ($skip_mycnf==0);
   $command .= " $destdirtmp/";
   if (run_command("create rsync archive", $command))
   {
@@ -604,12 +606,13 @@ sub mount_snapshot
 sub do_innodb_recover
 {
   log_msg ("Recovering InnoDB...", LOG_INFO);
-  my $command="echo 'select 1;' | $mysqld_safe --socket=/tmp/mylvmbackup.sock --pid-file=$pidfile --datadir=$mountdir --skip-networking --skip-grant --bootstrap --skip-ndbcluster --skip-slave-start";
+  my $command="echo 'select 1;' | $mysqld_safe --socket=$TMP/mylvmbackup.sock --pid-file=$pidfile --datadir=$mountdir --skip-networking --skip-grant --bootstrap --skip-ndbcluster --skip-slave-start";
   return run_command("InnoDB recovery on snapshot", $command);
 }
 
 sub save_posfile
 {
+  log_msg ("Copying $pos_tempfile to $pos_filename...", LOG_INFO);
   copy($pos_tempfile, $pos_filename) or log_msg ("Could not copy $pos_tempfile to $pos_filename: $!", LOG_ERR);
 }
 
