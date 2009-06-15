@@ -1,3 +1,25 @@
+2009-06-14  Lenz Grimmer <lenz@grimmer.com>
+
+ - Merged contributions from Matthew Boehm:
+ - Added support for date/time formatted file paths for the backupdir
+   and mountdir. Example: $backupdir=/path/to/%Y/%m/%d will expand to
+   /path/to/2008/10/02 and backups will go in there.
+ - Added support to attempt to create $backupdir and $mountdir if they do
+   not exist.
+ - Added support for using Perl modules as hook scripts. Module must be
+   named <hook>.pm and must be a package of type <hook>.  Module must
+   implement ->execute() which is called by mylvmbackup to initiate the 
+   hook. It must return boolean true/false (1 or 0) on success/failure.
+   ->execute() will be passed 2 parameters. The first parameter is a
+   clone() of the global $dbh. This will allow hook scripts to preform
+   actions on the DB using the existing connection. The second parameter
+   is a string containing any messages passed to the run_hook() function.
+   Module must also implement ->errmsg() which will return a string error
+   message to be sent to log_msg(). This will be called by mylvmbackup
+   when ->execute() returns false/0.
+ - Added new hook, 'logerr'. Called by log_msg() when log severity is
+   LOG_ERR. Passes $msg to hook script.
+
 2009-06-13  Lenz Grimmer <lenz@grimmer.com>
 
  - Removed the bind mount of the position file directory: copy the config

@@ -87,16 +87,18 @@ my $log_method;
 my $syslog_socktype;
 my $syslog_facility;
 my $syslog_remotehost;
-my $running_backup;
 
 # Load defaults into variables
 load_defaults();
+
 # Initialize variables from config file, if it exists
 if (-r $configfile) {
   load_config($configfile);
 }
+
 # Load the commandline arguments
 load_args();
+
 # If they specified an alternative config file
 if ($configfile2 ne "") {
   die ("Unable to load specified config file: $!\n") unless (-r $configfile2);
@@ -221,35 +223,40 @@ run_hook ("predisconnect");
 log_msg ("Disconnecting from database...", LOG_INFO);
 $dbh->disconnect;
 
-run_hook("premount");
-$mounted = mount_snapshot();
-save_posfile();
-
-if ($innodb_recover == 1)
+if ($snapshot_created)
 {
-  do_innodb_recover();
-}
+  run_hook("premount");
+  $mounted= mount_snapshot();
+  save_posfile();
+  if ($mounted)
+  {
+    if ($innodb_recover == 1)
+    {
+      do_innodb_recover();
+    }
+    if (-f $mycnf && $skip_mycnf == 0)
+    {
+      create_mycnf_file();
+    }
 
-if (-f $mycnf && $skip_mycnf == 0)
-{
-  create_mycnf_file();
-}
+    run_hook("prebackup");
+    my $backupsuccess=0;
+    if ($backuptype eq 'tar') {$backupsuccess = do_backup_tar()}
+    elsif ($backuptype eq 'rsync') {$backupsuccess = do_backup_rsync()}
+    elsif ($backuptype eq 'rsnap') {$backupsuccess = do_backup_rsnap()}
+    else {$backupsuccess = do_backup_none()};
 
-run_hook("prebackup");
-$running_backup = 1;
-
-if ($backuptype eq 'tar') {
-  do_backup_tar();
-} elsif ($backuptype eq 'rsync') {
-  do_backup_rsync();
-} elsif ($backuptype eq 'rsnap') {
-  do_backup_rsnap();
+    if ($backupsuccess == 1)
+    {
+      run_hook("backupsuccess");
+    } else {
+      run_hook("backupfailure");
+    }
+  }    
 } else {
-  do_backup_none();
+  cleanup();
+  exit 1;
 }
-
-$running_backup = 0;
-run_hook("backupsuccess");
 
 cleanup();
 exit 0;
@@ -384,6 +391,9 @@ sub load_args
     "syslog_facility=s" => \$syslog_facility,
     "syslog_remotehost=s" => \$syslog_remotehost,
   ) or help();
+
+  # As this function is called last, append to @INC here.
+  eval "use lib '$hooksdir'";
 }
 
 # Please keep all 3 functions in the same order: load_config, load_args, load_defaults 
@@ -639,13 +649,9 @@ sub log_msg
     __log_it ($syslog_level, $msg);
   }
 
-  # Abort cleanly after logging the error condition
   if ($syslog_level eq LOG_ERR)
   {
-    run_hook("backupfailure") if $running_backup;
-    cleanup();
-
-    exit(1);
+    run_hook ("logerr", $msg);
   }
 
   sub __print_it
@@ -654,7 +660,7 @@ sub log_msg
     my $msg = shift;
     my $logmsg = '';
 
-  if ($syslog_level eq LOG_WARNING) {
+    if ($syslog_level eq LOG_WARNING) {
       $logmsg = " Warning: ";
     } elsif ($syslog_level eq LOG_INFO) {
       $logmsg = " Info: ";
@@ -690,14 +696,14 @@ sub cleanup
   run_hook("precleanup");
   log_msg ("Cleaning up...", LOG_INFO);
   unless ($keep_mount) {
-    system("$umount $mountdir") if ($mounted);
-    unlink $pos_filename;
-    unlink $mycnf_filename;
+    run_command("Unmounting $mountdir","$umount $mountdir") if ($mounted);
+    unlink $pos_filename if (-f $pos_filename);
+    unlink $mycnf_filename if (-f $mycnf_filename);
     if ($posmountdir) {
       rmdir $mountdir;
       rmdir $posmountdir;
     }
-    unlink $pos_tempfile;
+    unlink $pos_tempfile if (-f $pos_tempfile);
   } else {
     log_msg("Not removing mount as requested by configuration", LOG_INFO);
   }
@@ -712,7 +718,7 @@ sub cleanup
   if ($snapshot_created)
   {
     unless ($keep_snapshot || $keep_mount) {
-      system("$lvremove -f /dev/$vgname/$backuplv");
+      run_command("Removing snapshot", "$lvremove -f /dev/$vgname/$backuplv");
     } else {
       log_msg("Not removing snapshot as requested by configuration", LOG_INFO);
     }
@@ -806,6 +812,13 @@ EOF
 sub check_dir 
 {
  my ($dirname,$optioname) = @_;
+ if (!(-d $dirname)) {
+    eval { File::Path::mkpath($dirname) };
+    if($@) {
+      log_msg ("The directory $dirname does not exist and I was unable to create it.", LOG_ERR);
+      help();
+    }
+ }
  unless ( (-d $dirname) and 
      (-w $dirname) and (-r $dirname) and  (-x $dirname))
  {
@@ -831,6 +844,7 @@ DIRERROR
 sub clean_dirname
 {
  my ($d) = @_;
+ $d = time2str($d, time) if($d =~ /(%[Ymdhis])+/);
  $d =~ s/^\s*//g;
  $d =~ s/\s$//g;
  return File::Basename::dirname($d.'/foo')
@@ -854,11 +868,9 @@ sub run_command
     if ($? & 0xff)
     {
       $err = "received signal " . ($? & 0xff);
-    } elsif ($? >> 8)
-    {
+    } elsif ($? >> 8) {
       $err = "exit status " . ($? >> 8);
-    } else
-    {
+    } else {
       $err = $!;
     }
     log_msg("FAILED: $message ($err)", LOG_ERR);
@@ -872,18 +884,32 @@ sub run_command
 sub run_hook
 {
   return if $skip_hooks;
-  my $hookname = shift;
+  my ($hookname, $hookarg) = @_;
   my $hookfile = $hooksdir."/".$hookname;
-  if (-x $hookfile)
+  $hookarg="" unless ($hookarg);
+
+  eval "use $hookname";
+  if($@)
   {
-    # Can't use run_command, since a failing "precleanup" will cause an
-    # infinite loop.
-    log_msg ("Running hook ".$hookname, LOG_INFO);
-    system($hookfile);
-    if ( $? >> 8 != 0)
+    # couldn't find hook as perl module. see if it's a shell script.
+    if (-x $hookfile)
     {
-      log_msg ("Hook $hookname failed with nonzero exit value ". ($?>>8),
+      my $message="Running hook '$hookname'";
+      $message.=" with argument '$hookarg'" unless ($hookarg eq "");
+      log_msg ($message, LOG_INFO);
+      system($hookfile $hookarg);
+      if ( $? >> 8 != 0)
+      {
+        log_msg (sprintf("Hook $hookname failed with nonzero exit value %d", $? >> 8),
                $hookname eq "precleanup" ? LOG_WARNING : LOG_ERR);
+      }
+    }
+  } else {
+    log_msg ("Running hook '$hookname' as perl module.", LOG_INFO);
+    my $ret = $hookname->execute(($dbh ? $dbh->clone() : undef), $hookarg);
+    if(!$ret)
+    {
+      log_msg ("Perl module '$hookname' did not return a true result: " . $hookname->errmsg(), LOG_ERR);
     }
   }
 }

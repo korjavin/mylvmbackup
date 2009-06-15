@@ -25,7 +25,10 @@ Matt Lohier submitted the patch to support rsnap as a backup backend.
 Matthew Boehm contributed a patch to make the backup file name suffix
 configurable via a "--suffix" option and also converted the documentation
 from asciidoc to Perl POD. He also contributed a patch to improve the
-error handling in case of a failed database connection.
+error handling in case of a failed database connection and support for using
+date/time format strings in the backupdir and mountdir path names.
+Matthew also provided patches that enabled the use hooks written as Perl
+modules.
 
 Alexander Skwar contributed a patch to support backups using different
 compression methods other than gzip for the tar backup as well as support
@@ -34,3 +37,11 @@ for using a non-GNU tar for the archiving.
 "kjetilho" (https://launchpad.net/~kjetilho-ifi) contributed a patch
 to improve the robustness and error handling of the entire script.
 (Bug #298175)
+
+Tim Stoop provided a patch to enable the --keep-mount option.
+
+Baron Schwartz provided a patch to allow reading the username and
+password from ~/.my.cnf
+
+Ronald Bradford provided many helpful suggestions to improve the
+usability and robustness of the script.
