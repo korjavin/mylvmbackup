@@ -157,7 +157,7 @@ before the snapshot is unmounted and discarded
 These hooks are optional and will only be called if a file for the particular
 stage exists and is executable. Note that hooks implemented as Perl modules
 (I<hookname.pm>) have priority over "plain" hook scripts (I<hookname>), if both
-exist - only the first one will be used. The execution of all hooks can be
+exist, only the first one will be used. The execution of all hooks can be
 suppressed by passing the I<--skip_hooks> option or by setting the
 I<skip_hooks> configuration option to I<1>;
 
@@ -347,13 +347,13 @@ If the directory does not exist, it will be created.
 It is possible to use selected I<timestr()> formatting sequences to create
 directory names which contain a dynamic date value. Currently, the following
 format strings are supported:
-I<%Y> year (e.g. 2009),
+I<%Y> 4-digit year (e.g. 2009),
 I<%m> month (01..12),
-I<%d> day of month (e.g. 01),
+I<%d> day of month, leading zero
 I<%h> month abbreviation, 
-I<%H> hour, 24 hour clock, leading 0's)
-I<%M> minute, leading 0's
-I<%S> seconds, leading 0's
+I<%H> hour, 24 hour clock, leading zero
+I<%M> minute, leading zero
+I<%S> seconds, leading zero
 Example: I<$mountdir=/path/to/%Y-%m-%d> will expand to I</path/to/2009-06-13>
 
 =item B<--backupdir=string>
@@ -365,14 +365,14 @@ directory. If the directory does not exist, it will be created.
 It is possible to use selected I<timestr()> formatting sequences to create
 directory names which contain a dynamic date value. Currently, the following
 format strings are supported:
-I<%Y> year (e.g. 2009),
+I<%Y> 4-digit year (e.g. 2009),
 I<%m> month (01..12),
-I<%d> day of month (e.g. 01),
+I<%d> day of month, leading zero
 I<%h> month abbreviation, 
-I<%H> hour, 24 hour clock, leading 0's)
-I<%M> minute, leading 0's
-I<%S> seconds, leading 0's
-Example: I<$backupdir=/path/to/%Y-%m-%d> will expand to I</path/to/2009-06-13>
+I<%H> hour, 24 hour clock, leading zero
+I<%M> minute, leading zero
+I<%S> seconds, leading zero
+Example: I<$mountdir=/path/to/%Y-%m-%d> will expand to I</path/to/2009-06-13>
 
 Instead of a local directory, you can also provide a
 valid rsync URL here, e.g. I<hostname::rsync-module/path>. This requires a
