@@ -27,17 +27,20 @@ NAME = mylvmbackup
 VERSION = 0.12
 BUILDDATE = $(shell date +%Y-%m-%d)
 MAN1 = man/$(NAME).1
-DISTFILES = COPYING \
-	CREDITS \
-	INSTALL \
+HOOKS := $(wildcard hooks/*.pm)
+DISTFILES = \
 	ChangeLog \
+	COPYING \
+	CREDITS \
+	hooks \
+	INSTALL \
 	Makefile \
 	man \
 	$(NAME) \
+	$(NAME).conf \
 	$(NAME).pl.in \
 	$(NAME).spec \
 	$(NAME).spec.in \
-	$(NAME).conf \
 	README \
 	TODO
 CLEANFILES = $(NAME).spec $(NAME) $(MAN1) $(MAN1).html
@@ -75,11 +78,13 @@ install: all
 	$(INSTALL_DATA) $(MAN1) $(DESTDIR)$(man1dir)/$(NAME).1
 	if test -f $(DESTDIR)$(sysconfdir)/$(NAME).conf ; then $(MV) $(DESTDIR)$(sysconfdir)/$(NAME).conf $(DESTDIR)$(sysconfdir)/$(NAME).conf.bak ; fi
 	$(INSTALL_CONF) $(NAME).conf $(DESTDIR)$(sysconfdir)
+	for HOOK in $(HOOKS) ; do if [ ! -f $(DESTDIR)$(datadir)/$$HOOK ] ; then $(INSTALL_DATA) -v $$HOOK $(DESTDIR)$(datadir) ; fi ; done
 
 uninstall:
 	$(RM) -f $(DESTDIR)$(bindir)/$(NAME)
 	$(RM) -f $(DESTDIR)$(man1dir)/$(NAME).1
 	$(RM) -f $(DESTDIR)$(sysconfdir)/$(NAME).conf
+	for HOOK in $(notdir $(HOOKS)) ; do $(RM) -f $(DESTDIR)$(datadir)/$$HOOK ; done
 
 distdir: all
 	if test -d $(distdir) ; then $(RM) -rf $(distdir) ; fi
