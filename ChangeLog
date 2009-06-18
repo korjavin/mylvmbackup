@@ -1,3 +1,20 @@
+2009-06-18  Lenz Grimmer <lenz@grimmer.com>
+
+ - Fixed allowed format strings for timestamped backupdir and mountdir
+   directory names
+ - Updated documentation: added information about hooks as Perl modules,
+   added new logerr hook to the list of available hooks, use of format
+   strings for the backupdir and mountdir. Documented the fact that these
+   directories are now created automatically, if they don't exist.
+ - Fixed Makefile and RPM spec file to install Perl hooks (and include them
+   in the distribution)
+ - Removed the absolute path names to external tools, as they tend to differ
+   between Linux distributions - ensure to configure $PATH correctly instead
+ - Added --log-err to the startup options of the InnoDB recovery instance
+   to redirect logging output to $TMP/mylvmbackup_recoverserver.err (instead
+   of using the primary instance's error log file, in case it has been defined
+   in my.cnf)
+ 
 2009-06-14  Lenz Grimmer <lenz@grimmer.com>
 
  - Merged contributions from Matthew Boehm:

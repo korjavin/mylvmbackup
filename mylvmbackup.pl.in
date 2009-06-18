@@ -442,16 +442,16 @@ sub load_defaults
   $relpath='';
   $need_xfsworkaround=0;
 
-# tools
-  $lvcreate='/sbin/lvcreate';
-  $lvremove='/sbin/lvremove';
-  $lvs='/sbin/lvs';
-  $mount='/bin/mount';
-  $umount='/bin/umount';
-  $tar='/bin/tar';
-  $compress='/bin/gzip';
-  $rsync='/usr/bin/rsync';
-  $rsnap='/usr/bin/rsnap';
+# External tools - make sure that these are in $PATH or provide absolute names
+  $lvcreate='lvcreate';
+  $lvremove='lvremove';
+  $lvs='lvs';
+  $mount='mount';
+  $umount='umount';
+  $tar='tar';
+  $compress='gzip';
+  $rsync='rsync';
+  $rsnap='rsnap';
 
 # logging
   $log_method = 'console';
@@ -616,7 +616,7 @@ sub mount_snapshot
 sub do_innodb_recover
 {
   log_msg ("Recovering InnoDB...", LOG_INFO);
-  my $command="echo 'select 1;' | $mysqld_safe --socket=$TMP/mylvmbackup.sock --pid-file=$pidfile --datadir=$mountdir --skip-networking --skip-grant --bootstrap --skip-ndbcluster --skip-slave-start";
+  my $command="echo 'select 1;' | $mysqld_safe --socket=$TMP/mylvmbackup.sock --pid-file=$pidfile --log-error=$TMP/mylvmbackup_recoverserver.err --datadir=$mountdir --skip-networking --skip-grant --bootstrap --skip-ndbcluster --skip-slave-start";
   return run_command("InnoDB recovery on snapshot", $command);
 }
 

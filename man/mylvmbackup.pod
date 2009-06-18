@@ -296,14 +296,15 @@ The default is appending B<_snapshot> to the lvname.
 
 If this option is given, mylvmbackup will not remove the snapshot
 before terminating. Note that keeping multiple LVM snapshots open at
-the same time can reduce I/O performance.
+the same time can reduce I/O performance and you will need to manually
+discard the snapshot before invoking mylvmbackup again.
 
 =item B<--keep_mount>
 
-If this option is given, mylvmbackup will not remove the mounted 
-partitions and the bindmounts before terminating. This option also
-implies I<keep_snapshot=1>, as it would not be useful if the snapshot
-is removed.
+If this option is given, mylvmbackup will not remove the mounted partition
+before terminating. This option also implies I<keep_snapshot=1>, as it would
+not be useful if the snapshot is removed. You need to manually unmount this
+directory before invoking mylvmbackup again.
 
 =item B<--relpath=string>
 
@@ -535,7 +536,7 @@ It is currently maintained by Lenz Grimmer, <lenz@grimmer.com>
 
 =head1 RESOURCES
 
-Main web site: http://www.lenzg.org/mylvmbackup
+Main web site: http://www.lenzg.net/mylvmbackup
 
 Mailing list: https://launchpad.net/~mylvmbackup-discuss
 
