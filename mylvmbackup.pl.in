@@ -844,7 +844,7 @@ DIRERROR
 sub clean_dirname
 {
  my ($d) = @_;
- $d = time2str($d, time) if($d =~ /(%[Ymdhis])+/);
+ $d = time2str($d, time) if($d =~ /(%[YmdhHMS])+/);
  $d =~ s/^\s*//g;
  $d =~ s/\s$//g;
  return File::Basename::dirname($d.'/foo')

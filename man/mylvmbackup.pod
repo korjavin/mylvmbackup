@@ -91,6 +91,18 @@ directory that the I<hooksdir> configuration option points to
 completion, any non-zero return value will be considered a failure which will
 be logged.
 
+Hook scripts can also be implemented as Perl modules. The module must be named
+I<hookname.pm> and must be a package of type I<hookname>. The module must
+implement I<execute()> which is called by mylvmbackup to initiate the hook. It
+must return boolean true/false (1 or 0) on success/failure. I<execute()> will
+be passed 2 parameters. The first parameter is a clone() of the global database
+handle $dbh. This will allow hook scripts to interact with the database using
+the established connection.  The second parameter is a string containing any
+messages passed to the I<run_hook()> function.  The module must also implement
+I<errmsg()> which will return a string error message to be sent to
+I<log_msg()>. This will be called by I<mylvmbackup> when I<execute()> returns
+false/0.
+
 The names of the scripts or symbolic links reflect the stage in which the hook
 will be called. Currently, the following stages exist:
 
@@ -132,6 +144,10 @@ after a successful backup
 
 after a failed backup
 
+=item B<logerr>
+
+when an error is logged
+
 =item B<precleanup>
 
 before the snapshot is unmounted and discarded
@@ -139,9 +155,11 @@ before the snapshot is unmounted and discarded
 =back
 
 These hooks are optional and will only be called if a file for the particular
-stage exists and is executable.  The execution of all hooks can be suppressed
-by passing the I<--skip_hooks> option or by setting the I<skip_hooks>
-configuration option to I<1>;
+stage exists and is executable. Note that hooks implemented as Perl modules
+(I<hookname.pm>) have priority over "plain" hook scripts (I<hookname>), if both
+exist - only the first one will be used. The execution of all hooks can be
+suppressed by passing the I<--skip_hooks> option or by setting the
+I<skip_hooks> configuration option to I<1>;
 
 =head1 OPTIONS
 
@@ -324,12 +342,39 @@ like I<YYYYMMDD_HHMMSS>, e.g. I<20070531_112549>
 
 Path for mounting the snapshot volume to.
 The default value is I</var/tmp/mylvmbackup/mnt/>.
+If the directory does not exist, it will be created.
+
+It is possible to use selected I<timestr()> formatting sequences to create
+directory names which contain a dynamic date value. Currently, the following
+format strings are supported:
+I<%Y> year (e.g. 2009),
+I<%m> month (01..12),
+I<%d> day of month (e.g. 01),
+I<%h> month abbreviation, 
+I<%H> hour, 24 hour clock, leading 0's)
+I<%M> minute, leading 0's
+I<%S> seconds, leading 0's
+Example: I<$mountdir=/path/to/%Y-%m-%d> will expand to I</path/to/2009-06-13>
 
 =item B<--backupdir=string>
 
-Specifies the pathname of the directory where the archive files will be
-written to. The backup directory must not be on the same volume as the MySQL
-data directory. Instead of a local directory, you can also provide a
+Specifies the pathname of the directory where the archive files will be written
+to. The backup directory must not be on the same volume as the MySQL data
+directory. If the directory does not exist, it will be created.
+
+It is possible to use selected I<timestr()> formatting sequences to create
+directory names which contain a dynamic date value. Currently, the following
+format strings are supported:
+I<%Y> year (e.g. 2009),
+I<%m> month (01..12),
+I<%d> day of month (e.g. 01),
+I<%h> month abbreviation, 
+I<%H> hour, 24 hour clock, leading 0's)
+I<%M> minute, leading 0's
+I<%S> seconds, leading 0's
+Example: I<$backupdir=/path/to/%Y-%m-%d> will expand to I</path/to/2009-06-13>
+
+Instead of a local directory, you can also provide a
 valid rsync URL here, e.g. I<hostname::rsync-module/path>. This requires a
 properly configured remote rsync setup (e.g. pre-setup SSH keys and a
 valid rsyncd.conf file). Note that using rsync for remote backups is still

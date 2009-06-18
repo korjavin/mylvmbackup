@@ -11,7 +11,7 @@
    implement ->execute() which is called by mylvmbackup to initiate the 
    hook. It must return boolean true/false (1 or 0) on success/failure.
    ->execute() will be passed 2 parameters. The first parameter is a
-   clone() of the global $dbh. This will allow hook scripts to preform
+   clone() of the global $dbh. This will allow hook scripts to perform
    actions on the DB using the existing connection. The second parameter
    is a string containing any messages passed to the run_hook() function.
    Module must also implement ->errmsg() which will return a string error
