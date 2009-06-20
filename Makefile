@@ -24,7 +24,7 @@ TAR = /bin/tar
 # define some variables
 
 NAME = mylvmbackup
-VERSION = 0.12
+VERSION = 0.13
 BUILDDATE = $(shell date +%Y-%m-%d)
 MAN1 = man/$(NAME).1
 HOOKS := $(wildcard hooks/*.pm)
