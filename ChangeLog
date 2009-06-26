@@ -1,6 +1,9 @@
 2009-06-26  Lenz Grimmer <lenz@grimmer.com>
 
  - Added support for rsync via SSH (BUG#392462)
+ - Fixed InnoDB recovery in case a relative path to the MySQL
+   data directory is defined (BUG#38337), improved the documentation
+   of relpath in the man page.
 
 2009-06-18  Lenz Grimmer <lenz@grimmer.com>
 

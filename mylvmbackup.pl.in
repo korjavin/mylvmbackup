@@ -616,7 +616,7 @@ sub mount_snapshot
 sub do_innodb_recover
 {
   log_msg ("Recovering InnoDB...", LOG_INFO);
-  my $command="echo 'select 1;' | $mysqld_safe --socket=$TMP/mylvmbackup.sock --pid-file=$pidfile --log-error=$TMP/mylvmbackup_recoverserver.err --datadir=$mountdir --skip-networking --skip-grant --bootstrap --skip-ndbcluster --skip-slave-start";
+  my $command="echo 'select 1;' | $mysqld_safe --socket=$TMP/mylvmbackup.sock --pid-file=$pidfile --log-error=$TMP/mylvmbackup_recoverserver.err --datadir=$mountdir/$relpath --skip-networking --skip-grant --bootstrap --skip-ndbcluster --skip-slave-start";
   return run_command("InnoDB recovery on snapshot", $command);
 }
 

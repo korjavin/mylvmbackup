@@ -307,7 +307,10 @@ directory before invoking mylvmbackup again.
 
 =item B<--relpath=string>
 
-Relative path on the logical volume to the MySQL data directory.
+Relative path on the logical volume to the MySQL data directory (no leading or
+trailing slash). Example: the logical volume is mounted on I</var/lib>, but the
+MySQL data directory is /var/lib/mysql. In this case, I<relpath> should be set
+to I<mysql>.
 The default is the empty string.
 
 =item B<--lvsize=string>
