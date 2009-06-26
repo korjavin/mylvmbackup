@@ -1,3 +1,7 @@
+2009-06-26  Lenz Grimmer <lenz@grimmer.com>
+
+ - Added support for rsync via SSH (BUG#392462)
+
 2009-06-18  Lenz Grimmer <lenz@grimmer.com>
 
  - Fixed allowed format strings for timestamped backupdir and mountdir

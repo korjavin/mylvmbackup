@@ -145,7 +145,7 @@ my $snapshot_created = 0;
 
 # Check for the backupdir, it must exist, and it must be readable/writable
 # Except when not doing any backups or using rsync to a remote server
-unless (($backuptype eq 'none') or ($backuptype eq 'rsync' and $backupdir =~ /::/))
+unless (($backuptype eq 'none') or ($backuptype eq 'rsync' and $backupdir =~ /^[^\/].*:.*/))
 {
   check_dir($backupdir, 'backupdir');
 }
@@ -578,9 +578,9 @@ sub do_backup_rsnap
 sub do_backup_rsync
 {
   my $destdir = $archivename;
+  # Do not use a temporary directory for remote backups
   my $destdirtmp = $destdir;
-  # Do not use mkdtemp here, as we can't touch the remote side yet.
-  if($destdir !~ /::/) {
+  unless ($destdir =~ /^[^\/].*:.*/) {
     $destdirtmp = sprintf('%s.INCOMPLETE-%07d',$destdir,int(rand(2**16)));
   }
   log_msg ("Taking actual backup...", LOG_INFO);

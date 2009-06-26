@@ -25,10 +25,9 @@ allows you to run mylvmbackup many times without danger of overwriting old
 archives.
 
 Alternatively, instead of I<tar>, you may use I<rsync>. This process is nearly
-identical, with the exception that the file suffix is not used. Currently,
-the rsync backup is primarily developed for performing local backups. You
-can configure it for backing up to a remote rsync server, but this is not
-fully tested in all possible configurations yet and may change at some point.
+identical, with the exception that the file suffix is not used. The rsync
+backup can perform both local backups as well as backing up to a remote 
+server using rsyncd or rsync via SSH.
 
 mylvmbackup also supports creating backups by using I<rsnap>, which is a
 wrapper around I<rsync> to automatically maintain and rotate a given number of
@@ -375,11 +374,11 @@ I<%M> minute, leading zero
 I<%S> seconds, leading zero
 Example: I<$mountdir=/path/to/%Y-%m-%d> will expand to I</path/to/2009-06-13>
 
-Instead of a local directory, you can also provide a
-valid rsync URL here, e.g. I<hostname::rsync-module/path>. This requires a
-properly configured remote rsync setup (e.g. pre-setup SSH keys and a
-valid rsyncd.conf file). Note that using rsync for remote backups is still
-under development and the way to configure it may change!
+Instead of a local directory, you can also provide a valid rsync URL here, e.g.
+I<username@hostname:/path>, I<hostname:path> or I<hostname::rsync-module/path>.
+This requires a properly configured remote rsync setup (e.g. pre-setup SSH keys
+or a working rsyncd configuration).
+
 The default is I</var/tmp/mylvmbackup/backup/>
 
 =item B<--mount=string>
