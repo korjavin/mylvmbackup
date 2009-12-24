@@ -24,10 +24,9 @@ format and file suffix may be modified. The use of timestamped archive names
 allows you to run mylvmbackup many times without danger of overwriting old
 archives.
 
-Alternatively, instead of I<tar>, you may use I<rsync>. This process is nearly
-identical, with the exception that the file suffix is not used. The rsync
-backup can perform both local backups as well as backing up to a remote 
-server using rsyncd or rsync via SSH.
+Alternatively, instead of I<tar>, you may use I<rsync>. The rsync backup can
+perform both local backups as well as backing up to a remote server using rsyncd
+or rsync via SSH.
 
 mylvmbackup also supports creating backups by using I<rsnap>, which is a
 wrapper around I<rsync> to automatically maintain and rotate a given number of
