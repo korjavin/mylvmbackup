@@ -24,10 +24,9 @@ format and file suffix may be modified. The use of timestamped archive names
 allows you to run mylvmbackup many times without danger of overwriting old
 archives.
 
-Alternatively, instead of I<tar>, you may use I<rsync>. This process is nearly
-identical, with the exception that the file suffix is not used. The rsync
-backup can perform both local backups as well as backing up to a remote 
-server using rsyncd or rsync via SSH.
+Alternatively, instead of I<tar>, you may use I<rsync>. The rsync backup can
+perform both local backups as well as backing up to a remote server using rsyncd
+or rsync via SSH.
 
 mylvmbackup also supports creating backups by using I<rsnap>, which is a
 wrapper around I<rsync> to automatically maintain and rotate a given number of
@@ -340,6 +339,8 @@ Format of the time stamp included in the backup file name. See
 the I<Date::Format> perldoc page for a description of the format.
 The default value is I<%Y%m%d_%H%M%S>, which creates a time stamp
 like I<YYYYMMDD_HHMMSS>, e.g. I<20070531_112549>
+Can be empty as well, to suppress adding a time stamp (e.g. when
+using rsync to always sync into the same backup directory).
 
 =item B<--mountdir=string>
 

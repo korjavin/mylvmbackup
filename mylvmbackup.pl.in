@@ -350,7 +350,7 @@ sub load_args
     "backuptype=s" => \$backuptype,
     "prefix=s" => \$prefix,
     "suffix=s" => \$suffix,
-    "datefmt=s" => \$datefmt,
+    "datefmt:s" => \$datefmt,
     "innodb_recover" => \&innodb_recover,
     "pidfile=s" => \$pidfile,
     "skip_flush_tables" => \&skip_flush_tables,

@@ -45,3 +45,6 @@ password from ~/.my.cnf
 
 Ronald Bradford provided many helpful suggestions to improve the
 usability and robustness of the script.
+
+Ask Bjørn Hansen contributed a patch to allow targets not to have a
+timestamp (for rsync targets, for example) and a documentation fix.
