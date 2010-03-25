@@ -453,8 +453,8 @@ The default is I<rsync>.
 =item B<--rsyncarg=string>
 
 Specifies the arguments for the I<rsync> program.
-The default is I<-avWP>. Should must ensure that the recursive option is
-included either implicitly by I<-a>, or explicitly.
+The default is I<-avWP>. You must ensure that the recursive option is
+included either implicitly by I<-a>, or explicitly by using I<-r>.
 
 =item B<--xfs>
 
