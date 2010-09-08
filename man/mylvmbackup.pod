@@ -176,7 +176,12 @@ The default is I<root>.
 =item B<--password=string>
 
 Specifies the password to use for connecting to the MySQL server.
-The default is the empty string (no password).
+The default is the empty string (no password). Alternatively, you can
+set the password by defining the environment variable I<MYSQL_PWD>
+prior to starting the script. Note however that this method is considered
+to be highly insecure, as it's possible for other users to obtain the
+password by examining the environment variables of the running process.
+See the MySQL Reference manual for more details on password security.
 
 =item B<--host=string>
 
