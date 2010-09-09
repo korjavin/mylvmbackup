@@ -450,6 +450,13 @@ Specifies the arguments for the I<rsnap> program.
 The default is I<7>, which causes it to keep the last 7 snapshot (useful
 when running I<mylvmbackup> once per day).
 
+=item B<--rsnaprsyncarg=string>
+
+Specifies the arguments for the I<rsync> process that is spawned by
+I<rsnap>, e.g. I<--exclude \*.o --bwlimit=8>. You don't need to provide
+the double dashes usually required by I<rsnap> to separate these arguments.
+Default value is the empty string.
+
 =item B<--rsync=string>
 
 Specifies the pathname for the I<rsync> program.

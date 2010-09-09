@@ -130,7 +130,7 @@ $mountdir = clean_dirname($mountdir);
 $backupdir = clean_dirname($backupdir);
 
 # Validate the existence of a prefix
-die "You must specify a non-empty prefix to name your backup!\n" unless ($prefix ne "");
+die "You must specify a non-empty prefix to name your backup!\n" if ($prefix eq "");
 
 $backuplv = $lvname.'_snapshot' if length($backuplv) == 0;
 my $date = time2str($datefmt, time);
@@ -575,6 +575,7 @@ sub do_backup_rsnap
   $command .= " $pos_filename";
   $command .= " $mycnf_filename" if ($skip_mycnf==0);
   $command .= " $destdir/";
+  $command .= " -- $rsnaprsyncarg" unless ($rsnaprsyncarg eq "");
 
   return run_command("create rsnap archive", $command);
 }
@@ -598,7 +599,6 @@ sub do_backup_rsync
   $command .= " $pos_filename";
   $command .= " $mycnf_filename" if ($skip_mycnf==0);
   $command .= " $destdirtmp/";
-  $command .= " -- $rsnaprsyncarg";
   if (run_command("create rsync archive", $command))
   {
     rename $destdirtmp, $destdir if($destdirtmp ne $destdir);

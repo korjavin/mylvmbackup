@@ -48,3 +48,6 @@ usability and robustness of the script.
 
 Ask Bjørn Hansen contributed a patch to allow targets not to have a
 timestamp (for rsync targets, for example) and a documentation fix.
+
+Ben Bonnell contributed a patch to add support for providing rsync
+options for the rsnap backend.
