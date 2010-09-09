@@ -74,6 +74,7 @@ my $rsync;
 my $rsnap;
 my $rsyncarg;
 my $rsnaparg;
+my $rsnaprsyncarg;
 my $tar;
 my $tararg;
 my $tarsuffixarg;
@@ -292,6 +293,7 @@ sub load_config
   $skip_mycnf=$cfg->val ('misc', 'skip_mycnf', $skip_mycnf);
   $rsyncarg=$cfg->val ('misc', 'rsyncarg', $rsyncarg);
   $rsnaparg=$cfg->val ('misc', 'rsnaparg', $rsnaparg);
+  $rsnaprsyncarg=$cfg->val ('misc', 'rsnaprsyncarg', $rsnaprsyncarg);
   $tararg=$cfg->val ('misc', 'tararg', $tararg);
   $tarsuffixarg=$cfg->val ('misc', 'tarsuffixarg', $tarsuffixarg);
   $tarfilesuffix = $cfg->val ('misc', 'tarfilesuffix', $tarfilesuffix);
@@ -362,6 +364,7 @@ sub load_args
     "compressarg=s" => \$compressarg,
     "rsyncarg=s" => \$rsyncarg,
     "rsnaparg=s" => \$rsnaparg,
+    "rsnaprsyncarg=s" => \$rsnaprsyncarg,
     "hooksdir=s" => \$hooksdir,
     "skip_hooks" => \&skip_hooks,
     "keep_snapshot" => \&keep_snapshot,
@@ -429,6 +432,7 @@ sub load_defaults
   $tarfilesuffix='.tar.gz';
   $compressarg='--stdout --verbose --best';
   $rsyncarg='-avPW';
+  $rsnaprsyncarg='';
   $rsnaparg='7';
   $hooksdir='/usr/share/mylvmbackup';
   $skip_hooks=0;
@@ -594,6 +598,7 @@ sub do_backup_rsync
   $command .= " $pos_filename";
   $command .= " $mycnf_filename" if ($skip_mycnf==0);
   $command .= " $destdirtmp/";
+  $command .= " -- $rsnaprsyncarg";
   if (run_command("create rsync archive", $command))
   {
     rename $destdirtmp, $destdir if($destdirtmp ne $destdir);
