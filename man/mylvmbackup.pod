@@ -448,7 +448,9 @@ The default is I<rsnap>.
 
 Specifies the arguments for the I<rsnap> program.
 The default is I<7>, which causes it to keep the last 7 snapshot (useful
-when running I<mylvmbackup> once per day).
+when running I<mylvmbackup> once per day). If you need to pass parameters
+to the I<rsync> process used by I<rsnap>, just append them after a single
+I<-->, e.g. I<rsnaparg=7 -- --exclude \*.o --bwlimit=8>.
 
 =item B<--rsync=string>
 
