@@ -67,10 +67,11 @@ perform the recovery operation on the backup snapshot prior to archiving it.
 
 The recovery operation is performed by spawning a second mysqld instance that
 uses the snapshot volume as the data directory. Note that this functionality
-currently assumes the default InnoDB configuration - it does not work properly
-if you use options like I<--innodb-file-per-table>, I<--innodb-data-home-dir>,
-I<--innodb-data-file-path> or I<--innodb-log-group-home-dir> that modify the
-default file layout for InnoDB tables.
+currently assumes a default InnoDB configuration in which all InnoDB table
+spaces and log files are stored inside of the data directory - it does not
+work properly if you use options like I<--innodb-data-home-dir>,
+I<--innodb-data-file-path> or I<--innodb-log-group-home-dir> that modify
+the default file layout for InnoDB tables.
 
 If you use InnoDB tables exclusively, you may also want to consider to include
 the option I<--skip_flush_tables>, to avoid the probably time-consuming and in
