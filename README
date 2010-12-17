@@ -1,7 +1,7 @@
 mylvmbackup - utility for creating MySQL backups via LVM snapshots
 
 Home page: http://www.lenzg.net/mylvmbackup/
-Source code, Bug Reports: https://launchpad.net/mylvmbackup
+Source code, Bug Reports, Mailing List: https://launchpad.net/mylvmbackup
 Maintainer: Lenz Grimmer <lenz@grimmer.com>
 
 mylvmbackup is a Perl script for quickly creating backups of MySQL server's
@@ -48,11 +48,14 @@ up and compress the data, LVM utilities ('lvcreate', 'lvremove' and 'lvs') to
 create and remove the LVM snapshot, and the system utilities 'mount' and
 'umount'.
 
-Mailing list
+Getting involved
 
-If you want to discuss the usage of mylvmbackup, propose patches or ask for
-help, there now is a mailinglist, hosted on FreeLists.org. To
-subscribe, either enter your email address on the mylvmbackup list
-information page at http://www.freelists.org/list/mylvmbackup or send an
-email with the subject "subscribe" to mylvmbackup-request@freelists.org.
-The list is archived at http://www.freelists.org/archives/mylvmbackup/
+If you want to discuss the usage of mylvmbackup or ask for help, there is a
+mailing list hosted on LaunchPad:
+
+  https://launchpad.net/~mylvmbackup-discuss
+
+The mailing list used to be on FreeLists.org before, but this one is no longer
+maintained. The old discussions are archived at
+
+  http://www.freelists.org/archives/mylvmbackup/
