@@ -514,6 +514,7 @@ sub do_backup_tar
 {
   my $tarball = $archivename.$tarfilesuffix;
   my $tarballtmp = mktemp("$tarball.INCOMPLETE-XXXXXXX");
+  umask 077;
 
   log_msg ("Taking actual backup...", LOG_INFO);
   log_msg ("Creating tar archive $tarball", LOG_INFO);
