@@ -701,6 +701,7 @@ sub cleanup
 {
   run_hook("precleanup");
   log_msg ("Cleaning up...", LOG_INFO);
+  unlink $pos_tempfile if (-f $pos_tempfile);
   unless ($keep_mount) {
     run_command("Unmounting $mountdir","$umount $mountdir") if ($mounted);
     unlink $pos_filename if (-f $pos_filename);
@@ -709,7 +710,6 @@ sub cleanup
       rmdir $mountdir;
       rmdir $posmountdir;
     }
-    unlink $pos_tempfile if (-f $pos_tempfile);
   } else {
     log_msg("Not removing mount as requested by configuration", LOG_INFO);
   }
