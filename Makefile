@@ -15,6 +15,7 @@ INSTALL_PROGRAM = $(INSTALL) -m 755
 INSTALL_CONF = $(INSTALL) -m 600
 MV = /bin/mv
 RM = /bin/rm
+PERL = /usr/bin/perl
 RPMBUILD = /usr/bin/rpmbuild
 RPMFLAGS = -ta --clean
 SED = /bin/sed
@@ -59,6 +60,7 @@ $(NAME).spec: $(NAME).spec.in
 
 $(NAME): $(NAME).pl.in
 	$(SED) -e s/@BUILDDATE@/$(BUILDDATE)/ \
+	       -e s_@PERL@_$(PERL)_ \
 	       -e s/@VERSION@/$(VERSION)/ < $< > $@
 	$(CHMOD) 755 $@
 
