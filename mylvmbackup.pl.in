@@ -88,6 +88,7 @@ my $log_method;
 my $syslog_socktype;
 my $syslog_facility;
 my $syslog_remotehost;
+my $use_thin_snapshots;
 
 # Load defaults into variables
 load_defaults();
@@ -303,6 +304,7 @@ sub load_config
   $keep_snapshot=$cfg->val ('misc', 'keep_snapshot', $keep_snapshot);
   $keep_mount=$cfg->val ('misc', 'keep_mount', $keep_mount);
   $quiet=$cfg->val ('misc', 'quiet', $quiet);
+  $use_thin_snapshots=$cfg->val ('misc', 'thin', $use_thin_snapshots);
 
   $mountdir=$cfg->val ('fs', 'mountdir', $mountdir);
   $backupdir=$cfg->val ('fs', 'backupdir', $backupdir);
@@ -369,6 +371,7 @@ sub load_args
     "skip_hooks" => \&skip_hooks,
     "keep_snapshot" => \&keep_snapshot,
     "keep_mount" => \&keep_mount,
+    "thin" => \&use_thin_snapshots,
     "quiet" => \&quiet,
 
 # fs
@@ -439,6 +442,7 @@ sub load_defaults
   $keep_snapshot=0;
   $keep_mount=0;
   $quiet=0;
+  $use_thin_snapshots=0;
 
 # fs
   $mountdir='/var/tmp/mylvmbackup/mnt/';
@@ -634,7 +638,9 @@ sub save_posfile
 
 sub create_lvm_snapshot 
 { 
-  my $command= "$lvcreate -s --size=$lvsize --name=$backuplv /dev/$vgname/$lvname";
+  my $params = '';
+  $params = "--size=$lvsize" unless $use_thin_snapshots;
+  my $command= "$lvcreate -s $params --name=$backuplv /dev/$vgname/$lvname";
   return run_command("taking LVM snapshot", $command);
 }
 
@@ -753,6 +759,10 @@ sub keep_snapshot {
 
 sub keep_mount {
   $keep_mount = 1;
+}
+
+sub use_thin_snapshots {
+  $use_thin_snapshots = 1;
 }
 
 sub quiet {

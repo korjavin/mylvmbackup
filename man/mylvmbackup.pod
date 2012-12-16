@@ -310,6 +310,12 @@ before terminating. This option also implies I<keep_snapshot=1>, as it would
 not be useful if the snapshot is removed. You need to manually unmount this
 directory before invoking mylvmbackup again.
 
+=item B<--thin>
+
+If this option is given, mylvmbackup will expect that the LVM volume is
+using thin provisioning and that the snapshot will use physical space
+from the existing thin pool. Any size specified with I<lvsize> is ignored.
+
 =item B<--relpath=string>
 
 Relative path on the logical volume to the MySQL data directory (no leading or
