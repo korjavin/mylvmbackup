@@ -806,7 +806,7 @@ Common options:
   --lvsize=<size>               Size for snapshot volume (def: $lvsize)
 
   --prefix=<prefix>             Prefix for naming the backup (def: $prefix)
-  --suffix=<suffix>             Prefix for naming the backup (def: $suffix)
+  --suffix=<suffix>             Suffix for naming the backup (def: $suffix)
   --backupdir=<dirname>         Path for archives (def: $backupdir)
   --backuptype=<type>           Select backup type: none, rsnap, rsync or tar
                                 (def: $backuptype)
