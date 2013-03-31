@@ -23,6 +23,7 @@ use DBI;
 use File::Basename;
 use File::Temp qw/ mkstemps mktemp /;
 use Getopt::Long;
+use Fcntl;
 
 use diagnostics;
 use strict;
@@ -207,6 +208,10 @@ if (!$dbh)
   log_msg ($DBI::errstr, LOG_ERR);
   die $DBI::errstr;
 }
+
+# Fix to close mysql socket at close
+open(my $mysql_fh, '<&=', $dbh->mysql_fd) or die "dup: $!";
+fcntl($mysql_fh, F_SETFD, FD_CLOEXEC);
 
 run_hook ("preflush");
 flush_tables($dbh) unless ($skip_flush_tables == 1);
