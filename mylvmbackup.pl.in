@@ -21,8 +21,12 @@ use Config::IniFiles;
 use Date::Format;
 use DBI;
 use File::Basename;
+use File::Find;
+use File::Path;
 use File::Temp qw/ mkstemps mktemp /;
+use MIME::Lite;
 use Getopt::Long;
+use Sys::Hostname;
 use Fcntl;
 
 use diagnostics;
@@ -67,6 +71,7 @@ my $pidfile;
 my $port;
 my $quiet;
 my $backuptype;
+my $backupretention;
 my $prefix;
 my $suffix;
 my $relpath;
@@ -89,6 +94,10 @@ my $log_method;
 my $syslog_socktype;
 my $syslog_facility;
 my $syslog_remotehost;
+my $mail_buffer;
+my $mail_from;
+my $mail_to;
+my $mail_subject;
 my $use_thin_snapshots;
 
 # Load defaults into variables
@@ -262,10 +271,14 @@ if ($snapshot_created)
   }    
 } else {
   cleanup();
+  apply_retention();
+  if ($log_method eq "mail") { send_mail(); }
   exit 1;
 }
 
 cleanup();
+apply_retention();
+if ($log_method eq "mail") { send_mail(); }
 exit 0;
 
 # Please keep all 3 functions in the same order: load_config, load_args, load_defaults 
@@ -289,6 +302,7 @@ sub load_config
   $backuplv = $cfg->val ('lvm', 'backuplv', $backuplv);
   
   $backuptype=$cfg->val ('misc', 'backuptype', $backuptype);
+  $backupretention=$cfg->val ('misc', 'backupretention', $backupretention);
   $prefix=$cfg->val ('misc', 'prefix', $prefix);
   $suffix=$cfg->val ('misc', 'suffix', $suffix);
   $datefmt=$cfg->val ('misc', 'datefmt', $datefmt);
@@ -330,6 +344,9 @@ sub load_config
   $syslog_socktype = $cfg->val ('logging', 'syslog_socktype', $syslog_socktype);
   $syslog_facility = $cfg->val ('logging', 'syslog_facility', $syslog_facility);
   $syslog_remotehost = $cfg->val ('logging', 'syslog_remotehost', $syslog_remotehost);
+  $mail_from = $cfg->val ('logging', 'mail_from', $mail_from);
+  $mail_to = $cfg->val ('logging', 'mail_to', $mail_to);
+  $mail_subject = $cfg->val ('logging', 'mail_subject', $mail_subject);
 }
 
 # Please keep all 3 functions in the same order: load_config, load_args, load_defaults 
@@ -357,6 +374,7 @@ sub load_args
 
 # misc
     "backuptype=s" => \$backuptype,
+    "backupretention=s" => \$backupretention,
     "prefix=s" => \$prefix,
     "suffix=s" => \$suffix,
     "datefmt:s" => \$datefmt,
@@ -401,6 +419,9 @@ sub load_args
     "syslog_socktype=s" => \$syslog_socktype,
     "syslog_facility=s" => \$syslog_facility,
     "syslog_remotehost=s" => \$syslog_remotehost,
+    "mail_from=s" => \$mail_from,
+    "mail_to=s" => \$mail_to,
+    "mail_subject=s" => \$mail_subject,
   ) or help();
 
   # As this function is called last, append to @INC here.
@@ -661,9 +682,12 @@ sub log_msg
     __print_it($syslog_level, $msg);
   } elsif ($log_method eq "syslog") {
     __log_it ($syslog_level, $msg);
-  } elsif ($log_method eq "both") {
+  } elsif ($log_method eq "mail") {
+    __mail_it ($syslog_level, $msg);
+  } elsif ($log_method eq "any") {
     __print_it ($syslog_level, $msg);
     __log_it ($syslog_level, $msg);
+    __mail_it ($syslog_level, $msg);
   }
 
   if ($syslog_level eq LOG_ERR)
@@ -685,6 +709,23 @@ sub log_msg
       $logmsg = " Error: ";
     }
     print timestamp() . $logmsg . $msg . "\n";
+  }
+
+  sub __mail_it
+  {
+    my $syslog_level = shift;
+    my $msg = shift;
+    my $logmsg = '';
+
+    if ($syslog_level eq LOG_WARNING) {
+      $logmsg = " Warning: ";
+    } elsif ($syslog_level eq LOG_INFO) {
+      $logmsg = " Info: ";
+    } elsif ($syslog_level eq LOG_ERR) {
+      $logmsg = " Error: ";
+    }
+
+    $mail_buffer .= timestamp() . $logmsg . $msg . "\n";
   }
 
   sub __log_it { syslog ($_[0], $_[1]); }
@@ -946,6 +987,42 @@ sub lvm_version
   $lv =~ s/\s.+//g;
 
   return $lv;
+}
+
+sub apply_retention
+{
+  if ($backupretention)
+  {
+    my @existingbackups;
+
+    File::Find::find({
+      'wanted' => sub { /^backup-.*\z/s && push @existingbackups, $_; },
+      'preprocess' => sub { sort { $a cmp $b } @_ }
+    }, $backupdir);
+
+    if ($#existingbackups+1 <= $backupretention) {
+      log_msg ("Retention is $backupretention, no backup to remove...", LOG_INFO);
+    } else {
+      while ($#existingbackups+1 > $backupretention) {
+        my $item = pop @existingbackups;
+        (unlink "$backupdir/$item" or die log_msg ("Error while removing old backup file $backupdir/$item: $!", LOG_ERR)) unless ! -f "$backupdir/$item";
+        (rmtree "$backupdir/$item" or die log_msg ("Error while removing old backup directory $backupdir/$item: $!", LOG_ERR)) unless ! -d "$backupdir/$item";
+        log_msg ("Removing old backup $backupdir/$item", LOG_INFO);
+      }
+    }
+  }
+}
+
+sub send_mail
+{
+  my $message = MIME::Lite->new (
+                From    => $mail_from,
+                To      => $mail_to,
+                Subject => $mail_subject,
+                Data    => $mail_buffer
+  );
+
+  $message->send;
 }
 
 # vim: ts=2 sw=2 expandtab ft=perl:
