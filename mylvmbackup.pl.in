@@ -19,6 +19,7 @@
 package mylvmbackup;
 use Config::IniFiles;
 use Date::Format;
+use DBD::mysql;
 use DBI;
 use File::Basename;
 use File::Find;
@@ -218,9 +219,11 @@ if (!$dbh)
   die $DBI::errstr;
 }
 
-# Fix to close mysql socket at close
-open(my $mysql_fh, '<&=', $dbh->mysql_fd) or die "dup: $!";
-fcntl($mysql_fh, F_SETFD, FD_CLOEXEC);
+# Fix to close mysql socket at close (needs DBD::mysql 4.019 or higher)
+if ($DBD::mysql::VERSION >= 4.019) {
+  open(my $mysql_fh, '<&=', $dbh->mysql_fd) or die "dup: $!";
+  fcntl($mysql_fh, F_SETFD, FD_CLOEXEC);
+}
 
 run_hook ("preflush");
 flush_tables($dbh) unless ($skip_flush_tables == 1);
