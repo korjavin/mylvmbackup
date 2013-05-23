@@ -999,7 +999,7 @@ sub apply_retention
     my @existingbackups;
 
     File::Find::find({
-      'wanted' => sub { /^backup-.*\z/s && push @existingbackups, $_; },
+      'wanted' => sub { /^$prefix.*$suffix.*/s && push @existingbackups, $_; },
       'preprocess' => sub { sort { $a cmp $b } @_ }
     }, $backupdir);
 
