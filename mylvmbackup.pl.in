@@ -25,7 +25,6 @@ use File::Basename;
 use File::Find;
 use File::Path;
 use File::Temp qw/ mkstemps mktemp /;
-use MIME::Lite;
 use Getopt::Long;
 use Sys::Hostname;
 use Fcntl;
@@ -129,6 +128,9 @@ if ("$log_method" eq "syslog") {
   }
   openlog ($syslog_ident, $syslog_args, $syslog_facility);
   log_msg ("Starting new backup...", LOG_INFO);
+} elsif ("$log_method" eq "mail") {
+  eval 'use MIME::Lite;';
+  die ("You need to have MIME::Lite installed when using the mail method!\n") if $@;
 }
 
 if (lvm_version() =~ /^1/)
@@ -1016,6 +1018,7 @@ sub apply_retention
   }
 }
 
+
 sub send_mail
 {
   my $message = MIME::Lite->new (
@@ -1024,7 +1027,7 @@ sub send_mail
                 Subject => $mail_subject,
                 Data    => $mail_buffer
   );
-
+  
   $message->send;
 }
 
