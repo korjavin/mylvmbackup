@@ -94,6 +94,7 @@ my $log_method;
 my $syslog_socktype;
 my $syslog_facility;
 my $syslog_remotehost;
+my $mail_report;
 my $mail_buffer;
 my $mail_from;
 my $mail_to;
@@ -119,7 +120,7 @@ if ($configfile2 ne "") {
   load_args();
 }   
 
-if ("$log_method" eq "syslog") {
+if (($log_method eq "syslog") or ($log_method eq "both")) {
   use Sys::Syslog qw(:DEFAULT setlogsock :macros);
   if ($syslog_socktype ne "native") {
     die ("You need to provide syslog_remotehost!\n") unless ($syslog_remotehost);
@@ -128,7 +129,9 @@ if ("$log_method" eq "syslog") {
   }
   openlog ($syslog_ident, $syslog_args, $syslog_facility);
   log_msg ("Starting new backup...", LOG_INFO);
-} elsif ("$log_method" eq "mail") {
+}
+
+if ($mail_report) {
   eval 'use MIME::Lite;';
   die ("You need to have MIME::Lite installed when using the mail method!\n") if $@;
 }
@@ -277,13 +280,13 @@ if ($snapshot_created)
 } else {
   cleanup();
   apply_retention();
-  if ($log_method eq "mail") { send_mail(); }
+  if ($mail_report) { send_mail(); }
   exit 1;
 }
 
 cleanup();
 apply_retention();
-if ($log_method eq "mail") { send_mail(); }
+if ($mail_report) { send_mail(); }
 exit 0;
 
 # Please keep all 3 functions in the same order: load_config, load_args, load_defaults 
@@ -349,6 +352,7 @@ sub load_config
   $syslog_socktype = $cfg->val ('logging', 'syslog_socktype', $syslog_socktype);
   $syslog_facility = $cfg->val ('logging', 'syslog_facility', $syslog_facility);
   $syslog_remotehost = $cfg->val ('logging', 'syslog_remotehost', $syslog_remotehost);
+  $mail_report = $cfg->val ('logging', 'mail_report', $mail_report);
   $mail_from = $cfg->val ('logging', 'mail_from', $mail_from);
   $mail_to = $cfg->val ('logging', 'mail_to', $mail_to);
   $mail_subject = $cfg->val ('logging', 'mail_subject', $mail_subject);
@@ -424,6 +428,7 @@ sub load_args
     "syslog_socktype=s" => \$syslog_socktype,
     "syslog_facility=s" => \$syslog_facility,
     "syslog_remotehost=s" => \$syslog_remotehost,
+    "mail_report" => \&mail_report,
     "mail_from=s" => \$mail_from,
     "mail_to=s" => \$mail_to,
     "mail_subject=s" => \$mail_subject,
@@ -453,6 +458,7 @@ sub load_defaults
 
 # misc
   $backuptype='tar';
+  $backupretention=0;
   $prefix='backup';
   $suffix='_mysql';
   $datefmt='%Y%m%d_%H%M%S';
@@ -497,6 +503,10 @@ sub load_defaults
   $syslog_socktype = 'native';
   $syslog_facility = '';
   $syslog_remotehost = '';
+  $mail_report = 0;
+  $mail_from = 'root@localhost';
+  $mail_to = 'root@localhost';
+  $mail_subject = 'mylvmbackup report for localhost';
 }
 
 sub flush_tables 
@@ -687,11 +697,12 @@ sub log_msg
     __print_it($syslog_level, $msg);
   } elsif ($log_method eq "syslog") {
     __log_it ($syslog_level, $msg);
-  } elsif ($log_method eq "mail") {
-    __mail_it ($syslog_level, $msg);
-  } elsif ($log_method eq "any") {
+  } elsif ($log_method eq "both") {
     __print_it ($syslog_level, $msg);
     __log_it ($syslog_level, $msg);
+  }
+
+  if ($mail_report) {
     __mail_it ($syslog_level, $msg);
   }
 

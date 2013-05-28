@@ -334,6 +334,15 @@ The default is I<5G> (5 gigabytes).
 Specifies what type of backup to perform. The available options are
 I<tar>, I<rsync>, I<rsnap> and I<none>.
 
+=item B<--backupretention=string>
+
+Specifies how many previous backups to keep in the backup directory.
+The default is I<0> (keep all backups).
+
+Note that this feature only works on a local backup directory with
+a static directory name! If you use I<timestr()> formatting sequences
+or rsync URLs, the retention mode will not work.
+
 =item B<--prefix=string>
 
 Prefix added to the backup file names. It is also appended to
@@ -394,6 +403,10 @@ Instead of a local directory, you can also provide a valid rsync URL here, e.g.
 I<username@hostname:/path>, I<hostname:path> or I<hostname::rsync-module/path>.
 This requires a properly configured remote rsync setup (e.g. pre-setup SSH keys
 or a working rsyncd configuration).
+
+Note that the I<backupretention> option does not work for rsync URLs or directory
+names that use format strings, you need to define a static local directory name
+if you want to use this functionality.
 
 The default is I</var/tmp/mylvmbackup/backup/>
 
@@ -484,7 +497,8 @@ use the XFS file system.
 
 How to log output from this script. Valid options are I<console>, I<syslog>
 or I<both>.
-The default value is I<console>.
+The default value is I<console>. Enabling the I<syslog> option requires
+an installed I<Sys::Syslog> Perl module.
 
 =item B<--syslog_socktype=string>
 
@@ -500,6 +514,32 @@ Default value is the empty string.
 =item B<--syslog_remotehost=string>
 
 Host name of a remote syslog server.
+
+=item B<--mail_report>
+
+Enable sending the logging output via email to a specified email
+address. The default is to not send email.
+
+This option requires an installed I<MIME::Lite> Perl module as
+well as a functional local sendmail (or alternative) facility.
+
+You should also review and adjust the I<mail_from>, I<mail_to>
+and I<mail_subject> configuration options to match you requirements.
+
+=item B<--mail_from=string>
+The email address to be used in the I<From:> header for email
+reports (requires the I<mail_report> option to be set).
+The default value is I<root@localhost>.
+
+=item B<--mail_to=string>
+The email address to be used to send email reports to
+(requires the I<mail_report> option to be set).
+The default value is I<root@localhost>.
+
+=item B<--mail_subject=string>
+The text to be used in the I<Subject:> header for email
+reports (requires the I<mail_report> option to be set).
+The default value is "mylvmbackup report for localhost".
 
 =item B<--configfile=string>
 
