@@ -51,3 +51,12 @@ timestamp (for rsync targets, for example) and a documentation fix.
 
 Ben Bonnell contributed a patch to add support for providing rsync
 options for the rsnap backend.
+
+Klaus Ethgen contributed a patch that removes the annoying LVM
+warnings about a leaked file descriptor (DBD:mysql does not add
+FD_CLOEXEC on the MySQL socket, requires DBD::mysql 4.019 and above)
+
+Alexandre Anriot contributed patches to provide a new "mail" log
+method, to send the log output via email as well as a new
+"backupretention" option that allows to only keep a defined number
+of backups in the backup directory.
