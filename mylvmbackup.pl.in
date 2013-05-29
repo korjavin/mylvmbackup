@@ -39,6 +39,7 @@ my $build_date='@BUILDDATE@';
 # syslog-related options
 my $syslog_ident = 'mylvmbackup';
 my $syslog_args = 'pid,ndelay';
+my $action = "backup";
 my $configfile = "/etc/mylvmbackup.conf";
 my $configfile2 = "";
 
@@ -167,127 +168,158 @@ unless (($backuptype eq 'none') or ($backuptype eq 'rsync' and $backupdir =~ /^[
 {
   check_dir($backupdir, 'backupdir');
 }
+  
+# Backup
+my ($posmountdir, $pos_filename, $pos_tempfile_fh, $pos_tempfile, $mycnf_basename, $mycnf_filename, @mountdir_content, $dsn, $dbh, $backupsuccess);
 
-# Check the mountdir, it must exist, and be readable/writeable
-check_dir($mountdir, 'mountdir');
-
-# Append the prefix to the mountdir, to allow multiple parallel backups. The
-# extra / is to ensure we go a level under it. An empty prefix is disallowed.
-$mountdir .= '/'.$prefix;
-
-my $posmountdir = $mountdir;
-$posmountdir .= '-pos'; # Notice that we do not add a slash.
-
-my $pos_filename = $posmountdir.'/'.$fullprefix.'.pos';
-my $pos_tempfile_fh;
-my $pos_tempfile;
-($pos_tempfile_fh, $pos_tempfile) = mkstemps($TMP.'/mylvmbackup-'.$fullprefix.'-XXXXXX', '.pos')
-  or log_msg ("Cannot create temporary file $pos_tempfile: $!", LOG_ERR);
-
-my $mycnf_basename = File::Basename::basename($mycnf);
-my $mycnf_filename = $posmountdir.'/'.$fullprefix.'_'.$mycnf_basename;
-
-# Now create it
-mkdir $mountdir;
-mkdir $posmountdir;
-
-# Check it again for existence and read/write.
-check_dir($mountdir, 'mountdir');
-
-# Now make sure it's empty
-my @mountdir_content = glob "$mountdir/*" ;
-unless ( scalar(@mountdir_content) eq 0)
+if ($action eq "backup")
 {
-	log_msg ("Please make sure Temp dir ($mountdir) is empty.", LOG_ERR); 
-	exit(1);
-};
-
-# Figure out our DSN string
-my $dsn = "DBI:mysql:database=mysql;mysql_read_default_group=client";
-
-if(length($socket) > 0) {
- $dsn .= ";mysql_socket=".$socket;
-}
-if(length($host) > 0) {
- $dsn .= ";host=".$host;
-}
-if(length($port) > 0) {
- $dsn .= ";port=".$port;
-}
-
-run_hook ("preconnect");
-log_msg ("Connecting to database...", LOG_INFO);
-my $dbh= DBI->connect($dsn,$user,$password);
-if (!$dbh)
-{
-  log_msg ($DBI::errstr, LOG_ERR);
-  die $DBI::errstr;
-}
-
-# Fix to close mysql socket at close (needs DBD::mysql 4.019 or higher)
-if ($DBD::mysql::VERSION >= 4.019) {
-  open(my $mysql_fh, '<&=', $dbh->mysql_fd) or die "dup: $!";
-  fcntl($mysql_fh, F_SETFD, FD_CLOEXEC);
-}
-
-run_hook ("preflush");
-flush_tables($dbh) unless ($skip_flush_tables == 1);
-
-create_posfile($dbh);
-
-run_hook ("presnapshot");
-$snapshot_created= create_lvm_snapshot();
-
-run_hook ("preunlock");
-log_msg ("Unlocking tables...", LOG_INFO);
-$dbh->do("UNLOCK TABLES") 
-  or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
-
-run_hook ("predisconnect");
-log_msg ("Disconnecting from database...", LOG_INFO);
-$dbh->disconnect;
-
-if ($snapshot_created)
-{
-  run_hook("premount");
-  $mounted= mount_snapshot();
-  save_posfile();
-  if ($mounted)
+  # Check the mountdir, it must exist, and be readable/writeable
+  check_dir($mountdir, 'mountdir');
+  
+  # Append the prefix to the mountdir, to allow multiple parallel backups. The
+  # extra / is to ensure we go a level under it. An empty prefix is disallowed.
+  $mountdir .= '/'.$prefix;
+  
+  $posmountdir = $mountdir;
+  $posmountdir .= '-pos'; # Notice that we do not add a slash.
+  
+  $pos_filename = $posmountdir.'/'.$fullprefix.'.pos';
+  ($pos_tempfile_fh, $pos_tempfile) = mkstemps($TMP.'/mylvmbackup-'.$fullprefix.'-XXXXXX', '.pos')
+    or log_msg ("Cannot create temporary file $pos_tempfile: $!", LOG_ERR);
+  
+  $mycnf_basename = File::Basename::basename($mycnf);
+  $mycnf_filename = $posmountdir.'/'.$fullprefix.'_'.$mycnf_basename;
+  
+  # Now create it
+  mkdir $mountdir;
+  mkdir $posmountdir;
+  
+  # Check it again for existence and read/write.
+  check_dir($mountdir, 'mountdir');
+  
+  # Now make sure it's empty
+  @mountdir_content = glob "$mountdir/*" ;
+  unless ( scalar(@mountdir_content) eq 0)
   {
-    if ($innodb_recover == 1)
+  	log_msg ("Please make sure Temp dir ($mountdir) is empty.", LOG_ERR); 
+  	exit(1);
+  };
+  
+  # Figure out our DSN string
+  $dsn = "DBI:mysql:database=mysql;mysql_read_default_group=client";
+  
+  if(length($socket) > 0) {
+   $dsn .= ";mysql_socket=".$socket;
+  }
+  if(length($host) > 0) {
+   $dsn .= ";host=".$host;
+  }
+  if(length($port) > 0) {
+   $dsn .= ";port=".$port;
+  }
+  
+  run_hook ("preconnect");
+  log_msg ("Connecting to database...", LOG_INFO);
+  $dbh= DBI->connect($dsn,$user,$password);
+  if (!$dbh)
+  {
+    log_msg ($DBI::errstr, LOG_ERR);
+    die $DBI::errstr;
+  }
+  
+  # Fix to close mysql socket at close (needs DBD::mysql 4.019 or higher)
+  if ($DBD::mysql::VERSION >= 4.019) {
+    open(my $mysql_fh, '<&=', $dbh->mysql_fd) or die "dup: $!";
+    fcntl($mysql_fh, F_SETFD, FD_CLOEXEC);
+  }
+  
+  run_hook ("preflush");
+  flush_tables($dbh) unless ($skip_flush_tables == 1);
+  
+  create_posfile($dbh);
+  
+  run_hook ("presnapshot");
+  $snapshot_created= create_lvm_snapshot();
+  
+  run_hook ("preunlock");
+  log_msg ("Unlocking tables...", LOG_INFO);
+  $dbh->do("UNLOCK TABLES") 
+    or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
+  
+  run_hook ("predisconnect");
+  log_msg ("Disconnecting from database...", LOG_INFO);
+  $dbh->disconnect;
+  
+  if ($snapshot_created)
+  {
+    run_hook("premount");
+    $mounted= mount_snapshot();
+    save_posfile();
+    if ($mounted)
     {
-      do_innodb_recover();
-    }
-    if (-f $mycnf && $skip_mycnf == 0)
-    {
-      create_mycnf_file();
-    }
-
-    run_hook("prebackup");
-    my $backupsuccess=0;
-    if ($backuptype eq 'tar') {$backupsuccess = do_backup_tar()}
-    elsif ($backuptype eq 'rsync') {$backupsuccess = do_backup_rsync()}
-    elsif ($backuptype eq 'rsnap') {$backupsuccess = do_backup_rsnap()}
-    else {$backupsuccess = do_backup_none()};
-
-    if ($backupsuccess == 1)
-    {
-      run_hook("backupsuccess");
-    } else {
-      run_hook("backupfailure");
-    }
-  }    
-} else {
+      if ($innodb_recover == 1)
+      {
+        do_innodb_recover();
+      }
+      if (-f $mycnf && $skip_mycnf == 0)
+      {
+        create_mycnf_file();
+      }
+  
+      run_hook("prebackup");
+      $backupsuccess=0;
+      if ($backuptype eq 'tar') {$backupsuccess = do_backup_tar()}
+      elsif ($backuptype eq 'rsync') {$backupsuccess = do_backup_rsync()}
+      elsif ($backuptype eq 'rsnap') {$backupsuccess = do_backup_rsnap()}
+      else {$backupsuccess = do_backup_none()};
+  
+      if ($backupsuccess == 1)
+      {
+        run_hook("backupsuccess");
+      } else {
+        run_hook("backupfailure");
+      }
+    }    
+  } else {
+    cleanup();
+    if ($mail_report) { send_mail(); }
+    exit 1;
+  }
+  
   cleanup();
-  apply_retention();
   if ($mail_report) { send_mail(); }
-  exit 1;
+  exit 0;
 }
 
-cleanup();
-apply_retention();
-if ($mail_report) { send_mail(); }
-exit 0;
+elsif ($action eq "purge")
+{
+  if ($backupretention) {
+    my @existingbackups;
+
+    File::Find::find({
+      'wanted' => sub { /^$prefix.*$suffix.*/s && push @existingbackups, $_; },
+      'preprocess' => sub { sort { $a cmp $b } @_ }
+    }, $backupdir);
+
+    if ($#existingbackups+1 <= $backupretention) {
+      log_msg ("Retention is $backupretention, no backup to remove...", LOG_INFO);
+    } else {
+      while ($#existingbackups+1 > $backupretention) {
+        my $item = pop @existingbackups;
+        (unlink "$backupdir/$item" or die log_msg ("Error while removing old backup file $backupdir/$item: $!", LOG_ERR)) unless ! -f "$backupdir/$item";
+        (rmtree "$backupdir/$item" or die log_msg ("Error while removing old backup directory $backupdir/$item: $!", LOG_ERR)) unless ! -d "$backupdir/$item";
+        log_msg ("Removing old backup $backupdir/$item", LOG_INFO);
+      }
+    }
+  } else {
+      log_msg ("Retention is disabled, no backup to remove...", LOG_INFO);
+  }
+}
+
+else {
+  log_msg ("Unknown action: $action", LOG_ERR);
+}
 
 # Please keep all 3 functions in the same order: load_config, load_args, load_defaults 
 sub load_config 
@@ -365,6 +397,7 @@ sub load_args
 # stuff that doesn't go in the config file ;-)
     "help" => \&help,  
     "configfile=s" => \$configfile2,
+    "action=s" => \$action,
 
 # mysql
     "user=s" => \$user,
@@ -433,6 +466,8 @@ sub load_args
     "mail_to=s" => \$mail_to,
     "mail_subject=s" => \$mail_subject,
   ) or help();
+
+  die help() unless $action eq "backup" or $action eq "purge";
 
   # As this function is called last, append to @INC here.
   eval "use lib '$hooksdir'";
@@ -859,6 +894,7 @@ Common options:
   --host=<host>                 Hostname for MySQL
   --port=<port>                 TCP port for MySQL
   --socket=<socket>             UNIX socket for MySQL
+  --action=backup|purge		Action to run, default is backup
   --quiet                       Suppress diagnostic output, print warnings
                                 and errors only
 
@@ -1004,33 +1040,6 @@ sub lvm_version
 
   return $lv;
 }
-
-sub apply_retention
-{
-  if ($backupretention)
-  {
-    my @existingbackups;
-
-    File::Find::find({
-      'wanted' => sub { /^$prefix.*$suffix.*/s && push @existingbackups, $_; },
-      'preprocess' => sub { sort { $a cmp $b } @_ }
-    }, $backupdir);
-
-    if ($#existingbackups+1 <= $backupretention) {
-      log_msg ("Retention is $backupretention, no backup to remove...", LOG_INFO);
-    } else {
-      while ($#existingbackups+1 > $backupretention) {
-        my $item = pop @existingbackups;
-        (unlink "$backupdir/$item" or die log_msg ("Error while removing old backup file $backupdir/$item: $!", LOG_ERR)) unless ! -f "$backupdir/$item";
-        (rmtree "$backupdir/$item" or die log_msg ("Error while removing old backup directory $backupdir/$item: $!", LOG_ERR)) unless ! -d "$backupdir/$item";
-        log_msg ("Removing old backup $backupdir/$item", LOG_INFO);
-      }
-    }
-  } else {
-      log_msg ("Retention is disabled, no backup to remove...", LOG_INFO);
-  }
-}
-
 
 sub send_mail
 {
