@@ -894,7 +894,7 @@ Common options:
   --host=<host>                 Hostname for MySQL
   --port=<port>                 TCP port for MySQL
   --socket=<socket>             UNIX socket for MySQL
-  --action=backup|purge		Action to run, default is backup
+  --action=backup|purge		Action to run (def: backup)
   --quiet                       Suppress diagnostic output, print warnings
                                 and errors only
 
