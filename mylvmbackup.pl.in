@@ -133,7 +133,7 @@ if (($log_method eq "syslog") or ($log_method eq "both")) {
 
 if ($mail_report) {
   eval 'use MIME::Lite;';
-  die ("You need to have MIME::Lite installed when using the mail method!\n") if $@;
+  die ("You need to have MIME::Lite installed when using the mail report feature!\n") if $@;
 }
 
 if (lvm_version() =~ /^1/)
@@ -352,10 +352,10 @@ sub load_config
   $syslog_socktype = $cfg->val ('logging', 'syslog_socktype', $syslog_socktype);
   $syslog_facility = $cfg->val ('logging', 'syslog_facility', $syslog_facility);
   $syslog_remotehost = $cfg->val ('logging', 'syslog_remotehost', $syslog_remotehost);
-  $mail_report = $cfg->val ('logging', 'mail_report', $mail_report);
-  $mail_from = $cfg->val ('logging', 'mail_from', $mail_from);
-  $mail_to = $cfg->val ('logging', 'mail_to', $mail_to);
-  $mail_subject = $cfg->val ('logging', 'mail_subject', $mail_subject);
+  $mail_report = $cfg->val ('reporting', 'mail_report', $mail_report);
+  $mail_from = $cfg->val ('reporting', 'mail_from', $mail_from);
+  $mail_to = $cfg->val ('reporting', 'mail_to', $mail_to);
+  $mail_subject = $cfg->val ('reporting', 'mail_subject', $mail_subject);
 }
 
 # Please keep all 3 functions in the same order: load_config, load_args, load_defaults 
@@ -1026,6 +1026,8 @@ sub apply_retention
         log_msg ("Removing old backup $backupdir/$item", LOG_INFO);
       }
     }
+  } else {
+      log_msg ("Retention is disabled, no backup to remove...", LOG_INFO);
   }
 }
 
