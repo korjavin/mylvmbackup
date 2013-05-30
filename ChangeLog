@@ -1,7 +1,49 @@
+2013-05-30  Lenz Grimmer <lenz@grimmer.com>
+
+ - Merged patches from Alexandre Anriot to provide a mail reporting method
+   which sends the log output via email and a new "purge" action that allows
+   to only keep a defined number of backups in the backup directory
+
+2013-03-31  Lenz Grimmer <lenz@grimmer.com>
+
+ - Applied patch contributed by Klaus Ethgen that removes the annoying LVM
+   warnings about a leaked file descriptor (DBD:mysql does not add FD_CLOEXEC
+   on the MySQL socket)
+
+2012-12-16  Lenz Grimmer <lenz@grimmer.com>
+
+ - BUG#1086313: mvlvmbackup lacks support for 'thin' LVM snapshots
+   (Thanks to Neil Wilson for the patch)
+
+2011-11-24  Lenz Grimmer <lenz@grimmer.com>
+
+ - BUG#787063: Ensure to clean up temporary .pos files when the snapshot mount
+   is kept, too 
+
+2011-02-14  Lenz Grimmer <lenz@grimmer.com>
+
+ - Applied small patch from Norbert Tretkowski: change umask to 077 before
+   creating the tarball backup files to prevent them from being readable by
+   everyone
+
+2010-09-21  Lenz Grimmer <lenz@grimmer.com>
+
+ - BUG#593220: Fixed the compressarg option for cat (removed the comment)
+
+2010-09-09  Lenz Grimmer <lenz@grimmer.com>
+
+ - Applied patch contributed by Ben Bonnel to add a new configuration option
+   "rsnaprsyncarg" that allows one to pass special options to the rsync process
+   when using the rsnap backend.
+ 
 2010-01-09  Lenz Grimmer <lenz@grimmer.com>
 
  - Applied patch provided by Ask Bjørn Hansen to allow targets not to have a
    timestamp (e.g. for rsync targets)
+
+2009-09-06  Lenz Grimmer <lenz@grimmer.com>
+
+ - Bumped up version number to 0.14
 
 2009-07-02  Lenz Grimmer <lenz@grimmer.com>
 
@@ -14,6 +56,10 @@
  - Fixed InnoDB recovery in case a relative path to the MySQL
    data directory is defined (BUG#38337), improved the documentation
    of relpath in the man page.
+
+2009-06-20  Lenz Grimmer <lenz@grimmer.com>
+
+ - Bumped up version number to 0.13
 
 2009-06-18  Lenz Grimmer <lenz@grimmer.com>
 
