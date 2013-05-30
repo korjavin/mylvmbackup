@@ -8,50 +8,56 @@ mylvmbackup [OPTIONS]
 
 =head1 DESCRIPTION
 
-mylvmbackup is a tool for quickly creating backups of MySQL server's data
-files. To perform a backup, mylvmbackup obtains a read lock on all tables and
-flushes all server caches to disk, makes an LVM snapshot of the volume
-containing the MySQL data directory, and unlocks the tables again. The
-snapshot process takes only a small amount of time. When it is done, the
-server can continue normal operations, while the actual file backup proceeds.
+I<mylvmbackup> is a tool for quickly creating full physical backups of a MySQL
+server's data files. To perform a backup, I<mylvmbackup> obtains a read lock on
+all tables and flushes all server caches to disk, makes an LVM snapshot of the
+volume containing the MySQL data directory, and unlocks the tables again. The
+snapshot process takes only a small amount of time. When it is done, the server
+can continue normal operations, while the actual file backup proceeds.
 
 The LVM snapshot is mounted to a temporary directory and all data is backed up
-using the I<tar> program. By default, the archive file is created using a name
-of the form I<backup-YYYYMMDD_hhmmss_mysql.tar.gz>, where I<YYYY>, I<MM>, I<DD>,
-I<hh>, I<mm>, and I<ss> represent the year, month, day, hour, minute, and second
-of the time at which the backup occurred. The default prefix I<backup>, date
-format and file suffix may be modified. The use of timestamped archive names
-allows you to run mylvmbackup many times without danger of overwriting old
-archives.
+using the I<tar> program by default. The archive files are created using names
+in the form of I<backup-YYYYMMDD_hhmmss_mysql.tar.gz>, where I<YYYY>, I<MM>,
+I<DD>, I<hh>, I<mm> and I<ss> represent the year, month, day, hour, minute,
+and second of the time at which the backup occurred. The default prefix
+I<backup>, date format and file suffix may be modified. The use of timestamped
+archive names allows you to run I<mylvmbackup> many times without risking to
+overwrite old archives. It is possible to preserve only a defined number of
+last backups, to avoid running out of disk space.
 
-Alternatively, instead of I<tar>, you may use I<rsync>. The rsync backup can
-perform both local backups as well as backing up to a remote server using rsyncd
-or rsync via SSH.
+Alternatively, instead of I<tar>, you can use I<rsync> or I<rsnap> to perform
+the archiving.
 
-mylvmbackup also supports creating backups by using I<rsnap>, which is a
-wrapper around I<rsync> to automatically maintain and rotate a given number of
-last backups (7 by default). It utilizes hard links to link to unchanged files
-for saving disk space.
+The I<rsync> backup can perform both local backups as well as backing up to a
+remote server using rsyncd or rsync via SSH.
 
-Additionally, a backup type I<none> is provided for cases where the user wants
-to use mylvmbackup only for creating the snapshots and intends to perform the
+I<rsnap> is a wrapper around I<rsync> to automatically maintain and rotate a
+given number of last backups (7 by default). It utilizes hard links to link to
+unchanged files for saving disk space.
+
+Moreover, a backup type I<none> is provided for cases where the user wants
+to use I<mylvmbackup> only for creating the snapshots and intends to perform the
 actual backup by using the appropriate hooks. (Or for cases where the snapshot
 itself is considered to be the backup).
 
+I<mylvmbackup> also provides several methods for logging and reporting the
+progress and success of a backup run. The log messages can either be printed
+to the console (STDOUT), logged via I<syslog> or sent to you via email.
+
 =head1 GENERAL HINTS
 
-It is required to run mylvmbackup on the same host where the MySQL server
+It is required to run I<mylvmbackup> on the same host where the MySQL server
 runs. If your MySQL daemon is not listening on localhost or using the default
 socket location, you must specify I<--host> or I<--socket>. Even though
-mylvmbackup communicates with the server through a normal client connection to
+I<mylvmbackup> communicates with the server through a normal client connection to
 obtain the read lock and flush data, it performs the actual backup by
 accessing the file system directly. It is also a requirement that the MySQL
 server's data directory resides on an LVM volume. (It is, however, a good idea
 to do the LVM backup to a different partition than the one where the data
-directory resides.  Otherwise, there is a good chance that LVM will run out of
+directory resides. Otherwise, there is a good chance that LVM will run out of
 undo space for LVM snapshot maintenance and the backup will fail.)
 
-The user who invokes mylvmbackup must have sufficient filesystem permissions
+The user who invokes I<mylvmbackup> must have sufficient filesystem permissions
 to create the LVM snapshot and mount it. This includes read/write access to
 the backup directory.
 
@@ -92,7 +98,7 @@ be logged.
 
 Hook scripts can also be implemented as Perl modules. The module must be named
 I<hookname.pm> and must be a package of type I<hookname>. The module must
-implement I<execute()> which is called by mylvmbackup to initiate the hook. It
+implement I<execute()> which is called by I<mylvmbackup> to initiate the hook. It
 must return boolean true/false (1 or 0) on success/failure. I<execute()> will
 be passed 2 parameters. The first parameter is a clone() of the global database
 handle $dbh. This will allow hook scripts to interact with the database using
@@ -162,12 +168,23 @@ I<skip_hooks> configuration option to I<1>;
 
 =head1 OPTIONS
 
-mylvmbackup supports the following command line options. The same options can
+I<mylvmbackup> supports the following command line options. The same options can
 also be defined in the I</etc/mylvmbackup.conf> configuration file (omitting
 the leading dashes, of course). A sample configuration file is included in
 the distribution.
 
 =over 4
+
+=item B<--action=string>
+
+Selects the mode of action. Possible values are I<backup> and I<purge>.
+
+When this option is omitted, the I<backup> action is executed by default, which
+performs the actual backup creation. Older backup files are preserved.
+
+The I<purge> action can be used to remove all backups except for the a
+configurable number of previous backups, defined by the I<backupretention>
+option. The backup creation process is skipped in this case.
 
 =item B<--user=string>
 
@@ -187,7 +204,7 @@ See the MySQL Reference manual for more details on password security.
 =item B<--host=string>
 
 Specifies the host name to use for connecting to the MySQL server. Note that
-mylvmbackup needs to be run on the same system that the MySQL server to be
+I<mylvmbackup> needs to be run on the same system that the MySQL server to be
 backed up runs on - do not enter a remote host's host name or IP address here!
 A non-empty value for I<host> other than I<localhost> overrides any given
 I<socket> path value.
@@ -298,21 +315,21 @@ The default is appending B<_snapshot> to the lvname.
 
 =item B<--keep_snapshot>
 
-If this option is given, mylvmbackup will not remove the snapshot
+If this option is given, I<mylvmbackup> will not remove the snapshot
 before terminating. Note that keeping multiple LVM snapshots open at
 the same time can reduce I/O performance and you will need to manually
-discard the snapshot before invoking mylvmbackup again.
+discard the snapshot before invoking I<mylvmbackup> again.
 
 =item B<--keep_mount>
 
-If this option is given, mylvmbackup will not remove the mounted partition
+If this option is given, I<mylvmbackup> will not remove the mounted partition
 before terminating. This option also implies I<keep_snapshot=1>, as it would
 not be useful if the snapshot is removed. You need to manually unmount this
-directory before invoking mylvmbackup again.
+directory before invoking I<mylvmbackup> again.
 
 =item B<--thin>
 
-If this option is given, mylvmbackup will expect that the LVM volume is
+If this option is given, I<mylvmbackup> will expect that the LVM volume is
 using thin provisioning and that the snapshot will use physical space
 from the existing thin pool. Any size specified with I<lvsize> is ignored.
 
@@ -336,8 +353,8 @@ I<tar>, I<rsync>, I<rsnap> and I<none>.
 
 =item B<--backupretention=string>
 
-Specifies how many previous backups to keep in the backup directory.
-The default is I<0> (keep all backups).
+Specifies how many previous backups to keep in the backup directory when
+performing the I<purge> action. The default is I<0> (keep all backups).
 
 Note that this feature only works on a local backup directory with
 a static directory name! If you use I<timestr()> formatting sequences
@@ -405,8 +422,9 @@ This requires a properly configured remote rsync setup (e.g. pre-setup SSH keys
 or a working rsyncd configuration).
 
 Note that the I<backupretention> option does not work for rsync URLs or directory
-names that use format strings, you need to define a static local directory name
-if you want to use this functionality.
+names that use format strings. You need to define a static local directory name
+in I<backupdir> if you want to use the I<purge> action to automatically remove
+older backups from the backup directory.
 
 The default is I</var/tmp/mylvmbackup/backup/>
 
@@ -527,16 +545,19 @@ You should also review and adjust the I<mail_from>, I<mail_to>
 and I<mail_subject> configuration options to match you requirements.
 
 =item B<--mail_from=string>
+
 The email address to be used in the I<From:> header for email
 reports (requires the I<mail_report> option to be set).
 The default value is I<root@localhost>.
 
 =item B<--mail_to=string>
+
 The email address to be used to send email reports to
 (requires the I<mail_report> option to be set).
 The default value is I<root@localhost>.
 
 =item B<--mail_subject=string>
+
 The text to be used in the I<Subject:> header for email
 reports (requires the I<mail_report> option to be set).
 The default value is "mylvmbackup report for localhost".
@@ -570,16 +591,20 @@ The executable Perl script that performs the work.
 
 For proper operation I<mylvmbackup> requires Perl 5 with the I<DBI> and
 I<DBD::mysql> modules. It also needs the I<Config::IniFiles> to read the global
-configuration file of the program and I<Sys::Syslog> in case you want to enable
-the syslog log facility. I<Date::Format> is required to create the time stamp
-used in the backup file names. In addition, it utilizes I<Getopt::Long>,
-I<File::Basename> and I<File::Temp>, which usually are part of the default Perl
-distribution.
+configuration file of the program.  I<Date::Format> is required to create the
+time stamp used in the backup file names. In addition, it utilizes
+I<Getopt::Long>, I<File::Basename> and I<File::Temp>, which usually are part of
+the default Perl distribution.
+I<Sys::Syslog> is only required in case you want to enable the syslog log
+facility.
+The I<MIME::Lite> module is required when you enable the mail reporting
+functionality. It also requires a functional local sendmail (or alternative)
+facility.
 
 It also requires several other external programs: GNU I<tar> and I<gzip> to back
 up the data, LVM utilities (I<lvcreate>, I<lvremove> and I<lvs>) to create and
 remove the LVM snapshot, and the system utilities I<mount> and I<umount>.
-Please note that mylvmbackup requires Linux LVM Version 2 or higher. It does not
+Please note that I<mylvmbackup> requires Linux LVM Version 2 or higher. It does not
 work on LVMv1, as this version does not support writable snapshots.
 
 Optionally, I<rsync> or I<rsnap> may be required instead of I<tar> and I<gzip>,
@@ -594,7 +619,7 @@ mount(8), tar(1), lvcreate(8), lvremove(8), lvs(8), umount(8), rsync(1)
 This program was initially written by Aleksey "Walrus" Kishkin from
 MySQL AB, with suggestions from Peter Zaitsev and Lenz Grimmer.
 
-It is currently maintained by Lenz Grimmer, <lenz@grimmer.com>
+It is currently maintained by Lenz Grimmer <lenz@grimmer.com>
 
 =head1 RESOURCES
 
@@ -611,5 +636,5 @@ contributors.
 
 =head1 COPYING
 
-mylvmbackup is distributed under the GNU public license. See the file
+I<mylvmbackup> is distributed under the GNU public license. See the file
 COPYING for details.

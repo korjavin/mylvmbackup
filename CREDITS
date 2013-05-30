@@ -56,7 +56,7 @@ Klaus Ethgen contributed a patch that removes the annoying LVM
 warnings about a leaked file descriptor (DBD:mysql does not add
 FD_CLOEXEC on the MySQL socket, requires DBD::mysql 4.019 and above)
 
-Alexandre Anriot contributed patches to provide a new "mail" log
-method, to send the log output via email as well as a new
-"backupretention" option that allows to only keep a defined number
-of backups in the backup directory.
+Alexandre Anriot contributed patches to provide the mail reporting
+method, which sends the log output via email as well as the "purge"
+action and "backupretention" option that allows to only keep a
+defined number of previous backups in the backup directory.
