@@ -292,34 +292,35 @@ if ($action eq "backup")
   exit 0;
 }
 
-elsif ($action eq "purge")
-{
-  if ($backupretention) {
-    my @existingbackups;
+if (($action eq "purge") and ($backupretention > 0)) {
+  my @existingbackups;
 
-    File::Find::find({
-      'wanted' => sub { /^$prefix.*$suffix.*/s && push @existingbackups, $_; },
-      'preprocess' => sub { sort { $a cmp $b } @_ }
-    }, $backupdir);
+  File::Find::find({
+    'wanted' => sub { /^$prefix.*$suffix.*/s && push @existingbackups, $_; },
+    'preprocess' => sub { sort { $a cmp $b } @_ }
+  }, $backupdir);
 
-    if ($#existingbackups+1 <= $backupretention) {
-      log_msg ("Retention is $backupretention, no backup to remove...", LOG_INFO);
-    } else {
-      while ($#existingbackups+1 > $backupretention) {
-        my $item = pop @existingbackups;
-        (unlink "$backupdir/$item" or die log_msg ("Error while removing old backup file $backupdir/$item: $!", LOG_ERR)) unless ! -f "$backupdir/$item";
-        (rmtree "$backupdir/$item" or die log_msg ("Error while removing old backup directory $backupdir/$item: $!", LOG_ERR)) unless ! -d "$backupdir/$item";
-        log_msg ("Removing old backup $backupdir/$item", LOG_INFO);
-      }
-    }
+  if ($#existingbackups+1 <= $backupretention) {
+    log_msg ("Retention is $backupretention, no backup to remove.", LOG_INFO);
   } else {
-      log_msg ("Retention is disabled, no backup to remove...", LOG_INFO);
+    while ($#existingbackups+1 > $backupretention) {
+      my $item = pop @existingbackups;
+      (unlink "$backupdir/$item" or die log_msg ("Error while removing old backup file $backupdir/$item: $!", LOG_ERR)) unless ! -f "$backupdir/$item";
+      (rmtree "$backupdir/$item" or die log_msg ("Error while removing old backup directory $backupdir/$item: $!", LOG_ERR)) unless ! -d "$backupdir/$item";
+      log_msg ("Removing old backup $backupdir/$item", LOG_INFO);
+    }
   }
+  if ($mail_report) { send_mail(); }
+  exit 0;
+} else {
+  log_msg ("Retention is disabled, no backup to remove.", LOG_INFO);
+  if ($mail_report) { send_mail(); }
+  exit 0;
 }
 
-else {
-  log_msg ("Unknown action: $action", LOG_ERR);
-}
+log_msg ("Unknown action: $action", LOG_ERR);
+if ($mail_report) { send_mail(); }
+exit 1;
 
 # Please keep all 3 functions in the same order: load_config, load_args, load_defaults 
 sub load_config 
@@ -894,7 +895,7 @@ Common options:
   --host=<host>                 Hostname for MySQL
   --port=<port>                 TCP port for MySQL
   --socket=<socket>             UNIX socket for MySQL
-  --action=backup|purge		Action to run (def: backup)
+  --action=backup|purge         Action to run (def: backup)
   --quiet                       Suppress diagnostic output, print warnings
                                 and errors only
 

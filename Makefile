@@ -106,3 +106,6 @@ clean:
 
 maintainer-clean: clean
 	$(RM) -f $(distdir).tar.gz
+
+syntaxcheck:
+	$(PERL) -c $(NAME).pl.in
