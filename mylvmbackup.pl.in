@@ -51,6 +51,7 @@ my $datefmt;
 my $hooksdir;
 my $host;
 my $innodb_recover;
+my $recoveryopts;
 my $skip_flush_tables;
 my $skip_hooks;
 my $skip_mycnf;
@@ -349,6 +350,7 @@ sub load_config
   $suffix=$cfg->val ('misc', 'suffix', $suffix);
   $datefmt=$cfg->val ('misc', 'datefmt', $datefmt);
   $innodb_recover=$cfg->val ('misc', 'innodb_recover', $innodb_recover);
+  $recoveryopts=$cfg->val ('misc', 'recoveryopts', $recoveryopts);
   $pidfile=$cfg->val ('misc', 'pidfile', $pidfile);
   $skip_flush_tables=$cfg->val ('misc', 'skip_flush_tables', $skip_flush_tables);
   $extra_flush_tables=$cfg->val ('misc', 'extra_flush_tables', $extra_flush_tables);
@@ -423,6 +425,7 @@ sub load_args
     "suffix=s" => \$suffix,
     "datefmt:s" => \$datefmt,
     "innodb_recover" => \&innodb_recover,
+    "recoveryopts" => \&recoveryopts,
     "pidfile=s" => \$pidfile,
     "skip_flush_tables" => \&skip_flush_tables,
     "extra_flush_tables" => \&extra_flush_tables,
@@ -500,6 +503,7 @@ sub load_defaults
   $suffix='_mysql';
   $datefmt='%Y%m%d_%H%M%S';
   $innodb_recover=0;
+  $recoveryopts='--skip-networking --skip-grant --bootstrap --skip-syslog --skip-slave-start';
   $pidfile = '$TMP/mylvmbackup_recoverserver.pid';
   $skip_flush_tables=0;
   $extra_flush_tables=0;
@@ -704,7 +708,7 @@ sub mount_snapshot
 sub do_innodb_recover
 {
   log_msg ("Recovering InnoDB...", LOG_INFO);
-  my $command="echo 'select 1;' | $mysqld_safe --socket=$TMP/mylvmbackup.sock --pid-file=$pidfile --log-error=$TMP/mylvmbackup_recoverserver.err --datadir=$mountdir/$relpath --skip-networking --skip-grant --bootstrap --skip-ndbcluster --skip-slave-start";
+  my $command="echo 'select 1;' | $mysqld_safe --socket=$TMP/mylvmbackup.sock --pid-file=$pidfile --log-error=$TMP/mylvmbackup_recoverserver.err --datadir=$mountdir/$relpath $recoveryopts";
   return run_command("InnoDB recovery on snapshot", $command);
 }
 

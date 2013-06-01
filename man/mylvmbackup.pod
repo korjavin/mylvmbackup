@@ -232,6 +232,15 @@ The default is verbose logging.
 
 Run InnoDB recovery on the writable snapshot prior to performing the backup.
 
+=item B<--recoveryopts>
+
+Additional values to pass to the startup options of the separate MySQL
+instance that gets spawned to perform the InnoDB log recovery option.
+Depending on your MySQL Server version, you may have to modify these
+startup parameters.
+
+The default is I<--skip-networking --skip-grant --bootstrap --skip-syslog --skip-slave-start>.
+
 =item B<--skip_flush_tables>
 
 Don't issue a I<FLUSH TABLES WITH READ LOCK> command before creating
