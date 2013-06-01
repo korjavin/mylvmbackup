@@ -225,6 +225,7 @@ if ($action eq "backup")
   if (!$dbh)
   {
     log_msg ($DBI::errstr, LOG_ERR);
+    if ($mail_report) { send_mail(); }
     die $DBI::errstr;
   }
   
