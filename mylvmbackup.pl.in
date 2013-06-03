@@ -22,7 +22,6 @@ use Date::Format;
 use DBD::mysql;
 use DBI;
 use File::Basename;
-use File::Find;
 use File::Path;
 use File::Temp qw/ mkstemps mktemp /;
 use Getopt::Long;
