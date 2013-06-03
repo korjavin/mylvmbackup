@@ -296,20 +296,24 @@ if ($action eq "backup")
 
 if (($action eq "purge") and ($backupretention > 0)) {
   my @existingbackups;
+  my %files;
 
-  File::Find::find({
-    'wanted' => sub { /^$prefix.*$suffix.*/s && push @existingbackups, $_; },
-    'preprocess' => sub { sort { $a cmp $b } @_ }
-  }, $backupdir);
+  # Gather list of files and time stamps (mtime)
+  opendir(my $DH, $backupdir) or die "Error opening $backupdir: $!";
+  %files = map { $_ => (stat("$backupdir/$_"))[9] } grep(! /^\.\.?$/, readdir($DH));
+  closedir($DH);
+
+  # Sort by mtime
+  @existingbackups = sort { $files{$b} <=> $files{$a} } (keys %files);
 
   if ($#existingbackups+1 <= $backupretention) {
     log_msg ("Retention is $backupretention, no backup to remove.", LOG_INFO);
   } else {
     while ($#existingbackups+1 > $backupretention) {
       my $item = pop @existingbackups;
-      (unlink "$backupdir/$item" or die log_msg ("Error while removing old backup file $backupdir/$item: $!", LOG_ERR)) unless ! -f "$backupdir/$item";
-      (rmtree "$backupdir/$item" or die log_msg ("Error while removing old backup directory $backupdir/$item: $!", LOG_ERR)) unless ! -d "$backupdir/$item";
       log_msg ("Removing old backup $backupdir/$item", LOG_INFO);
+      (unlink "$backupdir/$item" or log_msg ("Error while removing old backup file $backupdir/$item: $!", LOG_ERR)) if -f "$backupdir/$item";
+      (rmtree "$backupdir/$item" or log_msg ("Error while removing old backup directory $backupdir/$item: $!", LOG_ERR)) if -d "$backupdir/$item";
     }
   }
   if ($mail_report) { send_mail(); }

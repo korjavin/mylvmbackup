@@ -182,8 +182,8 @@ Selects the mode of action. Possible values are I<backup> and I<purge>.
 When this option is omitted, the I<backup> action is executed by default, which
 performs the actual backup creation. Older backup files are preserved.
 
-The I<purge> action can be used to remove all backups except for the a
-configurable number of previous backups, defined by the I<backupretention>
+The I<purge> action can be used to remove older backups except for the a
+configurable number of most recent backups, defined by the I<backupretention>
 option. The backup creation process is skipped in this case.
 
 =item B<--user=string>
@@ -367,7 +367,13 @@ performing the I<purge> action. The default is I<0> (keep all backups).
 
 Note that this feature only works on a local backup directory with
 a static directory name! If you use I<timestr()> formatting sequences
-or rsync URLs, the retention mode will not work.
+for the backup directory, the retention mode will not work.
+
+The script looks at the last modification time (mtime) of each file and
+directory to determine which files will be removed.
+
+Also be advised that this operation deletes B<all> files and directories
+in the backup directory that are older than the last n files!
 
 =item B<--prefix=string>
 
