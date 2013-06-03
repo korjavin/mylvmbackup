@@ -22,7 +22,7 @@ use Date::Format;
 use DBD::mysql;
 use DBI;
 use File::Basename;
-use File::Find;
+use File::Find::Rule;
 use File::Path;
 use File::Temp qw/ mkstemps mktemp /;
 use Getopt::Long;
@@ -295,18 +295,14 @@ if ($action eq "backup")
 }
 
 if (($action eq "purge") and ($backupretention > 0)) {
-  my @existingbackups;
+  my @existingbackups = File::Find::Rule->name(qr/^$prefix-.*($suffix|$tarfilesuffix).*$/)->maxdepth(1)->relative->in($backupdir);
+  my @existingbackups_s = sort { lc($b) cmp lc($a) } @existingbackups;
 
-  File::Find::find({
-    'wanted' => sub { /^$prefix.*$suffix.*/s && push @existingbackups, $_; },
-    'preprocess' => sub { sort { $a cmp $b } @_ }
-  }, $backupdir);
-
-  if ($#existingbackups+1 <= $backupretention) {
+  if ($#existingbackups_s+1 <= $backupretention) {
     log_msg ("Retention is $backupretention, no backup to remove.", LOG_INFO);
   } else {
-    while ($#existingbackups+1 > $backupretention) {
-      my $item = pop @existingbackups;
+    while ($#existingbackups_s+1 > $backupretention) {
+      my $item = pop @existingbackups_s;
       (unlink "$backupdir/$item" or die log_msg ("Error while removing old backup file $backupdir/$item: $!", LOG_ERR)) unless ! -f "$backupdir/$item";
       (rmtree "$backupdir/$item" or die log_msg ("Error while removing old backup directory $backupdir/$item: $!", LOG_ERR)) unless ! -d "$backupdir/$item";
       log_msg ("Removing old backup $backupdir/$item", LOG_INFO);
