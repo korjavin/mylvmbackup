@@ -310,7 +310,11 @@ if (($action eq "purge") and ($backupretention > 0)) {
   } else {
     while ($#existingbackups+1 > $backupretention) {
       my $item = pop @existingbackups;
-      log_msg ("Removing old backup $backupdir/$item", LOG_INFO);
+
+      my $status = "ok";
+      $status = "incomplete" unless $item !~ /INCOMPLETE/;
+
+      log_msg ("Removing old backup $backupdir/$item (this backup was $status)", LOG_INFO);
       (unlink "$backupdir/$item" or log_msg ("Error while removing old backup file $backupdir/$item: $!", LOG_ERR)) if -f "$backupdir/$item";
       (rmtree "$backupdir/$item" or log_msg ("Error while removing old backup directory $backupdir/$item: $!", LOG_ERR)) if -d "$backupdir/$item";
     }
