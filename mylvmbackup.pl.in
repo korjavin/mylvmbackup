@@ -392,6 +392,7 @@ sub load_config
   $syslog_facility = $cfg->val ('logging', 'syslog_facility', $syslog_facility);
   $syslog_remotehost = $cfg->val ('logging', 'syslog_remotehost', $syslog_remotehost);
   $mail_report = $cfg->val ('reporting', 'mail_report', $mail_report);
+
   $mail_from = $cfg->val ('reporting', 'mail_from', $mail_from);
   $mail_to = $cfg->val ('reporting', 'mail_to', $mail_to);
   $mail_subject = $cfg->val ('reporting', 'mail_subject', $mail_subject);
@@ -469,6 +470,8 @@ sub load_args
     "syslog_socktype=s" => \$syslog_socktype,
     "syslog_facility=s" => \$syslog_facility,
     "syslog_remotehost=s" => \$syslog_remotehost,
+
+# reporting
     "mail_report" => \&mail_report,
     "mail_from=s" => \$mail_from,
     "mail_to=s" => \$mail_to,
