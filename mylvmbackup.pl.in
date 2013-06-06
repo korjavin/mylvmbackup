@@ -1056,10 +1056,10 @@ sub lvm_version
 sub send_mail
 {
   my $message = MIME::Lite->new (
-                From    => $mail_from,
-                To      => $mail_to,
-                Subject => $mail_subject,
-                Data    => $mail_buffer
+                From    => "$mail_from",
+                To      => "$mail_to",
+                Subject => "$mail_subject - $action",
+                Data    => "$mail_buffer"
   );
   
   $message->send;
