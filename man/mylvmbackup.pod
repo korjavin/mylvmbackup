@@ -471,7 +471,8 @@ To exclude a database, you would pass I<--exclude dbname> here.
 
 =item B<--tarfilesuffix=string>
 
-Specifies the suffix for the tarball.
+Specifies the suffix for the tarball. This value should be set according
+to the selected compression method (e.g. I<.tar.bz2> for bzip2 compression).
 The default is I<.tar.gz>.
 
 =item B<--compress=string>
@@ -482,7 +483,7 @@ The program must support reading the to be compressed data from I<stdin> and
 writing to I<stdout>, without requiring intermediate temporary files (for this
 reason, 7zip cannot be used). It's also possible to use I<cat>. In this case,
 no compression will be done. Make sure to update the I<compressarg> option
-accordingly.
+and the I<tarfilesuffix> accordingly.
 The default is I<gzip>. Can be left empty.
 
 =item B<--compressarg=string>
