@@ -71,6 +71,9 @@ htmlman:
 	$(POD2HTML) man/$(NAME).pod > $(MAN1).html
 	$(RM) -f pod2htmd.tmp  pod2htmi.tmp
 
+install-bin: $(NAME)
+	$(INSTALL_PROGRAM) $(NAME) $(DESTDIR)$(bindir)
+
 install: all
 	test -d $(DESTDIR)$(bindir) || $(INSTALL) -d $(DESTDIR)$(bindir)
 	test -d $(DESTDIR)$(man1dir) || $(INSTALL) -d $(DESTDIR)$(man1dir)

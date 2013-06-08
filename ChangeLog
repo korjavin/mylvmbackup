@@ -1,3 +1,10 @@
+2013-06-09  Lenz Grimmer <lenz@grimmer.com>
+
+ - Enabled timestr() formatting sequences for snapshot volume names, to
+   create snapshot names which contain a dynamic date value. This can
+   be useful when thin provisioned snapshots are used as the actual backup
+   by enabling the keep_snapshot option
+
 2013-05-30  Lenz Grimmer <lenz@grimmer.com>
 
  - Merged patches from Alexandre Anriot to provide a mail reporting method
