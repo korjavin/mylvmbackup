@@ -548,13 +548,15 @@ Default value is the empty string.
 
 Host name of a remote syslog server.
 
-=item B<--mail_report>
+=item B<--mail_report_on>
 
 Enable sending the logging output via email to a specified email
 address. The default is to not send email.
 
 This option requires an installed I<MIME::Lite> Perl module as
 well as a functional local sendmail (or alternative) facility.
+
+Supported values are I<never> (default value), I<always>, or I<errors>.
 
 You should also review and adjust the I<mail_from>, I<mail_to>
 and I<mail_subject> configuration options to match you requirements.
