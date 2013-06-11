@@ -552,7 +552,7 @@ sub load_defaults
   $syslog_socktype = 'native';
   $syslog_facility = '';
   $syslog_remotehost = '';
-  $mail_report_on = "never";
+  $mail_report_on = 'never';
   $mail_from = 'root@localhost';
   $mail_to = 'root@localhost';
   $mail_subject = 'mylvmbackup report for localhost';
