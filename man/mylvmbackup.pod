@@ -42,7 +42,8 @@ itself is considered to be the backup).
 
 I<mylvmbackup> also provides several methods for logging and reporting the
 progress and success of a backup run. The log messages can either be printed
-to the console (STDOUT), logged via I<syslog> or sent to you via email.
+to the console (STDOUT) or logged via I<syslog>. Additionally, a report can be
+sent to you via email.
 
 =head1 GENERAL HINTS
 
@@ -179,12 +180,13 @@ the distribution.
 
 Selects the mode of action. Possible values are I<backup> and I<purge>.
 
-When this option is omitted, the I<backup> action is executed by default, which
+When this option is omitted, the I<backup> action is assumed by default, which
 performs the actual backup creation. Older backup files are preserved.
 
-The I<purge> action can be used to remove older backups except for the a
-configurable number of most recent backups, defined by the I<backupretention>
-option. The backup creation process is skipped in this case.
+The I<purge> action can be used to remove older backups from the backup
+directory, except for the a configurable number of most recent backups, defined
+by the I<backupretention> option. The backup creation process is skipped in
+this case.
 
 =item B<--user=string>
 
@@ -319,8 +321,50 @@ The default is I<data>.
 
 =item B<--backuplv=string>
 
-Specifies the name of the logical volume for the snapshot volume.
-The default is appending B<_snapshot> to the lvname.
+Specifies the name used for the snapshot volume. If left empty, B<_snapshot>
+will simply be appended to the original volume name (e.g. I<data_snapshot>).
+
+It is possible to use selected I<timestr()> formatting sequences to create
+snapshot volume names which contain a dynamic date value. This can be useful
+if you use thin provisioned snapshots as the actual backup, by enabling the
+I<keep_snapshot> option.
+
+Currently, the following format strings are supported:
+
+=over
+
+=item I<%Y>
+
+4-digit year (e.g. 2009)
+
+=item I<%m>
+
+Month (01..12)
+
+=item I<%d>
+
+Day of month, leading zero
+
+=item I<%h>
+
+Month abbreviation,
+
+=item I<%H>
+
+Hour, 24 hour clock, leading zero
+
+=item I<%M>
+
+Minute, leading zero
+
+=item I<%S>
+
+Seconds, leading zero
+
+=back
+
+Example: I<$backuplv=backup-%Y-%m-%d-%H-%M-%S> will expand to
+I<backup-2013-06-07-14-08-45>.
 
 =item B<--keep_snapshot>
 
@@ -404,13 +448,39 @@ If the directory does not exist, it will be created.
 It is possible to use selected I<timestr()> formatting sequences to create
 directory names which contain a dynamic date value. Currently, the following
 format strings are supported:
-I<%Y> 4-digit year (e.g. 2009),
-I<%m> month (01..12),
-I<%d> day of month, leading zero
-I<%h> month abbreviation, 
-I<%H> hour, 24 hour clock, leading zero
-I<%M> minute, leading zero
-I<%S> seconds, leading zero
+
+=over
+
+=item I<%Y>
+
+4-digit year (e.g. 2009)
+
+=item I<%m>
+
+Month (01..12)
+
+=item I<%d>
+
+Day of month, leading zero
+
+=item I<%h>
+
+Month abbreviation,
+
+=item I<%H>
+
+Hour, 24 hour clock, leading zero
+
+=item I<%M>
+
+Minute, leading zero
+
+=item I<%S>
+
+Seconds, leading zero
+
+=back
+
 Example: I<$mountdir=/path/to/%Y-%m-%d> will expand to I</path/to/2009-06-13>
 
 =item B<--backupdir=string>
@@ -422,13 +492,39 @@ directory. If the directory does not exist, it will be created.
 It is possible to use selected I<timestr()> formatting sequences to create
 directory names which contain a dynamic date value. Currently, the following
 format strings are supported:
-I<%Y> 4-digit year (e.g. 2009),
-I<%m> month (01..12),
-I<%d> day of month, leading zero
-I<%h> month abbreviation, 
-I<%H> hour, 24 hour clock, leading zero
-I<%M> minute, leading zero
-I<%S> seconds, leading zero
+
+=over
+
+=item I<%Y>
+
+4-digit year (e.g. 2009)
+
+=item I<%m>
+
+Month (01..12)
+
+=item I<%d>
+
+Day of month, leading zero
+
+=item I<%h>
+
+Month abbreviation,
+
+=item I<%H>
+
+Hour, 24 hour clock, leading zero
+
+=item I<%M>
+
+Minute, leading zero
+
+=item I<%S>
+
+Seconds, leading zero
+
+=back
+
 Example: I<$mountdir=/path/to/%Y-%m-%d> will expand to I</path/to/2009-06-13>
 
 Instead of a local directory, you can also provide a valid rsync URL here, e.g.
@@ -471,7 +567,8 @@ To exclude a database, you would pass I<--exclude dbname> here.
 
 =item B<--tarfilesuffix=string>
 
-Specifies the suffix for the tarball.
+Specifies the suffix for the tarball. This value should be set according
+to the selected compression method (e.g. I<.tar.bz2> for bzip2 compression).
 The default is I<.tar.gz>.
 
 =item B<--compress=string>
@@ -482,7 +579,7 @@ The program must support reading the to be compressed data from I<stdin> and
 writing to I<stdout>, without requiring intermediate temporary files (for this
 reason, 7zip cannot be used). It's also possible to use I<cat>. In this case,
 no compression will be done. Make sure to update the I<compressarg> option
-accordingly.
+and the I<tarfilesuffix> accordingly.
 The default is I<gzip>. Can be left empty.
 
 =item B<--compressarg=string>
@@ -548,18 +645,23 @@ Default value is the empty string.
 
 Host name of a remote syslog server.
 
-=item B<--mail_report_on>
+=item B<--mail_report_on=string>
 
 Enable sending the logging output via email to a specified email
-address. The default is to not send email.
+address.
 
 This option requires an installed I<MIME::Lite> Perl module as
 well as a functional local sendmail (or alternative) facility.
 
-Supported values are I<never> (default value), I<always>, or I<errors>.
-
 You should also review and adjust the I<mail_from>, I<mail_to>
 and I<mail_subject> configuration options to match you requirements.
+
+Supported values are I<never>, this disables the mail reporting
+completely. A value of I<always> sends an email report for each
+invocation of I<mylvmbackup>, I<errors> only sends a report in
+case of an error condition.
+
+The default value is I<never>.
 
 =item B<--mail_from=string>
 
@@ -640,11 +742,11 @@ It is currently maintained by Lenz Grimmer <lenz@grimmer.com>
 
 =head1 RESOURCES
 
-Main web site: http://www.lenzg.net/mylvmbackup
+Main web site: L<http://www.lenzg.net/mylvmbackup>
 
-Mailing list: https://launchpad.net/~mylvmbackup-discuss
+Mailing list: L<https://launchpad.net/~mylvmbackup-discuss>
 
-Source code, bug tracker: https://launchpad.net/mylvmbackup
+Source code, bug tracker: L<https://launchpad.net/mylvmbackup>
 
 =head1 CREDITS
 

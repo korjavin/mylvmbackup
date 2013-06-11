@@ -151,7 +151,13 @@ $backupdir = clean_dirname($backupdir);
 # Validate the existence of a prefix
 die "You must specify a non-empty prefix to name your backup!\n" if ($prefix eq "");
 
-$backuplv = $lvname.'_snapshot' if length($backuplv) == 0;
+if (length($backuplv) == 0)
+{
+  $backuplv = $lvname.'_snapshot';
+} else {
+  $backuplv = time2str($backuplv, time);
+}
+
 my $date = time2str($datefmt, time);
 my $fullprefix = $prefix.'-'.$date.$suffix;
 
