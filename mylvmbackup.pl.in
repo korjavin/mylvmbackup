@@ -135,7 +135,7 @@ if (($log_method eq "syslog") or ($log_method eq "both")) {
 
 if ($mail_report_on ne "never") {
   eval 'use MIME::Lite;';
-  die ("You need to have MIME::Lite installed when using the mail report feature!\n") if $@;
+  die ("You need to have MIME::Lite installed when enabling the mail report feature!\n") if $@;
 }
 
 if (lvm_version() =~ /^1/)
@@ -149,7 +149,11 @@ $mountdir = clean_dirname($mountdir);
 $backupdir = clean_dirname($backupdir);
 
 # Validate the existence of a prefix
-die "You must specify a non-empty prefix to name your backup!\n" if ($prefix eq "");
+if ($prefix eq "")
+{
+  log_msg("You must specify a non-empty prefix to name your backup!", LOG_ERR); 
+  exit(1);
+}
 
 if (length($backuplv) == 0)
 {
@@ -232,7 +236,6 @@ if ($action eq "backup")
   if (!$dbh)
   {
     log_msg ($DBI::errstr, LOG_ERR);
-    $errorstate = 1;
     die $DBI::errstr;
   }
   
@@ -251,9 +254,7 @@ if ($action eq "backup")
   $snapshot_created= create_lvm_snapshot();
   
   run_hook ("preunlock");
-  log_msg ("Unlocking tables...", LOG_INFO);
-  $dbh->do("UNLOCK TABLES") 
-    or log_msg ($DBI::errstr, LOG_ERR) && die $DBI::errstr;
+  unlock_tables($dbh);
   
   run_hook ("predisconnect");
   log_msg ("Disconnecting from database...", LOG_INFO);
@@ -287,11 +288,18 @@ if ($action eq "backup")
         run_hook("backupsuccess");
       } else {
         run_hook("backupfailure");
+        log_msg ("Backup creation failed", LOG_ERR);
+        cleanup();
+        exit 1;
       }
-    }    
+    } else {
+      log_msg ("Could not mount snapshot volume $backuplv to $mountdir", LOG_ERR);
+      cleanup();
+      exit 1;
+    }
   } else {
+    log_msg ("Could not create snapshot volume $backuplv", LOG_ERR);
     cleanup();
-    $errorstate = 1;
     exit 1;
   }
   
@@ -328,7 +336,6 @@ if (($action eq "purge") and ($backupretention > 0)) {
 }
 
 log_msg ("Unknown action: $action", LOG_ERR);
-$errorstate = 1;
 exit 1;
 
 # Please keep all 3 functions in the same order: load_config, load_args, load_defaults 
@@ -571,6 +578,12 @@ sub flush_tables
   $dbh->do("FLUSH TABLES WITH READ LOCK") or log_msg ($DBI::errstr, LOG_ERR);
 }
 
+sub unlock_tables {
+  my $dbh = shift;
+  log_msg ("Unlocking tables...", LOG_INFO);
+  $dbh->do("UNLOCK TABLES") or log_msg ($DBI::errstr, LOG_ERR);
+}
+
 sub create_posfile
 {
   log_msg ("Taking position record into $pos_tempfile...", LOG_INFO);
@@ -751,13 +764,14 @@ sub log_msg
     __log_it ($syslog_level, $msg);
   }
 
-  if ($mail_report_on ne "never") {
-    __mail_it ($syslog_level, $msg);
-  }
-
   if ($syslog_level eq LOG_ERR)
   {
+    $errorstate = 1;
     run_hook ("logerr", $msg);
+  }
+
+  unless ($mail_report_on eq "never") {
+    __mail_it ($syslog_level, $msg);
   }
 
   sub __print_it
@@ -944,7 +958,7 @@ sub check_dir
     eval { File::Path::mkpath($dirname) };
     if($@) {
       log_msg ("The directory $dirname does not exist and I was unable to create it.", LOG_ERR);
-      help();
+      exit 1;
     }
  }
  unless ( (-d $dirname) and 
@@ -1068,6 +1082,7 @@ END {
   
     $message->send;
   }
+  exit 1 if ($errorstate == 1);
 }
 
 # vim: ts=2 sw=2 expandtab ft=perl:
