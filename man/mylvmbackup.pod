@@ -645,16 +645,23 @@ Default value is the empty string.
 
 Host name of a remote syslog server.
 
-=item B<--mail_report>
+=item B<--mail_report_on=string>
 
 Enable sending the logging output via email to a specified email
-address. The default is to not send email.
+address.
 
 This option requires an installed I<MIME::Lite> Perl module as
 well as a functional local sendmail (or alternative) facility.
 
 You should also review and adjust the I<mail_from>, I<mail_to>
 and I<mail_subject> configuration options to match you requirements.
+
+Supported values are I<never>, this disables the mail reporting
+completely. A value of I<always> sends an email report for each
+invocation of I<mylvmbackup>, I<errors> only sends a report in
+case of an error condition.
+
+The default value is I<never>.
 
 =item B<--mail_from=string>
 
