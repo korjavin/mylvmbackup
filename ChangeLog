@@ -1,9 +1,31 @@
+2013-06-11  Lenz Grimmer <lenz@grimmer.com>
+
+ - Improved error handling: send out an email if mail_report_on has been
+   set to "errors" and a log message with log level LOG_ERR was logged.
+ - Abort and clean up if the snapshot volume could not be mounted
+ - Abort and clean up if the backup creation failed
+ - Exit with a non-zero return code if errorstate was set
+
 2013-06-09  Lenz Grimmer <lenz@grimmer.com>
 
  - Enabled timestr() formatting sequences for snapshot volume names, to
    create snapshot names which contain a dynamic date value. This can
    be useful when thin provisioned snapshots are used as the actual backup
    by enabling the keep_snapshot option
+
+2013-06-03  Lenz Grimmer <lenz@grimmer.com>
+
+ - Added "thin" option to mylvmbackup.conf (default=0), to enable 
+   thin provisioned LVM snapshots
+
+2013-06-01  Lenz Grimmer <lenz@grimmer.com>
+
+ - Added new configuration option "recoveryopts" that allows to modify
+   the command line options that are passed to the MySQL instance that
+   performs the InnoDB recovery (BUG#544295 and BUG#1091950)
+   The current default options are "--skip-networking --skip-grant
+   --bootstrap --skip-syslog --skip-slave-start" (which better
+   accommodates MySQL 5.1)
 
 2013-05-30  Lenz Grimmer <lenz@grimmer.com>
 
