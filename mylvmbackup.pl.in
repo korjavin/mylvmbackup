@@ -240,8 +240,9 @@ if ($action eq "backup")
   }
   
   # Fix to close mysql socket at close (needs DBD::mysql 4.019 or higher)
+  my $mysql_fh;
   if ($DBD::mysql::VERSION >= 4.019) {
-    open(my $mysql_fh, '<&=', $dbh->mysql_fd) or die "dup: $!";
+    open($mysql_fh, '<&=', $dbh->mysql_fd) or die "dup: $!";
     fcntl($mysql_fh, F_SETFD, FD_CLOEXEC);
   }
   
