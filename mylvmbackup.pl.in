@@ -312,9 +312,9 @@ if (($action eq "purge") and ($backupretention > 0)) {
   my @existingbackups;
   my %files;
 
-  # Gather list of files and time stamps (mtime)
+  # Gather list of files and time stamps (mtime), exclude dot files
   opendir(my $DH, $backupdir) or die "Error opening $backupdir: $!";
-  %files = map { $_ => (stat("$backupdir/$_"))[9] } grep(! /^\.\.?$/, readdir($DH));
+  %files = map { $_ => (stat("$backupdir/$_"))[9] } grep(! /^\./, readdir($DH));
   closedir($DH);
 
   # Sort by mtime

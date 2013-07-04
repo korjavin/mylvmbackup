@@ -188,6 +188,10 @@ directory, except for the a configurable number of most recent backups, defined
 by the I<backupretention> option. The backup creation process is skipped in
 this case.
 
+Note that this option erases B<all> files contained in this directory that
+match the criterion of being older than the last n backup files (with the
+exception of hidden (dot) files!
+
 =item B<--user=string>
 
 Specifies the username to use for connecting to the MySQL server.
@@ -416,8 +420,9 @@ for the backup directory, the retention mode will not work.
 The script looks at the last modification time (mtime) of each file and
 directory to determine which files will be removed.
 
-Also be advised that this operation deletes B<all> files and directories
-in the backup directory that are older than the last n files!
+Be advised that this operation deletes B<all> files and directories in
+the backup directory that are older than the last n files (with the
+exception of hidden (dot) files!
 
 =item B<--prefix=string>
 
