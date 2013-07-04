@@ -1074,10 +1074,12 @@ END {
   if ($mail_report_on eq "always" ||
 	($mail_report_on eq "errors" && $errorstate == 1))
   {
+    my $state = ($errorstate == 1) ? "unsuccessful" : "successful";
+
     my $message = MIME::Lite->new (
                   From    => "$mail_from",
                   To      => "$mail_to",
-                  Subject => "$mail_subject - $action",
+                  Subject => "$mail_subject - $action $state",
                   Data    => "$mail_buffer"
     );
   
