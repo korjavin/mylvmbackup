@@ -687,7 +687,7 @@ sub do_backup_tar
 
 sub do_backup_zbackup
 {
-  my $tarball = $archivename.$tarfilesuffix;
+  my $tarball = $fullprefix;
   umask 077;
 
   log_msg ("Taking actual backup...", LOG_INFO);
