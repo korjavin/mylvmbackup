@@ -102,6 +102,9 @@ my $mail_from;
 my $mail_to;
 my $mail_subject;
 my $use_thin_snapshots;
+my  $zbackup;
+my  $zbackuparg;
+my  $zbackupdir;
 
 # Load defaults into variables
 load_defaults();
@@ -120,7 +123,7 @@ if ($configfile2 ne "") {
   load_config($configfile2);
   # re-load the arguments, as they should override any config file settings
   load_args();
-}   
+}
 
 if (($log_method eq "syslog") or ($log_method eq "both")) {
   use Sys::Syslog qw(:DEFAULT setlogsock :macros);
@@ -339,7 +342,7 @@ if (($action eq "purge") and ($backupretention > 0)) {
 log_msg ("Unknown action: $action", LOG_ERR);
 exit 1;
 
-# Please keep all 3 functions in the same order: load_config, load_args, load_defaults 
+# Please keep all 3 functions in the same order: load_config, load_args, load_defaults
 sub load_config 
 {
   my $configfile = shift(@_);
@@ -407,6 +410,12 @@ sub load_config
   $mail_from = $cfg->val ('reporting', 'mail_from', $mail_from);
   $mail_to = $cfg->val ('reporting', 'mail_to', $mail_to);
   $mail_subject = $cfg->val ('reporting', 'mail_subject', $mail_subject);
+
+  $zbackup= $cfg->val ('zbackup', 'zbackup', $zbackup);
+  $zbackuparg= $cfg->val ('zbackup', 'zbackuparg', $zbackuparg);
+  $zbackupdir= $cfg->val ('zbackup', 'zbackupdir', $zbackupdir);
+
+
 }
 
 # Please keep all 3 functions in the same order: load_config, load_args, load_defaults 
@@ -432,6 +441,11 @@ sub load_args
     "lvname=s" => \$lvname,
     "lvsize=s" => \$lvsize,
     "backuplv=s" => \$backuplv,
+
+# zbackup
+    "zbackup=s" => \$zbackup,
+    "zbackuparg=s" => \$zbackuparg,
+    "zbackupdir=s" => \$zbackupdir,
 
 # misc
     "backuptype=s" => \$backuptype,
@@ -564,6 +578,12 @@ sub load_defaults
   $mail_from = 'root@localhost';
   $mail_to = 'root@localhost';
   $mail_subject = 'mylvmbackup report for localhost';
+
+# zbackup
+  $zbackup='/usr/local/bin/zbackup';
+  $zbackuparg='--non-encrypted';
+  $zbackupdir='/media/zbackup';
+
 }
 
 sub flush_tables 
