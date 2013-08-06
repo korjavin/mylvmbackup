@@ -1,3 +1,12 @@
 language: perl
 perl:
   - "5.14"
+before_install:
+  # modules
+  - "cpanm DBD::mysql"
+  - "cpanm Config::IniFiles"
+  - "cpanm DateTime"
+  # install packages
+  - "sudo apt-get update"
+  - "sudo apt-get install lvm2"
+
