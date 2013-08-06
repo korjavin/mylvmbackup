@@ -1,3 +1,6 @@
+2013-08-08  Korjavin Ivan <korjavin@gmail.com>
+ - zbackup backup type
+
 2013-06-11  Lenz Grimmer <lenz@grimmer.com>
 
  - Improved error handling: send out an email if mail_report_on has been
