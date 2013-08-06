@@ -4,10 +4,9 @@ perl:
 before_install:
   # modules
   - "cpanm DBD::mysql"
-  - "cpanm Config::IniFiles"
   - "cpanm DateTime"
   # install packages
   - "sudo apt-get update"
-  - "sudo apt-get install lvm2"
+  - "sudo apt-get install lvm2 libconfig-inifiles-perl"
 
 install: true
