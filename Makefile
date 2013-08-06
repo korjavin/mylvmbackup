@@ -55,7 +55,7 @@ DISTFILES = \
 	$(NAME).pl.in \
 	$(NAME).spec \
 	$(NAME).spec.in \
-	README \
+	README.md \
 	TODO
 CLEANFILES = $(NAME).spec $(NAME) $(MAN1) $(MAN1).html
 prefix = /usr/local
@@ -124,4 +124,7 @@ maintainer-clean: clean
 	$(RM) -f $(distdir).tar.gz
 
 syntaxcheck:
+	$(PERL) -c $(NAME).pl.in
+
+test:
 	$(PERL) -c $(NAME).pl.in
