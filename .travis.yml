@@ -1,6 +1,9 @@
 language: perl
 perl:
   - "5.14"
+branches:
+  only:
+    - master
 before_install:
   # modules
   - "cpanm DBD::mysql"
