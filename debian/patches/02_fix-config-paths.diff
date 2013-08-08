@@ -1,0 +1,111 @@
+#! /bin/sh -e
+## DP: 02_fix-config-paths.diff
+if [ $# -ne 1 ]; then 
+    echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+    exit 1  
+fi
+case "$1" in 
+    -patch) patch -f --no-backup-if-mismatch -p1 < $0;;
+    -unpatch) patch -f --no-backup-if-mismatch -R -p1 < $0;;
+    *)
+        echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+        exit 1;;
+esac
+
+exit 0
+
+@DPATCH@
+diff -Nur mylvmbackup-0.15.orig/man/mylvmbackup.pod mylvmbackup-0.15/man/mylvmbackup.pod
+--- mylvmbackup-0.15.orig/man/mylvmbackup.pod	2009-06-26 17:49:08.000000000 +0200
++++ mylvmbackup-0.15/man/mylvmbackup.pod	2010-01-13 12:50:38.000000000 +0100
+@@ -230,7 +230,7 @@
+ that is spawned to perform the InnoDB recovery (see option
+ I<--innodb_recover>). Must be different from the PID file that the actual
+ running server uses.
+-The default is I</var/tmp/mylvmbackup_recoverserver.pid>
++The default is I</var/run/mysqld/mylvmbackup_recoverserver.pid>
+ 
+ =item B<--lvcreate=string>
+ 
+@@ -344,7 +344,7 @@
+ =item B<--mountdir=string>
+ 
+ Path for mounting the snapshot volume to.
+-The default value is I</var/tmp/mylvmbackup/mnt/>.
++The default value is I</var/cache/mylvmbackup/mnt/>.
+ If the directory does not exist, it will be created.
+ 
+ It is possible to use selected I<timestr()> formatting sequences to create
+@@ -382,7 +382,7 @@
+ This requires a properly configured remote rsync setup (e.g. pre-setup SSH keys
+ or a working rsyncd configuration).
+ 
+-The default is I</var/tmp/mylvmbackup/backup/>
++The default is I</var/cache/mylvmbackup/backup/>
+ 
+ =item B<--mount=string>
+ 
+diff -Nur mylvmbackup-0.15.orig/mylvmbackup.conf mylvmbackup-0.15/mylvmbackup.conf
+--- mylvmbackup-0.15.orig/mylvmbackup.conf	2009-09-05 15:44:09.000000000 +0200
++++ mylvmbackup-0.15/mylvmbackup.conf	2010-01-13 12:51:16.000000000 +0100
+@@ -18,7 +18,7 @@
+ host=
+ port=
+ socket=
+-mycnf=/etc/my.cnf
++mycnf=/etc/mysql/my.cnf
+ 
+ #
+ # LVM-specific options
+@@ -34,8 +34,8 @@
+ #
+ [fs]
+ xfs=0
+-mountdir=/var/tmp/mylvmbackup/mnt/
+-backupdir=/var/tmp/mylvmbackup/backup/
++mountdir=/var/cache/mylvmbackup/mnt/
++backupdir=/var/cache/mylvmbackup/backup/
+ relpath=
+ 
+ #
+@@ -80,7 +80,7 @@
+ rsnaparg=7
+ datefmt=%Y%m%d_%H%M%S
+ innodb_recover=0
+-pidfile=/var/tmp/mylvmbackup_recoverserver.pid
++pidfile=/var/run/mylvmbackup_recoverserver.pid
+ skip_flush_tables=0
+ extra_flush_tables=0
+ skip_mycnf=0
+diff -Nur mylvmbackup-0.15.orig/mylvmbackup.pl.in mylvmbackup-0.15/mylvmbackup.pl.in
+--- mylvmbackup-0.15.orig/mylvmbackup.pl.in	2009-09-05 15:44:09.000000000 +0200
++++ mylvmbackup-0.15/mylvmbackup.pl.in	2010-01-13 12:57:46.000000000 +0100
+@@ -406,7 +406,7 @@
+   $port = '';
+   $socket = '';
+   $mysqld_safe='mysqld_safe';
+-  $mycnf = '/etc/my.cnf';
++  $mycnf = '/etc/mysql/my.cnf';
+ 
+ # lvm
+   $vgname='mysql';
+@@ -534,7 +534,7 @@
+   $suffix='_mysql';
+   $datefmt='%Y%m%d_%H%M%S';
+   $innodb_recover=0;
+-  $pidfile = '$TMP/mylvmbackup_recoverserver.pid';
++  $pidfile = '/var/run/mylvmbackup_recoverserver.pid';
+   $skip_flush_tables=0;
+   $extra_flush_tables=0;
+   $skip_mycnf=0;
+@@ -437,8 +437,8 @@
+   $quiet=0;
+ 
+ # fs
+-  $mountdir='/var/tmp/mylvmbackup/mnt/';
+-  $backupdir='/var/tmp/mylvmbackup/backup/';
++  $mountdir='/var/cache/mylvmbackup/mnt/';
++  $backupdir='/var/cache/mylvmbackup/backup/';
+   $relpath='';
+   $need_xfsworkaround=0;
+ 

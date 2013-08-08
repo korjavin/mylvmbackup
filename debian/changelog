@@ -1,0 +1,93 @@
+mylvmbackup (0.13-2) unstable; urgency=medium
+
+  * Set umask before creating the backup. (closes: #518471)
+  * Update upstream homepage. (closes: #608058)
+
+ -- Norbert Tretkowski <norbert@tretkowski.de>  Mon, 14 Feb 2011 13:34:43 +0100
+
+mylvmbackup (0.13-1) unstable; urgency=low
+
+  * New upstream release.
+  * Fix some lintian warnings:
+    + copyright-refers-to-versionless-license-file
+    + debhelper-but-no-misc-depends
+
+ -- Norbert Tretkowski <norbert@tretkowski.de>  Thu, 14 Jan 2010 21:15:20 +0100
+
+mylvmbackup (0.12-1) unstable; urgency=low
+
+  * New upstream release.
+  * Now maintained by Debian MySQL Maintainers.
+
+ -- Norbert Tretkowski <norbert@tretkowski.de>  Fri, 03 Jul 2009 09:21:01 +0200
+
+mylvmbackup (0.11-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Norbert Tretkowski <norbert@tretkowski.de>  Wed, 21 Jan 2009 12:29:48 +0100
+
+mylvmbackup (0.10-1) unstable; urgency=low
+
+  * New upstream release.
+    + Add missing entry for "lvs" to mylvmbackup.conf. (closes: #494105)
+
+ -- Norbert Tretkowski <norbert@tretkowski.de>  Sun, 14 Sep 2008 11:39:26 +0200
+
+mylvmbackup (0.9-1) unstable; urgency=low
+
+  * New upstream release.
+  * Add version to asciidoc build-dependency. (closes: #489566)
+
+ -- Norbert Tretkowski <norbert@tretkowski.de>  Fri, 11 Jul 2008 11:35:58 +0200
+
+mylvmbackup (0.8-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Norbert Tretkowski <norbert@tretkowski.de>  Tue, 15 Apr 2008 22:08:03 +0200
+
+mylvmbackup (0.7-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Norbert Tretkowski <norbert@tretkowski.de>  Tue, 08 Apr 2008 14:09:42 +0200
+
+mylvmbackup (0.6-5) unstable; urgency=low
+
+  * Move upstream website in control file to source stanza.
+
+ -- Norbert Tretkowski <norbert@tretkowski.de>  Wed, 26 Mar 2008 22:09:07 +0100
+
+mylvmbackup (0.6-4) unstable; urgency=low
+
+  * Add upstream website to long description.
+  * Use /var/run/mysqld/ instead /var/tmp/ for PID file of InnoDB recovery.
+
+ -- Norbert Tretkowski <norbert@tretkowski.de>  Sat, 03 Nov 2007 11:15:25 +0100
+
+mylvmbackup (0.6-3) unstable; urgency=low
+
+  * Change mode of /etc/mylvmbackup.conf to 600 in postinst.
+
+ -- Norbert Tretkowski <norbert@tretkowski.de>  Mon, 29 Oct 2007 19:45:24 +0100
+
+mylvmbackup (0.6-2) unstable; urgency=low
+
+  * Use dpatch for patch management.
+  * Include /etc/mysql/my.cnf instead /etc/my.cnf in the backup.
+
+ -- Norbert Tretkowski <norbert@tretkowski.de>  Sun, 28 Oct 2007 19:06:55 +0100
+
+mylvmbackup (0.6-1) unstable; urgency=low
+
+  * New upstream release.
+  * Add libtimedate-perl dependency.
+
+ -- Norbert Tretkowski <norbert@tretkowski.de>  Sun, 28 Oct 2007 17:57:53 +0100
+
+mylvmbackup (0.5-1) unstable; urgency=low
+
+  * Initial release. (closes: #448228)
+
+ -- Norbert Tretkowski <norbert@tretkowski.de>  Sat, 27 Oct 2007 12:22:15 +0200

@@ -1,0 +1,28 @@
+#! /bin/sh -e
+## DP: 01_fix-makefile-path.diff
+if [ $# -ne 1 ]; then 
+    echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+    exit 1  
+fi
+case "$1" in 
+    -patch) patch -f --no-backup-if-mismatch -p1 < $0;;
+    -unpatch) patch -f --no-backup-if-mismatch -R -p1 < $0;;
+    *)
+        echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+        exit 1;;
+esac
+
+exit 0
+
+@DPATCH@
+--- mylvmbackup-0.6.orig/Makefile	2007-05-31 11:31:29.000000000 +0200
++++ mylvmbackup-0.6/Makefile	2007-10-28 19:16:08.000000000 +0100
+@@ -45,7 +45,7 @@
+ sysconfdir = /etc
+ bindir = $(prefix)/bin
+ distdir = $(NAME)-$(VERSION)
+-mandir = $(prefix)/man
++mandir = $(prefix)/share/man
+ man1dir = $(mandir)/man1
+ 
+ all: $(DISTFILES) $(MAN1)

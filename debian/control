@@ -1,0 +1,22 @@
+Source: mylvmbackup
+Section: misc
+Priority: extra
+Maintainer: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
+Uploaders: Norbert Tretkowski <norbert@tretkowski.de>
+Build-Depends: debhelper (>= 5), dpatch, asciidoc (>= 8.2.0), xsltproc, docbook-xsl
+Standards-Version: 3.9.1
+Homepage: http://lenzg.net/mylvmbackup/
+Vcs-Browser: http://svn.debian.org/wsvn/pkg-mysql/mylvmbackup/
+Vcs-Svn: svn://svn.debian.org/svn/pkg-mysql/mylvmbackup/
+
+Package: mylvmbackup
+Architecture: all
+Depends: ${perl:Depends}, ${misc:Depends}, libdbd-mysql-perl, libtimedate-perl, libconfig-inifiles-perl, lvm2
+Suggests: mysql-server
+Description: quickly creating backups of MySQL server's data files
+ To perform a backup, mylvmbackup obtains a read lock on all tables and
+ flushes all server caches to disk, makes an LVM snapshot of the volume
+ containing the MySQL data directory, and unlocks the tables again. The
+ snapshot process takes only a small amount of time. When it is done, the
+ server can continue normal operations, while the actual file backup
+ proceeds.
