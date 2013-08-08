@@ -127,4 +127,4 @@ syntaxcheck:
 	$(PERL) -c $(NAME).pl.in
 
 test: all
-	dpkg-buildpackage
+	dpkg-buildpackage -us -uc
