@@ -126,5 +126,5 @@ maintainer-clean: clean
 syntaxcheck:
 	$(PERL) -c $(NAME).pl.in
 
-test:
-	$(PERL) -c $(NAME).pl.in
+test: all
+	dpkg-buildpackage

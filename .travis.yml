@@ -7,6 +7,6 @@ before_install:
   - "cpanm DateTime"
   # install packages
   - "sudo apt-get update"
-  - "sudo apt-get install lvm2 libconfig-inifiles-perl"
+  - "sudo apt-get install lvm2 libconfig-inifiles-perl debhelper dpatch asciidoc xsltproc docbook-xsl"
 
 install: true
