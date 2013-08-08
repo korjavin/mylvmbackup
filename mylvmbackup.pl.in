@@ -285,6 +285,7 @@ if ($action eq "backup")
       if ($backuptype eq 'tar') {$backupsuccess = do_backup_tar()}
       elsif ($backuptype eq 'rsync') {$backupsuccess = do_backup_rsync()}
       elsif ($backuptype eq 'rsnap') {$backupsuccess = do_backup_rsnap()}
+      elsif ($backuptype eq 'zbackup') {$backupsuccess = do_backup_zbackup()}
       else {$backupsuccess = do_backup_none()};
   
       if ($backupsuccess == 1)
@@ -682,6 +683,44 @@ sub do_backup_tar
   } else {
     return 0;
   }    
+}
+
+sub do_backup_zbackup
+{
+  my $tarball = $archivename.$tarfilesuffix;
+  umask 077;
+
+  log_msg ("Taking actual backup...", LOG_INFO);
+  log_msg ("Creating tar archive $tarball", LOG_INFO);
+  my $mountdir_rel = $mountdir;
+  $mountdir_rel =~ s/^$topmountdir//g;
+  $mountdir_rel =~ s/^\/+//g;
+  my $pos_filename_rel = $pos_filename;
+  $pos_filename_rel =~ s/^$topmountdir//g;
+  $pos_filename_rel =~ s/^\/+//g;
+  my $mycnf_filename_rel = $mycnf_filename;
+  $mycnf_filename_rel =~ s/^$topmountdir//g;
+  $mycnf_filename_rel =~ s/^\/+//g;
+
+  # To be portable, do a "cd" before calling tar (ie. don't do "tar ... -C ...")
+  my $command= "cd '$topmountdir' ;";
+
+  # Build the primary tar command.
+  $command.= sprintf("'%s' %s %s %s %s " ,
+    $tar, $tararg, "-", "$mountdir_rel/$relpath", $tarsuffixarg );
+
+  # Maybe some additional files are to be added
+  $command .= " $pos_filename_rel";
+  $command .= " $mycnf_filename_rel" if ($skip_mycnf==0);
+
+  $command .= sprintf("  | %s %s backup %s ", $zbackup , $zbackuparg, $zbackupdir . '/' . $tarball);
+
+  if (run_command("create tar archive", $command))
+  {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 sub do_backup_none
