@@ -406,7 +406,7 @@ The default is I<5G> (5 gigabytes).
 =item B<--backuptype=string>
 
 Specifies what type of backup to perform. The available options are
-I<tar>, I<rsync>, I<rsnap> and I<none>.
+I<tar>, I<rsync>, I<rsnap>,I<zbackup> and I<none>.
 
 =item B<--backupretention=string>
 
