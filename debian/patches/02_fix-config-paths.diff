@@ -68,10 +68,10 @@ diff -Nur mylvmbackup-0.15.orig/mylvmbackup.conf mylvmbackup-0.15/mylvmbackup.co
  relpath=
  
  #
-@@ -80,7 +80,7 @@
- rsnaparg=7
+@@ -95,7 +95,7 @@
  datefmt=%Y%m%d_%H%M%S
  innodb_recover=0
+ recoveryopts=--skip-networking --skip-grant --bootstrap --skip-syslog --skip-slave-start
 -pidfile=/var/tmp/mylvmbackup_recoverserver.pid
 +pidfile=/var/run/mylvmbackup_recoverserver.pid
  skip_flush_tables=0
@@ -90,9 +90,9 @@ diff -Nur mylvmbackup-0.15.orig/mylvmbackup.pl.in mylvmbackup-0.15/mylvmbackup.p
  # lvm
    $vgname='mysql';
 @@ -534,7 +534,7 @@
-   $suffix='_mysql';
    $datefmt='%Y%m%d_%H%M%S';
    $innodb_recover=0;
+   $recoveryopts='--skip-networking --skip-grant --bootstrap --skip-syslog --skip-slave-start';
 -  $pidfile = '$TMP/mylvmbackup_recoverserver.pid';
 +  $pidfile = '/var/run/mylvmbackup_recoverserver.pid';
    $skip_flush_tables=0;
