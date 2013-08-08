@@ -1,3 +1,2 @@
-01_fix-makefile-path.diff
 02_fix-config-paths.diff
 03_set-umask.diff
