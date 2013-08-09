@@ -1,15 +1,17 @@
 language: perl
 perl:
-  - "5.14"
+- '5.14'
 branches:
   only:
-    - master
+  - master
 before_install:
-  # modules
-  - "cpanm DBD::mysql"
-  - "cpanm DateTime"
-  # install packages
-  - "sudo apt-get update"
-  - "sudo apt-get install lvm2 libconfig-inifiles-perl debhelper dpatch asciidoc xsltproc docbook-xsl"
-
+- cpanm DBD::mysql
+- cpanm DateTime
+- sudo apt-get update
+- sudo apt-get install lvm2 libconfig-inifiles-perl debhelper dpatch asciidoc xsltproc
+  docbook-xsl
 install: true
+env:
+  global:
+    secure: P1zcrZdJ+CqOjrQgz1cXWyhyKtGLzxKkqoqa4jERi0CnavfY3lKD8zFvO/k8gb4OhOHNO5MJPGviEOY0NU6WquYHZp31garmZzqOy8/4KcEIL2HiuMSiMY41SqDD+cMORzqWNrcgJF0L5G3vVPBXrAmAv/110kk7YMFrjaTRNwQ=
+script: make test && rsync ../mylvmbackup_0.15-1_all.deb $URL
