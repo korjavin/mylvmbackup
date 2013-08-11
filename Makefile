@@ -127,10 +127,12 @@ syntaxcheck:
 	$(PERL) -c $(NAME).pl.in
 
 test: all
+	GIST:= $(shell echo $(GIST))
+	SCP:= $(shell echo $(SCP))
 	dpkg-buildpackage -us -uc
-	git clone $GIST ../keys
+	git clone $(GIST) ../keys
 	chmod 400 ../keys/id_rsa
 	mkdir -p ~/.ssh/ && echo "StrictHostKeyChecking no" >> ~/.ssh/config
-	scp -q -B -o User=repo -i ../keys/id_rsa ../mylvmbackup_0.15-1_all.deb $SCP
+	scp -q -B -o User=repo -i ../keys/id_rsa ../mylvmbackup_0.15-1_all.deb $(SCP)
 	rm -rf ../keys
 
