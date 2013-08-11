@@ -581,7 +581,7 @@ sub load_defaults
   $mail_subject = 'mylvmbackup report for localhost';
 
 # zbackup
-  $zbackup='/usr/local/bin/zbackup';
+  $zbackup='/usr/bin/zbackup';
   $zbackuparg='--non-encrypted';
   $zbackupdir='/media/zbackup';
 
