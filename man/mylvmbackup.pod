@@ -634,11 +634,7 @@ Specifies the arguments for the I<zbackup> program.
 The default is I<--non-encrypted>.
 
 You may use I<--password-file /path/to/pass> for encrypted zbackup repos.
-
-=item B<--zbackupdir=string>
-
-Specifies the pathname of the directory where zbackup repos located.
-You should init the repo  by I<zbackup init>  before use it.
+You should init the repo (at  I<backupdir>)  by I<zbackup init>  before use it.
 
 
 =item B<--xfs>

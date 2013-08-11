@@ -104,7 +104,6 @@ my $mail_subject;
 my $use_thin_snapshots;
 my  $zbackup;
 my  $zbackuparg;
-my  $zbackupdir;
 
 # Load defaults into variables
 load_defaults();
@@ -414,7 +413,6 @@ sub load_config
 
   $zbackup= $cfg->val ('zbackup', 'zbackup', $zbackup);
   $zbackuparg= $cfg->val ('zbackup', 'zbackuparg', $zbackuparg);
-  $zbackupdir= $cfg->val ('zbackup', 'zbackupdir', $zbackupdir);
 
 
 }
@@ -446,7 +444,6 @@ sub load_args
 # zbackup
     "zbackup=s" => \$zbackup,
     "zbackuparg=s" => \$zbackuparg,
-    "zbackupdir=s" => \$zbackupdir,
 
 # misc
     "backuptype=s" => \$backuptype,
@@ -583,7 +580,6 @@ sub load_defaults
 # zbackup
   $zbackup='/usr/bin/zbackup';
   $zbackuparg='--non-encrypted';
-  $zbackupdir='/media/zbackup';
 
 }
 
@@ -713,7 +709,7 @@ sub do_backup_zbackup
   $command .= " $pos_filename_rel";
   $command .= " $mycnf_filename_rel" if ($skip_mycnf==0);
 
-  $command .= sprintf("  | %s %s backup %s ", $zbackup , $zbackuparg, $zbackupdir . '/' .  $fullprefix );
+  $command .= sprintf("  | %s %s backup %s ", $zbackup , $zbackuparg, $backupdir . '/' .  $fullprefix );
 
   if (run_command("create tar archive", $command))
   {
