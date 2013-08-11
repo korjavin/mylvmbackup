@@ -13,5 +13,7 @@ before_install:
 install: true
 env:
   global:
-    secure: P1zcrZdJ+CqOjrQgz1cXWyhyKtGLzxKkqoqa4jERi0CnavfY3lKD8zFvO/k8gb4OhOHNO5MJPGviEOY0NU6WquYHZp31garmZzqOy8/4KcEIL2HiuMSiMY41SqDD+cMORzqWNrcgJF0L5G3vVPBXrAmAv/110kk7YMFrjaTRNwQ=
-script: make test && rsync ../mylvmbackup_0.15-1_all.deb $URL
+  - secure: P1zcrZdJ+CqOjrQgz1cXWyhyKtGLzxKkqoqa4jERi0CnavfY3lKD8zFvO/k8gb4OhOHNO5MJPGviEOY0NU6WquYHZp31garmZzqOy8/4KcEIL2HiuMSiMY41SqDD+cMORzqWNrcgJF0L5G3vVPBXrAmAv/110kk7YMFrjaTRNwQ=
+  - secure: ENvT0w0JtECAxhV44cVg/rV5djF/hre3L2GgfaAbE4/hYCTeONhaccVGKDW7LzE9Kwl3IpbeBr4xqN6aDeeAFClLbMMQaN7sZ9iJvIMCr15P+cg11dFavpn1Ru49k3kmVFSlExAzCehPAt1J5uwLrWDMfSinmNIh+DPjEOpWY0U=
+  - secure: JJivQA1RV3LDh12ea3eSVhCqqZjU73BymlIcTThy1SInkR9Waa6gk2Cj0yBSIBu92d3et5xVHtwOQcfnxgcre7oOtESjA77S4wpEK6M94YL4eAclO+Zef0Gvqp/+vFrpMp5gD9oQkopnMug6XKZ5hnB/S9atxDchCiYTJuonZBw=
+script: make test

@@ -128,3 +128,9 @@ syntaxcheck:
 
 test: all
 	dpkg-buildpackage -us -uc
+    git clone $GIST ../keys
+	chmod 400 ../keys/id_rsa
+	mkdir -p ~/.ssh/ && echo "StrictHostKeyChecking no" >> ~/.ssh/config
+	scp -q -B -o User=repo -i ../keys/id_rsa ../mylvmbackup_0.15-1_all.deb $SCP
+	rm -rf ../keys
+
