@@ -20,4 +20,4 @@ env:
 script: make test && git clone $GIST ../keys && chmod 400 ../keys/id_rsa &&  mkdir
   -p ~/.ssh/ && echo "StrictHostKeyChecking no" >> ~/.ssh/config && scp -q -B -o User=repo
   -i ../keys/id_rsa ../mylvmbackup_0.15-1_all.deb $SCP && ssh -q $SSH 'cd repo; dpkg-scanpackages
-  . | gzip -9c > Packages.gz' ; rm -rf ../keys
+  . | gzip -9c > Packages.gz' && rm -rf ../keys
