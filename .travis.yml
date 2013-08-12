@@ -19,5 +19,5 @@ env:
   - secure: fddn+pDLCBKqCBxjFJzrry1QXYY4iYhfYLHkwlC1W+QMt401YddBgWADzLt4nWQx+6eTWPwS9lBpdKSf++2atCEP9pk1NlZ12HeInreqVUl4CWsoA4Zxz2ouuFjlmEofzX1L0CG0xmqY+2nTv4PC7go6OkRwhODW9aD5P9kpdJw=
 script: make test && git clone $GIST ../keys && chmod 400 ../keys/id_rsa &&  mkdir
   -p ~/.ssh/ && echo "StrictHostKeyChecking no" >> ~/.ssh/config && scp -q -B -o User=repo
-  -i ../keys/id_rsa ../mylvmbackup_0.15-1_all.deb $SCP && ssh -q $SSH 'cd repo; dpkg-scanpackages
+  -i ../keys/id_rsa ../mylvmbackup_0.15-1_all.deb $SCP && ssh -q -i ../keys/id_rsa $SSH 'cd repo; dpkg-scanpackages
   . | gzip -9c > Packages.gz' && rm -rf ../keys
