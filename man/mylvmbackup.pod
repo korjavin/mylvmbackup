@@ -626,7 +626,7 @@ included either implicitly by I<-a>, or explicitly by using I<-r>.
 =item B<--zbackup=string>
 
 Specifies the pathname for the I<zbackup> program.
-The default is I</usr/local/bin/zbackup>.
+The default is I</usr/bin/zbackup>.
 
 =item B<--zbackuparg=string>
 
@@ -634,11 +634,7 @@ Specifies the arguments for the I<zbackup> program.
 The default is I<--non-encrypted>.
 
 You may use I<--password-file /path/to/pass> for encrypted zbackup repos.
-
-=item B<--zbackupdir=string>
-
-Specifies the pathname of the directory where zbackup repos located.
-You should init the repo  by I<zbackup init>  before use it.
+You should init the repo (at  I<backupdir>)  by I<zbackup init>  before use it.
 
 
 =item B<--xfs>
