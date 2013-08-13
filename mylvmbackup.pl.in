@@ -710,7 +710,7 @@ sub do_backup_zbackup
   $command .= " $pos_filename_rel";
   $command .= " $mycnf_filename_rel" if ($skip_mycnf==0);
 
-  $command .= sprintf("  | %s %s backup %s ", $zbackup , $zbackuparg, $backupdir . '/' .  $fullprefix );
+  $command .= sprintf("  | %s %s backup %s ", $zbackup , $zbackuparg, $archivename );
 
   if (run_command("create zbackup archive", $command))
   {
