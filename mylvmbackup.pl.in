@@ -702,8 +702,9 @@ sub do_backup_zbackup
   my $command= "cd '$topmountdir' ;";
 
   # Build the primary tar command.
-  $command.= sprintf("'%s' %s %s %s %s " ,
-    $tar, $tararg, "-", "$mountdir_rel/$relpath", $tarsuffixarg );
+  # Hardcoded tararg=cvf for prevent compression that bad for zbackup
+  $command.= sprintf("'%s' cvf %s %s %s " ,
+    $tar, "-", "$mountdir_rel/$relpath", $tarsuffixarg );
 
   # Maybe some additional files are to be added
   $command .= " $pos_filename_rel";
