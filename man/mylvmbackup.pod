@@ -626,7 +626,7 @@ included either implicitly by I<-a>, or explicitly by using I<-r>.
 =item B<--zbackup=string>
 
 Specifies the pathname for the I<zbackup> program.
-The default is I</usr/local/bin/zbackup>.
+The default is I</usr/bin/zbackup>.
 
 =item B<--zbackuparg=string>
 
