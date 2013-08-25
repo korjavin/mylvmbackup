@@ -102,8 +102,8 @@ my $mail_from;
 my $mail_to;
 my $mail_subject;
 my $use_thin_snapshots;
-my  $zbackup;
-my  $zbackuparg;
+my $zbackup;
+my $zbackuparg;
 
 # Load defaults into variables
 load_defaults();
@@ -177,9 +177,13 @@ my $snapshot_created = 0;
 
 # Check for the backupdir, it must exist, and it must be readable/writable
 # Except when not doing any backups or using rsync to a remote server
+# If zbackup is the selected backup type, check if a backup repository
+# has already been created and set it up, if necessary
 unless (($backuptype eq 'none') or ($backuptype eq 'rsync' and $backupdir =~ /^[^\/].*:.*/))
 {
   check_dir($backupdir, 'backupdir');
+  # Check for and initialize zbackup repository
+  if ($backuptype eq 'zbackup') { check_zbackuprepo($backupdir) };
 }
   
 # Backup
@@ -578,7 +582,7 @@ sub load_defaults
   $mail_subject = 'mylvmbackup report for localhost';
 
 # zbackup
-  $zbackup='/usr/bin/zbackup';
+  $zbackup='zbackup';
   $zbackuparg='--non-encrypted';
 
 }
@@ -683,11 +687,10 @@ sub do_backup_tar
 
 sub do_backup_zbackup
 {
-  my $tarball = $fullprefix;
   umask 077;
 
   log_msg ("Taking actual backup...", LOG_INFO);
-  log_msg ("Creating zbackup archive $tarball", LOG_INFO);
+  log_msg ("Creating zbackup archive $fullprefix", LOG_INFO);
   my $mountdir_rel = $mountdir;
   $mountdir_rel =~ s/^$topmountdir//g;
   $mountdir_rel =~ s/^\/+//g;
@@ -702,16 +705,13 @@ sub do_backup_zbackup
   my $command= "cd '$topmountdir' ;";
 
   # Build the primary tar command.
-  # Hardcoded tararg=cvf for prevent compression that bad for zbackup
+  # We explicitly override $tararg to "cvf" to prevent compression that bad for zbackup
   $command.= sprintf("'%s' cvf %s %s %s " ,
     $tar, "-", "$mountdir_rel/$relpath", $tarsuffixarg );
 
   # Maybe some additional files are to be added
   $command .= " $pos_filename_rel";
   $command .= " $mycnf_filename_rel" if ($skip_mycnf==0);
-
-  #check and init repo
-  check_zbackuprepo($backupdir);
 
   my $zarchivename = $backupdir . '/backups/' . $fullprefix;
   $command .= sprintf("  | %s %s backup %s ", $zbackup , $zbackuparg, $zarchivename );
@@ -1018,10 +1018,10 @@ sub check_zbackuprepo
  if (!(-d $dirname . '/backups') or !(-d $dirname . '/bundles') or !(-d $dirname . '/index') or !(-f $dirname . '/info') ) {
     eval {
       my $command= "$zbackup $zbackuparg init $dirname";
-      run_command("Init zbackup repo", $command);
+      run_command("Initializing zbackup repository", $command);
     };
     if($@) {
-      log_msg ("The directory $dirname not a zbackup repo and I was unable to init it.", LOG_ERR);
+      log_msg ("The directory $dirname is not a zbackup repository and I was unable to initialize it.", LOG_ERR);
       exit 1;
     }
  }
@@ -1030,14 +1030,14 @@ sub check_zbackuprepo
  {
    print <<DIRERROR;
 
-The directory $dirname not a zbackup repo and I don't have 
-sufficient privileges to init it.
+The directory $dirname not a zbackup repository and I don't have 
+sufficient privileges to initalize it.
 Please verify the permissions or provide another directory
 by using the option --backupdir=<directory>
 
 DIRERROR
 
-   log_msg ("The directory $dirname not a zbackup repo and I don't have sufficient privileges to init it.", LOG_ERR);
+   log_msg ("The directory $dirname is not a zbackup repo and I don't have sufficient privileges to initialize it.", LOG_ERR);
   }
 }
 

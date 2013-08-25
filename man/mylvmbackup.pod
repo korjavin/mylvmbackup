@@ -406,7 +406,9 @@ The default is I<5G> (5 gigabytes).
 =item B<--backuptype=string>
 
 Specifies what type of backup to perform. The available options are
-I<tar>, I<rsync>, I<rsnap>, I<zbackup> and I<none>.
+I<tar>, I<rsync>, I<rsnap>, I<zbackup> and I<none>. Note that using
+I<zbackup> still requires a I<tar> executable to prepare the backup
+archives.
 
 =item B<--backupretention=string>
 
@@ -626,16 +628,16 @@ included either implicitly by I<-a>, or explicitly by using I<-r>.
 =item B<--zbackup=string>
 
 Specifies the pathname for the I<zbackup> program.
-The default is I</usr/bin/zbackup>.
+The default is I<zbackup>.
 
 =item B<--zbackuparg=string>
 
 Specifies the arguments for the I<zbackup> program.
 The default is I<--non-encrypted>.
 
-You may use I<--password-file /path/to/pass> for encrypted zbackup repos.
-You should init the repo (at  I<backupdir>)  by I<zbackup init>  before use it.
-
+You may use I<--password-file /path/to/pass> to create an encrypted zbackup
+repository. The backup repository located in I<backupdir> will be initialized
+automatically by running I<zbackup init> before the first invocation.
 
 =item B<--xfs>
 
