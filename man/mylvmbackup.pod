@@ -25,8 +25,8 @@ archive names allows you to run I<mylvmbackup> many times without risking to
 overwrite old archives. It is possible to preserve only a defined number of
 last backups, to avoid running out of disk space.
 
-Alternatively, instead of I<tar>, you can use I<rsync> or I<rsnap> to perform
-the archiving.
+Alternatively, instead of I<tar>, you can use I<rsync>, I<rsnap> or I<zbackup>
+to perform the archiving.
 
 The I<rsync> backup can perform both local backups as well as backing up to a
 remote server using rsyncd or rsync via SSH.
@@ -34,6 +34,14 @@ remote server using rsyncd or rsync via SSH.
 I<rsnap> is a wrapper around I<rsync> to automatically maintain and rotate a
 given number of last backups (7 by default). It utilizes hard links to link to
 unchanged files for saving disk space.
+
+I<zbackup> is a globally-deduplicating backup tool. Feed a large .tar into it,
+and it will store duplicate regions of it only once, then compress and
+optionally encrypt the result. Feed another .tar file, and it will also re-use
+any data found in any previous backups. This way only new changes are stored,
+and as long as the files are not very different, the amount of storage required
+is very low. Any of the backup files stored previously can be read back in full
+at any time.
 
 Moreover, a backup type I<none> is provided for cases where the user wants
 to use I<mylvmbackup> only for creating the snapshots and intends to perform the
@@ -183,10 +191,10 @@ Selects the mode of action. Possible values are I<backup> and I<purge>.
 When this option is omitted, the I<backup> action is assumed by default, which
 performs the actual backup creation. Older backup files are preserved.
 
-The I<purge> action can be used to remove older backups from the backup
-directory, except for the a configurable number of most recent backups, defined
-by the I<backupretention> option. The backup creation process is skipped in
-this case.
+The I<purge> action can be used to remove older tar or local rsync backups from
+the backup directory, except for the a configurable number of most recent
+backups, defined by the I<backupretention> option. The backup creation process
+is skipped in this case.
 
 Note that this option erases B<all> files contained in this directory that
 match the criterion of being older than the last n backup files (with the
@@ -412,8 +420,9 @@ archives.
 
 =item B<--backupretention=string>
 
-Specifies how many previous backups to keep in the backup directory when
-performing the I<purge> action. The default is I<0> (keep all backups).
+Specifies how many previous backups (tar archives or rsync directories only) to
+keep in the backup directory when performing the I<purge> action. The default
+is I<0> (keep all backups).
 
 Note that this feature only works on a local backup directory with
 a static directory name! If you use I<timestr()> formatting sequences

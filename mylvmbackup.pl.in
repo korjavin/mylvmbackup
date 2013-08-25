@@ -315,7 +315,12 @@ if ($action eq "backup")
   exit 0;
 }
 
-if (($action eq "purge") and ($backupretention > 0)) {
+# Only purge local tar or rsync backups
+if  (($action eq "purge")
+and ( $backuptype eq 'tar'
+or  ( $backuptype eq 'rsync' and $backupdir =~ /^\/.*/ ) )
+and ($backupretention > 0))
+{
   my @existingbackups;
   my %files;
 
@@ -339,7 +344,7 @@ if (($action eq "purge") and ($backupretention > 0)) {
   }
   exit 0;
 } else {
-  log_msg ("Retention is disabled, no backup to remove.", LOG_INFO);
+  log_msg ("Retention is disabled or backup type provides no backups to remove.", LOG_INFO);
   exit 0;
 }
 
