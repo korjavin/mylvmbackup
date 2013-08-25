@@ -995,8 +995,8 @@ Common options:
   --prefix=<prefix>             Prefix for naming the backup (def: $prefix)
   --suffix=<suffix>             Suffix for naming the backup (def: $suffix)
   --backupdir=<dirname>         Path for archives (def: $backupdir)
-  --backuptype=<type>           Select backup type: none, rsnap, rsync or tar
-                                (def: $backuptype)
+  --backuptype=<type>           Select backup type: none, rsnap, rsync, tar
+                                or zbackup (def: $backuptype)
 
   --configfile=<file>           Specify an alternative configuration file
                                 (def: $configfile)
