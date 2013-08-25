@@ -732,9 +732,7 @@ sub do_backup_none
 
 sub do_backup_rsnap
 {
-  my $destdir = $backupdir;
-  
-  log_msg ("Archiving with rsnap to $destdir", LOG_INFO);
+  log_msg ("Archiving with rsnap to $backupdir", LOG_INFO);
 
   # Trailing slash is bad
   my $relpath_noslash = $relpath;
@@ -743,7 +741,7 @@ sub do_backup_rsnap
   my $command = "$rsnap $rsnaparg $mountdir/$relpath_noslash";
   $command .= " $pos_filename";
   $command .= " $mycnf_filename" if ($skip_mycnf==0);
-  $command .= " $destdir/";
+  $command .= " $backupdir/";
   $command .= " -- $rsnaprsyncarg" unless ($rsnaprsyncarg eq "");
 
   return run_command("create rsnap archive", $command);
